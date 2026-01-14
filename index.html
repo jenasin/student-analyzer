@@ -1,4 +1,3 @@
-
 <!DOCTYPE html>
 <html lang="cs">
 <head>
@@ -6,71 +5,418 @@
     <meta name="viewport" content="width=device-width, initial-scale=1.0">
     <title>AI Academic Navigator</title>
     <script src="https://cdn.tailwindcss.com?plugins=typography"></script>
-    <link href="https://fonts.googleapis.com/css2?family=Inter:wght@300;400;500;600;700&family=Lora:ital,wght@0,400..700;1,400..700&display=swap" rel="stylesheet">
+
+    <!-- Playfair Display & Inter Fonts -->
+    <link rel="preconnect" href="https://fonts.googleapis.com">
+    <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+    <link href="https://fonts.googleapis.com/css2?family=Playfair+Display:ital,wght@0,400;0,500;0,600;0,700;1,400&family=Inter:wght@300;400;500;600&display=swap" rel="stylesheet">
+
     <style>
+        /* ==========================================
+           CSS Variables - Nobel Prize Theme
+           ========================================== */
         :root {
-            --font-ui: 'Inter', sans-serif;
-            --font-academic: 'Lora', serif;
+            /* Font families */
+            --font-sans: 'Inter', system-ui, -apple-system, 'Segoe UI', Roboto, Arial, sans-serif;
+            --font-serif: 'Playfair Display', Georgia, 'Times New Roman', serif;
+            --font-mono: ui-monospace, SFMono-Regular, Menlo, Monaco, Consolas, monospace;
+
+            /* Typography scale */
+            --text-xs: 0.75rem;      /* 12px */
+            --text-sm: 0.875rem;     /* 14px */
+            --text-base: 1rem;       /* 16px */
+            --text-lg: 1.125rem;     /* 18px */
+            --text-xl: 1.25rem;      /* 20px */
+            --text-2xl: 1.5rem;      /* 24px */
+            --text-3xl: 1.875rem;    /* 30px */
+            --text-4xl: 2.25rem;     /* 36px */
+
+            /* Line heights */
+            --leading-tight: 1.2;
+            --leading-snug: 1.4;
+            --leading-normal: 1.55;
+            --leading-relaxed: 1.65;
+            --leading-loose: 1.75;
+
+            /* Font weights */
+            --font-light: 300;
+            --font-normal: 400;
+            --font-medium: 500;
+            --font-semibold: 600;
+            --font-bold: 700;
+
+            /* Letter spacing */
+            --tracking-tight: -0.02em;
+            --tracking-normal: 0;
+            --tracking-wide: 0.05em;
+
+            /* Colors - Nobel Prize palette */
+            --color-bg: #F9F8F4;           /* Cream */
+            --color-bg-card: #ffffff;
+            --color-bg-dark: #1a1a1a;      /* Nobel dark */
+            --color-border: #e5e2d9;
+            --color-border-hover: #d4d0c4;
+            --color-text: #1a1a1a;         /* Nobel dark */
+            --color-text-secondary: #4a4a4a;
+            --color-text-muted: #7a7a7a;
+            --color-primary: #C5A059;      /* Nobel gold */
+            --color-primary-hover: #b08d4a;
+            --color-primary-light: rgba(197, 160, 89, 0.12);
+            --color-accent: #8B7355;       /* Bronze accent */
+
+            /* Shadows - softer, warmer */
+            --shadow-sm: 0 1px 3px 0 rgba(26, 26, 26, 0.04);
+            --shadow-md: 0 4px 12px -2px rgba(26, 26, 26, 0.08);
+            --shadow-lg: 0 12px 24px -4px rgba(26, 26, 26, 0.12);
+            --shadow-gold: 0 4px 20px -4px rgba(197, 160, 89, 0.25);
+
+            /* Spacing (8px grid) */
+            --space-1: 0.25rem;   /* 4px */
+            --space-2: 0.5rem;    /* 8px */
+            --space-3: 0.75rem;   /* 12px */
+            --space-4: 1rem;      /* 16px */
+            --space-5: 1.25rem;   /* 20px */
+            --space-6: 1.5rem;    /* 24px */
+            --space-8: 2rem;      /* 32px */
+            --space-10: 2.5rem;   /* 40px */
+            --space-12: 3rem;     /* 48px */
+
+            /* Border radius - more refined */
+            --radius-sm: 6px;
+            --radius-md: 10px;
+            --radius-lg: 14px;
+            --radius-xl: 20px;
+            --radius-full: 9999px;
         }
+
+        /* ==========================================
+           Global Styles
+           ========================================== */
+        *, *::before, *::after {
+            box-sizing: border-box;
+        }
+
+        html {
+            font-size: 16px;
+            -webkit-font-smoothing: antialiased;
+            -moz-osx-font-smoothing: grayscale;
+            text-rendering: optimizeLegibility;
+            scroll-behavior: smooth;
+        }
+
         body {
-            font-family: var(--font-ui);
-            background-color: #fcfcfd; /* Slightly warmer white for paper-like feel */
-            font-size: 17px; /* Increased base size */
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            font-weight: var(--font-normal);
+            line-height: var(--leading-normal);
+            letter-spacing: var(--tracking-normal);
+            color: var(--color-text);
+            background-color: var(--color-bg);
+            margin: 0;
+            padding: 0;
         }
-        /* Custom scrollbar */
+
+        /* ==========================================
+           Typography - Headings (Playfair Display)
+           ========================================== */
+        h1, h2, h3, h4, h5, h6,
+        .heading-serif,
+        .font-serif {
+            font-family: var(--font-serif);
+            font-weight: var(--font-semibold);
+            line-height: var(--leading-tight);
+            letter-spacing: var(--tracking-tight);
+            color: var(--color-text);
+        }
+
+        h1, .text-h1 {
+            font-size: var(--text-4xl);
+            font-weight: var(--font-bold);
+        }
+
+        h2, .text-h2 {
+            font-size: var(--text-2xl);
+            font-weight: var(--font-semibold);
+        }
+
+        h3, .text-h3 {
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+        }
+
+        h4, .text-h4 {
+            font-size: var(--text-lg);
+            font-weight: var(--font-medium);
+        }
+
+        /* ==========================================
+           Typography - Body (Inter)
+           ========================================== */
+        p, .text-body {
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            line-height: var(--leading-relaxed);
+            color: var(--color-text-secondary);
+        }
+
+        .text-small {
+            font-size: var(--text-sm);
+            line-height: var(--leading-normal);
+        }
+
+        .text-muted {
+            color: var(--color-text-muted);
+        }
+
+        /* ==========================================
+           Typography - UI Elements
+           ========================================== */
+        .text-label {
+            font-family: var(--font-sans);
+            font-size: var(--text-xs);
+            font-weight: var(--font-semibold);
+            letter-spacing: var(--tracking-wide);
+            text-transform: uppercase;
+            color: var(--color-primary);
+        }
+
+        .text-button {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            font-weight: var(--font-medium);
+        }
+
+        .text-option {
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            font-weight: var(--font-medium);
+            line-height: var(--leading-snug);
+        }
+
+        .text-mono {
+            font-family: var(--font-mono);
+        }
+
+        /* ==========================================
+           Card Component - Nobel Style
+           ========================================== */
+        .card {
+            background: var(--color-bg-card);
+            border: 1px solid var(--color-border);
+            border-radius: var(--radius-lg);
+            box-shadow: var(--shadow-sm);
+            transition: all 0.25s ease;
+        }
+
+        .card:hover {
+            border-color: var(--color-border-hover);
+            box-shadow: var(--shadow-md);
+        }
+
+        .card-gold:hover {
+            border-color: var(--color-primary);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .card-title {
+            font-family: var(--font-serif);
+            font-size: var(--text-xl);
+            font-weight: var(--font-semibold);
+            color: var(--color-text);
+            line-height: var(--leading-tight);
+        }
+
+        .card-description {
+            font-family: var(--font-sans);
+            font-size: var(--text-sm);
+            color: var(--color-text-secondary);
+            line-height: var(--leading-relaxed);
+        }
+
+        /* ==========================================
+           Option/Answer Component
+           ========================================== */
+        .option-button {
+            font-family: var(--font-sans);
+            font-size: var(--text-base);
+            font-weight: var(--font-medium);
+            line-height: var(--leading-snug);
+            background: var(--color-bg-card);
+            border: 2px solid var(--color-border);
+            border-radius: var(--radius-md);
+            padding: var(--space-4) var(--space-5);
+            transition: all 0.2s ease;
+            cursor: pointer;
+            text-align: left;
+            width: 100%;
+        }
+
+        .option-button:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        .option-button.selected {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+            box-shadow: var(--shadow-gold);
+        }
+
+        .option-key {
+            font-family: var(--font-sans);
+            font-weight: var(--font-semibold);
+            color: var(--color-primary);
+        }
+
+        /* ==========================================
+           Gold Accent Elements
+           ========================================== */
+        .gold-accent {
+            color: var(--color-primary);
+        }
+
+        .gold-gradient {
+            background: linear-gradient(135deg, #C5A059 0%, #D4B876 50%, #C5A059 100%);
+        }
+
+        .gold-border {
+            border: 2px solid var(--color-primary);
+        }
+
+        .bg-gold-light {
+            background-color: var(--color-primary-light);
+        }
+
+        /* ==========================================
+           Buttons - Nobel Style
+           ========================================== */
+        .btn-primary {
+            background: linear-gradient(135deg, #C5A059 0%, #b08d4a 100%);
+            color: white;
+            font-family: var(--font-sans);
+            font-weight: var(--font-medium);
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-md);
+            border: none;
+            box-shadow: var(--shadow-gold);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-primary:hover {
+            transform: translateY(-1px);
+            box-shadow: 0 6px 24px -4px rgba(197, 160, 89, 0.4);
+        }
+
+        .btn-secondary {
+            background: var(--color-bg-card);
+            color: var(--color-text);
+            font-family: var(--font-sans);
+            font-weight: var(--font-medium);
+            padding: var(--space-3) var(--space-6);
+            border-radius: var(--radius-md);
+            border: 1px solid var(--color-border);
+            transition: all 0.2s ease;
+            cursor: pointer;
+        }
+
+        .btn-secondary:hover {
+            border-color: var(--color-primary);
+            background: var(--color-primary-light);
+        }
+
+        /* ==========================================
+           Scrollbar - Elegant
+           ========================================== */
         ::-webkit-scrollbar {
-            width: 6px;
+            width: 8px;
+            height: 8px;
         }
+
         ::-webkit-scrollbar-track {
-            background: transparent;
+            background: var(--color-bg);
         }
+
         ::-webkit-scrollbar-thumb {
-            background: #e2e8f0;
-            border-radius: 10px;
+            background: var(--color-border-hover);
+            border-radius: var(--radius-full);
         }
+
         ::-webkit-scrollbar-thumb:hover {
-            background: #cbd5e1;
+            background: var(--color-primary);
         }
 
-        .academic-text {
-            font-family: var(--font-academic);
-            line-height: 1.7;
+        /* ==========================================
+           Animations
+           ========================================== */
+        @keyframes fade-in {
+            from { opacity: 0; }
+            to { opacity: 1; }
         }
 
-        /* Custom prose overrides for Claude-like feel */
-        .prose-academic {
-            font-family: var(--font-academic);
-            font-size: 1.125rem; /* ~18px */
-            line-height: 1.75;
-            color: #1e293b;
-        }
-        .prose-academic strong {
-            color: #4338ca; /* Indigo 700 */
-            font-weight: 600;
-        }
-        
-        /* Message bubble animations */
-        @keyframes message-in {
-            from { opacity: 0; transform: translateY(10px); }
+        @keyframes slide-up {
+            from { opacity: 0; transform: translateY(16px); }
             to { opacity: 1; transform: translateY(0); }
         }
-        .message-anim {
-            animation: message-in 0.4s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+
+        @keyframes gold-shimmer {
+            0% { background-position: -200% center; }
+            100% { background-position: 200% center; }
+        }
+
+        .animate-fade-in {
+            animation: fade-in 0.4s ease forwards;
+        }
+
+        .animate-slide-up {
+            animation: slide-up 0.5s cubic-bezier(0.16, 1, 0.3, 1) forwards;
+        }
+
+        .animate-shimmer {
+            background: linear-gradient(90deg, var(--color-primary) 0%, #D4B876 50%, var(--color-primary) 100%);
+            background-size: 200% auto;
+            animation: gold-shimmer 3s linear infinite;
+            -webkit-background-clip: text;
+            -webkit-text-fill-color: transparent;
+        }
+
+        /* ==========================================
+           Utility Classes
+           ========================================== */
+        .font-sans { font-family: var(--font-sans); }
+        .font-serif { font-family: var(--font-serif); }
+        .font-mono { font-family: var(--font-mono); }
+
+        .bg-cream { background-color: var(--color-bg); }
+        .bg-card { background-color: var(--color-bg-card); }
+        .bg-dark { background-color: var(--color-bg-dark); }
+        .border-nobel { border-color: var(--color-border); }
+
+        .text-gold { color: var(--color-primary); }
+        .text-dark { color: var(--color-text); }
+
+        .shadow-nobel-sm { box-shadow: var(--shadow-sm); }
+        .shadow-nobel-md { box-shadow: var(--shadow-md); }
+        .shadow-nobel-lg { box-shadow: var(--shadow-lg); }
+        .shadow-gold { box-shadow: var(--shadow-gold); }
+
+        .rounded-nobel { border-radius: var(--radius-lg); }
+
+        /* Divider with gold accent */
+        .divider-gold {
+            height: 1px;
+            background: linear-gradient(90deg, transparent 0%, var(--color-primary) 50%, transparent 100%);
+        }
+
+        /* Selection color */
+        ::selection {
+            background-color: var(--color-primary-light);
+            color: var(--color-text);
         }
     </style>
-<script type="importmap">
-{
-  "imports": {
-    "react-dom/": "https://esm.sh/react-dom@^19.2.3/",
-    "react/": "https://esm.sh/react@^19.2.3/",
-    "react": "https://esm.sh/react@^19.2.3",
-    "react-markdown": "https://esm.sh/react-markdown@^9.0.1",
-    "@google/genai": "https://esm.sh/@google/genai@^1.35.0"
-  }
-}
-</script>
 </head>
 <body>
     <div id="root"></div>
+    <script type="module" src="/index.tsx"></script>
 </body>
 </html>

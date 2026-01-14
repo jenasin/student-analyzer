@@ -1,0 +1,1100 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <meta name="viewport" content="width=device-width, initial-scale=1.0">
+  <title>AI Academic Navigator: An AI-Powered Student Assessment Platform | ESCP Summit 2026</title>
+  <meta name="description" content="Academic paper presenting AI Academic Navigator - leveraging GPT-4 for comprehensive student cognitive assessment and personalized learning recommendations.">
+
+  <!-- Google Fonts -->
+  <link rel="preconnect" href="https://fonts.googleapis.com">
+  <link rel="preconnect" href="https://fonts.gstatic.com" crossorigin>
+  <link href="https://fonts.googleapis.com/css2?family=Crimson+Pro:ital,wght@0,400;0,600;0,700;1,400&family=Inter:wght@400;500;600&display=swap" rel="stylesheet">
+
+  <style>
+    :root {
+      --escp-primary: #1e3a5f;
+      --escp-secondary: #c4a962;
+      --escp-dark: #0d1b2a;
+      --escp-light: #fafafa;
+      --text-color: #1a1a1a;
+      --text-muted: #555;
+      --border-color: #ddd;
+    }
+
+    * { margin: 0; padding: 0; box-sizing: border-box; }
+
+    body {
+      font-family: 'Crimson Pro', Georgia, serif;
+      font-size: 18px;
+      line-height: 1.8;
+      color: var(--text-color);
+      background: white;
+    }
+
+    /* Accessibility Panel */
+    .accessibility-panel {
+      position: fixed;
+      top: 0;
+      left: -320px;
+      width: 320px;
+      height: 100vh;
+      background: white;
+      box-shadow: 4px 0 20px rgba(0,0,0,0.15);
+      z-index: 10000;
+      transition: left 0.3s ease;
+      padding: 24px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+    }
+    .accessibility-panel.open { left: 0; }
+    .accessibility-panel h3 { color: var(--escp-primary); margin-bottom: 20px; font-size: 18px; }
+    .accessibility-btn {
+      display: flex; align-items: center; gap: 12px;
+      width: 100%; padding: 12px 16px; margin-bottom: 8px;
+      border: 2px solid #e0e0e0; border-radius: 8px;
+      background: white; cursor: pointer; font-size: 14px;
+    }
+    .accessibility-btn:hover { border-color: var(--escp-primary); background: #f5f5f5; }
+    .accessibility-btn.active { border-color: var(--escp-secondary); background: #fef9e7; }
+    .accessibility-trigger {
+      position: fixed; left: 0; top: 50%; transform: translateY(-50%);
+      background: var(--escp-primary); color: white; border: none;
+      padding: 12px 8px; border-radius: 0 8px 8px 0; cursor: pointer;
+      z-index: 9999; writing-mode: vertical-rl; font-size: 12px;
+      font-family: 'Inter', sans-serif;
+    }
+    .close-accessibility {
+      position: absolute; top: 12px; right: 12px;
+      background: none; border: none; font-size: 24px; cursor: pointer; color: #999;
+    }
+
+    /* Language Switcher */
+    .lang-switcher {
+      position: fixed; top: 20px; right: 20px; z-index: 1000;
+      display: flex; gap: 4px; background: white;
+      padding: 4px; border-radius: 20px; box-shadow: 0 2px 12px rgba(0,0,0,0.1);
+      font-family: 'Inter', sans-serif;
+    }
+    .lang-btn {
+      padding: 6px 14px; border: none; background: transparent;
+      border-radius: 16px; cursor: pointer; font-weight: 500; font-size: 13px;
+    }
+    .lang-btn.active { background: var(--escp-primary); color: white; }
+    .lang-btn:not(.active):hover { background: #e0e0e0; }
+
+    /* Paper Layout */
+    .paper-container {
+      max-width: 800px;
+      margin: 0 auto;
+      padding: 60px 40px;
+    }
+
+    /* Header */
+    .paper-header {
+      text-align: center;
+      padding-bottom: 40px;
+      border-bottom: 1px solid var(--border-color);
+      margin-bottom: 40px;
+    }
+
+    .conference-badge {
+      display: inline-block;
+      background: var(--escp-primary);
+      color: white;
+      padding: 6px 16px;
+      border-radius: 4px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      letter-spacing: 1px;
+      margin-bottom: 24px;
+    }
+
+    .paper-title {
+      font-size: 32px;
+      font-weight: 700;
+      line-height: 1.3;
+      margin-bottom: 16px;
+      color: var(--escp-dark);
+    }
+
+    .paper-subtitle {
+      font-size: 20px;
+      font-style: italic;
+      color: var(--text-muted);
+      margin-bottom: 24px;
+    }
+
+    .authors {
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      color: var(--text-muted);
+    }
+
+    .authors strong {
+      color: var(--text-color);
+    }
+
+    /* Sections */
+    .paper-section {
+      margin-bottom: 48px;
+    }
+
+    .section-title {
+      font-size: 24px;
+      font-weight: 700;
+      color: var(--escp-primary);
+      margin-bottom: 20px;
+      padding-bottom: 8px;
+      border-bottom: 2px solid var(--escp-secondary);
+    }
+
+    .subsection-title {
+      font-size: 20px;
+      font-weight: 600;
+      color: var(--escp-dark);
+      margin: 32px 0 16px;
+    }
+
+    p {
+      margin-bottom: 16px;
+      text-align: justify;
+    }
+
+    /* Abstract Box */
+    .abstract-box {
+      background: #f8f9fa;
+      padding: 24px 28px;
+      border-left: 4px solid var(--escp-primary);
+      margin-bottom: 32px;
+    }
+
+    .abstract-box p {
+      margin-bottom: 12px;
+    }
+
+    .keywords {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 16px;
+    }
+
+    .keywords strong {
+      color: var(--escp-primary);
+    }
+
+    /* Figures */
+    .figure {
+      margin: 32px 0;
+      text-align: center;
+    }
+
+    .figure img {
+      max-width: 100%;
+      border: 1px solid var(--border-color);
+      border-radius: 8px;
+      box-shadow: 0 4px 20px rgba(0,0,0,0.1);
+    }
+
+    .figure-placeholder {
+      background: linear-gradient(135deg, #667eea 0%, #764ba2 100%);
+      width: 100%;
+      height: 400px;
+      border-radius: 8px;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      color: white;
+      font-size: 48px;
+      position: relative;
+    }
+
+    .figure-placeholder::after {
+      content: 'Screenshot placeholder - replace with actual image';
+      position: absolute;
+      bottom: 20px;
+      font-size: 14px;
+      font-family: 'Inter', sans-serif;
+      opacity: 0.8;
+    }
+
+    .figure-caption {
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text-muted);
+      margin-top: 12px;
+      text-align: center;
+    }
+
+    .figure-caption strong {
+      color: var(--text-color);
+    }
+
+    /* Two-column figures */
+    .figures-row {
+      display: grid;
+      grid-template-columns: 1fr 1fr;
+      gap: 24px;
+      margin: 32px 0;
+    }
+
+    .figures-row .figure {
+      margin: 0;
+    }
+
+    .figures-row .figure-placeholder {
+      height: 280px;
+    }
+
+    /* Architecture Diagram */
+    .architecture-box {
+      background: #f8f9fa;
+      padding: 32px;
+      border-radius: 8px;
+      margin: 32px 0;
+    }
+
+    .arch-flow {
+      display: flex;
+      flex-direction: column;
+      gap: 16px;
+      max-width: 600px;
+      margin: 0 auto;
+    }
+
+    .arch-layer {
+      display: flex;
+      align-items: center;
+      gap: 16px;
+    }
+
+    .arch-label {
+      width: 100px;
+      font-family: 'Inter', sans-serif;
+      font-size: 11px;
+      font-weight: 600;
+      text-transform: uppercase;
+      color: var(--text-muted);
+      text-align: right;
+    }
+
+    .arch-boxes {
+      display: flex;
+      gap: 8px;
+      flex-wrap: wrap;
+      flex: 1;
+    }
+
+    .arch-box {
+      padding: 10px 16px;
+      border-radius: 6px;
+      font-family: 'Inter', sans-serif;
+      font-size: 12px;
+      font-weight: 500;
+    }
+
+    .arch-box.ui { background: #e3f2fd; color: #1565c0; }
+    .arch-box.logic { background: #fff3e0; color: #e65100; }
+    .arch-box.ai { background: #f3e5f5; color: #7b1fa2; }
+    .arch-box.data { background: #e8f5e9; color: #2e7d32; }
+
+    .arch-arrow {
+      text-align: center;
+      color: #999;
+      font-size: 20px;
+      padding-left: 116px;
+    }
+
+    /* Tables */
+    table {
+      width: 100%;
+      border-collapse: collapse;
+      margin: 24px 0;
+      font-size: 15px;
+    }
+
+    th, td {
+      padding: 12px 16px;
+      text-align: left;
+      border-bottom: 1px solid var(--border-color);
+    }
+
+    th {
+      background: #f8f9fa;
+      font-family: 'Inter', sans-serif;
+      font-weight: 600;
+      font-size: 13px;
+      text-transform: uppercase;
+      color: var(--escp-primary);
+    }
+
+    /* Lists */
+    ul, ol {
+      margin: 16px 0 16px 24px;
+    }
+
+    li {
+      margin-bottom: 8px;
+    }
+
+    /* Highlight Box */
+    .highlight-box {
+      background: linear-gradient(135deg, var(--escp-primary) 0%, #2d5a87 100%);
+      color: white;
+      padding: 28px 32px;
+      border-radius: 8px;
+      margin: 32px 0;
+    }
+
+    .highlight-box h4 {
+      font-size: 18px;
+      margin-bottom: 12px;
+      color: var(--escp-secondary);
+    }
+
+    .highlight-box p {
+      color: rgba(255,255,255,0.9);
+      margin-bottom: 0;
+    }
+
+    /* Demo Box */
+    .demo-box {
+      border: 2px solid var(--border-color);
+      border-radius: 8px;
+      overflow: hidden;
+      margin: 32px 0;
+    }
+
+    .demo-header {
+      background: var(--escp-primary);
+      color: white;
+      padding: 12px 20px;
+      font-family: 'Inter', sans-serif;
+      font-size: 14px;
+      font-weight: 600;
+    }
+
+    .demo-chat {
+      padding: 20px;
+      background: #f8f9fa;
+      max-height: 400px;
+      overflow-y: auto;
+    }
+
+    .chat-msg {
+      display: flex;
+      gap: 12px;
+      margin-bottom: 16px;
+    }
+
+    .chat-avatar {
+      width: 32px;
+      height: 32px;
+      border-radius: 50%;
+      display: flex;
+      align-items: center;
+      justify-content: center;
+      font-size: 14px;
+      flex-shrink: 0;
+    }
+
+    .chat-avatar.ai { background: linear-gradient(135deg, #667eea 0%, #764ba2 100%); }
+    .chat-avatar.user { background: var(--escp-secondary); }
+
+    .chat-bubble {
+      background: white;
+      padding: 12px 16px;
+      border-radius: 12px;
+      max-width: 85%;
+      font-size: 14px;
+      line-height: 1.5;
+      font-family: 'Inter', sans-serif;
+      box-shadow: 0 1px 3px rgba(0,0,0,0.08);
+    }
+
+    .chat-bubble.user {
+      background: var(--escp-primary);
+      color: white;
+      margin-left: auto;
+    }
+
+    .demo-controls {
+      padding: 12px 20px;
+      border-top: 1px solid var(--border-color);
+      display: flex;
+      gap: 12px;
+    }
+
+    .demo-btn {
+      padding: 8px 20px;
+      border-radius: 20px;
+      border: 2px solid var(--escp-primary);
+      background: var(--escp-primary);
+      color: white;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      font-weight: 500;
+      cursor: pointer;
+    }
+
+    .demo-btn:hover { background: var(--escp-dark); }
+    .demo-btn.secondary { background: white; color: var(--escp-primary); }
+
+    /* References */
+    .references {
+      font-size: 15px;
+      line-height: 1.6;
+    }
+
+    .references p {
+      text-indent: -24px;
+      padding-left: 24px;
+      margin-bottom: 12px;
+    }
+
+    /* Footer */
+    .paper-footer {
+      margin-top: 60px;
+      padding-top: 40px;
+      border-top: 1px solid var(--border-color);
+      text-align: center;
+      font-family: 'Inter', sans-serif;
+      font-size: 13px;
+      color: var(--text-muted);
+    }
+
+    .paper-footer .logo {
+      font-family: 'Crimson Pro', serif;
+      font-size: 20px;
+      font-weight: 700;
+      color: var(--escp-primary);
+      margin-bottom: 8px;
+    }
+
+    /* Language toggle content */
+    [data-lang="cs"] { display: none; }
+    body[data-active-lang="cs"] [data-lang="cs"] { display: block; }
+    body[data-active-lang="cs"] [data-lang="en"] { display: none; }
+
+    /* Accessibility modes */
+    body.high-contrast { background: black; color: yellow; }
+    body.high-contrast .paper-container { background: black; }
+    body.large-text { font-size: 22px; }
+
+    @media (max-width: 768px) {
+      .paper-container { padding: 40px 20px; }
+      .figures-row { grid-template-columns: 1fr; }
+      .arch-layer { flex-direction: column; align-items: flex-start; }
+      .arch-label { width: auto; text-align: left; }
+      .arch-arrow { padding-left: 0; }
+    }
+
+    @media print {
+      .accessibility-trigger, .accessibility-panel, .lang-switcher, .demo-controls { display: none; }
+      .paper-container { padding: 0; max-width: 100%; }
+    }
+  </style>
+</head>
+<body data-active-lang="en">
+
+  <!-- Accessibility -->
+  <button class="accessibility-trigger" onclick="toggleAccessibility()">Accessibility</button>
+  <aside class="accessibility-panel" id="accessibilityPanel">
+    <button class="close-accessibility" onclick="toggleAccessibility()">&times;</button>
+    <h3>Accessibility Settings</h3>
+    <button class="accessibility-btn" onclick="toggleHighContrast()">🔲 High Contrast</button>
+    <button class="accessibility-btn" onclick="toggleLargeText()">🔤 Large Text</button>
+    <button class="accessibility-btn" onclick="resetAccessibility()">↺ Reset All</button>
+    <p style="margin-top: 16px; color: #666; font-size: 12px;">Ctrl+F10 - Open this menu</p>
+  </aside>
+
+  <!-- Language Switcher -->
+  <div class="lang-switcher">
+    <button class="lang-btn active" onclick="setLang('en')" id="langEn">EN</button>
+    <button class="lang-btn" onclick="setLang('cs')" id="langCs">CZ</button>
+  </div>
+
+  <article class="paper-container">
+
+    <!-- Header -->
+    <header class="paper-header">
+      <div class="conference-badge">
+        ESCP AI in Higher Education Summit 2026 | Paris, March 17–18
+      </div>
+
+      <h1 class="paper-title">
+        <span data-lang="en">AI Academic Navigator: Leveraging Large Language Models for Comprehensive Student Cognitive Assessment and Personalized Learning</span>
+        <span data-lang="cs">AI Akademický Navigátor: Využití velkých jazykových modelů pro komplexní kognitivní hodnocení studentů a personalizované učení</span>
+      </h1>
+
+      <p class="paper-subtitle">
+        <span data-lang="en">A Case Study in AI-Powered Educational Assessment</span>
+        <span data-lang="cs">Případová studie AI hodnocení ve vzdělávání</span>
+      </p>
+
+      <div class="authors">
+        <span data-lang="en"><strong>Author Name</strong> · Institution · email@institution.edu</span>
+        <span data-lang="cs"><strong>Jméno autora</strong> · Instituce · email@instituce.cz</span>
+      </div>
+    </header>
+
+    <!-- Abstract -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">Abstract</span>
+        <span data-lang="cs">Abstrakt</span>
+      </h2>
+
+      <div class="abstract-box">
+        <div data-lang="en">
+          <p>
+            This paper presents <strong>AI Academic Navigator</strong>, a web-based platform that employs <strong>GPT-4 large language models to conduct comprehensive cognitive and metacognitive assessments</strong> of university students. The system integrates seven validated psychological instruments—including the Stroop Test, Mental Rotation Test, VAK learning styles, Grit Scale, Growth Mindset inventory, RIASEC career interests, and Emotional Intelligence assessment—within an AI-guided conversational interface.
+          </p>
+          <p>
+            <strong>The AI analyzes student responses in real-time</strong>, providing personalized feedback, synthesizing results across multiple dimensions, and generating actionable learning recommendations. Unlike traditional static assessments, our approach leverages the contextual understanding capabilities of large language models to adapt to individual student needs and provide nuanced, personalized insights.
+          </p>
+          <p>
+            We demonstrate the platform's architecture, present preliminary user experience data, and discuss implications for the future of AI-assisted student assessment in higher education.
+          </p>
+        </div>
+
+        <div data-lang="cs">
+          <p>
+            Tento článek představuje <strong>AI Akademický Navigátor</strong>, webovou platformu využívající <strong>velké jazykové modely GPT-4 k provádění komplexního kognitivního a metakognitivního hodnocení</strong> vysokoškolských studentů. Systém integruje sedm validovaných psychologických nástrojů—včetně Stroopova testu, Testu mentální rotace, učebních stylů VAK, Škály Grit, inventáře růstového myšlení, kariérních zájmů RIASEC a hodnocení emoční inteligence—v rámci AI-řízeného konverzačního rozhraní.
+          </p>
+          <p>
+            <strong>AI analyzuje odpovědi studentů v reálném čase</strong>, poskytuje personalizovanou zpětnou vazbu, syntetizuje výsledky napříč více dimenzemi a generuje praktická doporučení pro učení. Na rozdíl od tradičních statických hodnocení náš přístup využívá schopnosti kontextuálního porozumění velkých jazykových modelů k přizpůsobení individuálním potřebám studentů.
+          </p>
+        </div>
+
+        <div class="keywords">
+          <strong>Keywords:</strong>
+          <span data-lang="en">artificial intelligence, cognitive assessment, personalized learning, large language models, GPT-4, higher education, learning analytics</span>
+          <span data-lang="cs">umělá inteligence, kognitivní hodnocení, personalizované učení, velké jazykové modely, GPT-4, vysokoškolské vzdělávání</span>
+        </div>
+      </div>
+    </section>
+
+    <!-- Introduction -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">1. Introduction</span>
+        <span data-lang="cs">1. Úvod</span>
+      </h2>
+
+      <div data-lang="en">
+        <p>
+          The integration of artificial intelligence in higher education has accelerated dramatically with the advent of large language models (LLMs). While much attention has focused on AI's role in content generation and automated grading, less explored is the potential for <strong>AI to conduct sophisticated student assessments and provide personalized learning guidance</strong>.
+        </p>
+        <p>
+          Traditional psychometric assessments, though validated and reliable, often suffer from static delivery, delayed feedback, and limited personalization. Students complete standardized questionnaires and receive results that may feel disconnected from their individual context. We propose that conversational AI can bridge this gap, <strong>analyzing student responses dynamically and providing immediate, contextualized insights</strong>.
+        </p>
+        <p>
+          The AI Academic Navigator addresses this opportunity by combining established psychological instruments with the conversational and analytical capabilities of GPT-4. The system does not replace validated assessment methodologies; rather, it enhances the delivery and interpretation of results through AI-powered analysis and personalized recommendations.
+        </p>
+      </div>
+
+      <div data-lang="cs">
+        <p>
+          Integrace umělé inteligence ve vysokoškolském vzdělávání se dramaticky urychlila s příchodem velkých jazykových modelů (LLM). Zatímco velká pozornost se zaměřuje na roli AI v generování obsahu a automatickém hodnocení, méně prozkoumaný je potenciál <strong>AI provádět sofistikovaná hodnocení studentů a poskytovat personalizované vedení v učení</strong>.
+        </p>
+        <p>
+          AI Akademický Navigátor řeší tuto příležitost kombinací zavedených psychologických nástrojů s konverzačními a analytickými schopnostmi GPT-4. Systém nenahrazuje validované hodnotící metodologie; spíše zlepšuje poskytování a interpretaci výsledků prostřednictvím AI analýzy a personalizovaných doporučení.
+        </p>
+      </div>
+    </section>
+
+    <!-- The Role of AI -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">2. The Role of AI in Student Analysis</span>
+        <span data-lang="cs">2. Role AI v analýze studentů</span>
+      </h2>
+
+      <div class="highlight-box">
+        <h4 data-lang="en">Core AI Capabilities</h4>
+        <h4 data-lang="cs">Klíčové schopnosti AI</h4>
+        <p data-lang="en">
+          The GPT-4 model serves as the analytical engine, processing student responses across all assessment modules to generate comprehensive cognitive profiles, identify learning patterns, and produce personalized recommendations in natural language.
+        </p>
+        <p data-lang="cs">
+          Model GPT-4 slouží jako analytický engine, zpracovává odpovědi studentů napříč všemi hodnotícími moduly za účelem generování komplexních kognitivních profilů, identifikace vzorců učení a vytváření personalizovaných doporučení v přirozeném jazyce.
+        </p>
+      </div>
+
+      <div data-lang="en">
+        <p>
+          The AI system performs several critical functions in the assessment process:
+        </p>
+        <ul>
+          <li><strong>Real-time Response Analysis:</strong> As students complete each assessment module, the AI analyzes patterns in their responses, timing data, and consistency to generate immediate insights.</li>
+          <li><strong>Cross-Module Synthesis:</strong> The AI integrates results across all seven assessment instruments, identifying correlations and generating a holistic student profile that no single test could provide.</li>
+          <li><strong>Personalized Feedback Generation:</strong> Using the student's specific results, the AI crafts individualized feedback in conversational language, explaining what results mean and how they apply to the student's academic journey.</li>
+          <li><strong>Actionable Recommendations:</strong> Based on the comprehensive profile, the AI generates specific, practical study strategies tailored to the student's cognitive style, strengths, and areas for development.</li>
+          <li><strong>Conversational Clarification:</strong> Students can ask follow-up questions about their results, and the AI provides contextual explanations drawing on the full assessment data.</li>
+        </ul>
+      </div>
+
+      <div data-lang="cs">
+        <p>
+          AI systém vykonává několik kritických funkcí v procesu hodnocení:
+        </p>
+        <ul>
+          <li><strong>Analýza odpovědí v reálném čase:</strong> Jak studenti dokončují každý modul, AI analyzuje vzorce v jejich odpovědích, časová data a konzistenci.</li>
+          <li><strong>Syntéza napříč moduly:</strong> AI integruje výsledky ze všech sedmi nástrojů a generuje holistický profil studenta.</li>
+          <li><strong>Generování personalizované zpětné vazby:</strong> AI vytváří individualizovanou zpětnou vazbu v konverzačním jazyce.</li>
+          <li><strong>Praktická doporučení:</strong> Na základě profilu AI generuje specifické studijní strategie.</li>
+          <li><strong>Konverzační vysvětlení:</strong> Studenti mohou klást doplňující otázky o svých výsledcích.</li>
+        </ul>
+      </div>
+
+      <!-- Figure: AI Analysis Flow -->
+      <div class="figure">
+        <div class="figure-placeholder" style="background: linear-gradient(135deg, #8b5cf6 0%, #6366f1 100%); height: 300px;">
+          🤖📊
+        </div>
+        <p class="figure-caption">
+          <strong data-lang="en">Figure 1:</strong>
+          <strong data-lang="cs">Obrázek 1:</strong>
+          <span data-lang="en">AI-powered analysis workflow showing how GPT-4 processes student data from multiple assessment modules to generate personalized insights.</span>
+          <span data-lang="cs">Pracovní postup AI analýzy ukazující, jak GPT-4 zpracovává data studentů z více modulů pro generování personalizovaných poznatků.</span>
+        </p>
+      </div>
+    </section>
+
+    <!-- System Architecture -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">3. System Architecture</span>
+        <span data-lang="cs">3. Architektura systému</span>
+      </h2>
+
+      <div data-lang="en">
+        <p>
+          The AI Academic Navigator is built as a modern web application using React 19 with TypeScript, ensuring type safety and maintainability. The architecture follows a layered approach separating presentation, business logic, AI integration, and data management.
+        </p>
+      </div>
+
+      <div data-lang="cs">
+        <p>
+          AI Akademický Navigátor je postaven jako moderní webová aplikace využívající React 19 s TypeScriptem. Architektura sleduje vrstvený přístup oddělující prezentaci, obchodní logiku, AI integraci a správu dat.
+        </p>
+      </div>
+
+      <div class="architecture-box">
+        <div class="arch-flow">
+          <div class="arch-layer">
+            <div class="arch-label">Presentation</div>
+            <div class="arch-boxes">
+              <div class="arch-box ui">React 19</div>
+              <div class="arch-box ui">TypeScript</div>
+              <div class="arch-box ui">Tailwind CSS</div>
+              <div class="arch-box ui">Vite</div>
+            </div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="arch-label">Logic</div>
+            <div class="arch-boxes">
+              <div class="arch-box logic">Assessment Modules</div>
+              <div class="arch-box logic">Scoring Engine</div>
+              <div class="arch-box logic">Session Manager</div>
+            </div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="arch-label">AI Layer</div>
+            <div class="arch-boxes">
+              <div class="arch-box ai">OpenAI GPT-4</div>
+              <div class="arch-box ai">Prompt Engineering</div>
+              <div class="arch-box ai">Context Management</div>
+            </div>
+          </div>
+          <div class="arch-arrow">↓</div>
+          <div class="arch-layer">
+            <div class="arch-label">Data</div>
+            <div class="arch-boxes">
+              <div class="arch-box data">LocalStorage</div>
+              <div class="arch-box data">Student Profiles</div>
+              <div class="arch-box data">Results History</div>
+            </div>
+          </div>
+        </div>
+      </div>
+
+      <p class="figure-caption">
+        <strong data-lang="en">Figure 2:</strong>
+        <strong data-lang="cs">Obrázek 2:</strong>
+        <span data-lang="en">System architecture showing the four-layer design from user interface to data persistence.</span>
+        <span data-lang="cs">Architektura systému ukazující čtyřvrstvý design od uživatelského rozhraní po persistenci dat.</span>
+      </p>
+    </section>
+
+    <!-- Assessment Modules -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">4. Assessment Modules</span>
+        <span data-lang="cs">4. Hodnotící moduly</span>
+      </h2>
+
+      <div data-lang="en">
+        <p>The platform integrates seven validated psychological instruments, each measuring distinct cognitive and metacognitive dimensions:</p>
+      </div>
+      <div data-lang="cs">
+        <p>Platforma integruje sedm validovaných psychologických nástrojů, z nichž každý měří odlišné kognitivní a metakognitivní dimenze:</p>
+      </div>
+
+      <table>
+        <thead>
+          <tr>
+            <th data-lang="en">Module</th>
+            <th data-lang="cs">Modul</th>
+            <th data-lang="en">Theoretical Basis</th>
+            <th data-lang="cs">Teoretický základ</th>
+            <th data-lang="en">Measures</th>
+            <th data-lang="cs">Měří</th>
+          </tr>
+        </thead>
+        <tbody>
+          <tr>
+            <td>Stroop Test</td>
+            <td data-lang="en">Stroop (1935)</td>
+            <td data-lang="cs">Stroop (1935)</td>
+            <td data-lang="en">Selective attention, cognitive flexibility</td>
+            <td data-lang="cs">Selektivní pozornost, kognitivní flexibilita</td>
+          </tr>
+          <tr>
+            <td data-lang="en">Mental Rotation</td>
+            <td data-lang="cs">Mentální rotace</td>
+            <td>Shepard & Metzler (1971)</td>
+            <td data-lang="en">Spatial visualization ability</td>
+            <td data-lang="cs">Prostorová představivost</td>
+          </tr>
+          <tr>
+            <td>VAK</td>
+            <td>Fleming (1987)</td>
+            <td data-lang="en">Learning style preferences</td>
+            <td data-lang="cs">Preference učebního stylu</td>
+          </tr>
+          <tr>
+            <td data-lang="en">Grit Scale</td>
+            <td data-lang="cs">Škála Grit</td>
+            <td>Duckworth (2007)</td>
+            <td data-lang="en">Perseverance and passion</td>
+            <td data-lang="cs">Vytrvalost a vášeň</td>
+          </tr>
+          <tr>
+            <td data-lang="en">Growth Mindset</td>
+            <td data-lang="cs">Růstové myšlení</td>
+            <td>Dweck (2006)</td>
+            <td data-lang="en">Implicit theories of intelligence</td>
+            <td data-lang="cs">Implicitní teorie inteligence</td>
+          </tr>
+          <tr>
+            <td>RIASEC</td>
+            <td>Holland (1959)</td>
+            <td data-lang="en">Career interests</td>
+            <td data-lang="cs">Kariérní zájmy</td>
+          </tr>
+          <tr>
+            <td data-lang="en">Emotional Intelligence</td>
+            <td data-lang="cs">Emoční inteligence</td>
+            <td>Goleman (1995)</td>
+            <td data-lang="en">Self and social awareness</td>
+            <td data-lang="cs">Sebeuvědomění a empatie</td>
+          </tr>
+        </tbody>
+      </table>
+    </section>
+
+    <!-- Screenshots -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">5. Application Interface</span>
+        <span data-lang="cs">5. Rozhraní aplikace</span>
+      </h2>
+
+      <div data-lang="en">
+        <p>The following screenshots demonstrate the key interfaces of the AI Academic Navigator platform.</p>
+      </div>
+      <div data-lang="cs">
+        <p>Následující snímky obrazovky ukazují klíčová rozhraní platformy AI Akademický Navigátor.</p>
+      </div>
+
+      <!-- Screenshot 1: Dashboard -->
+      <div class="figure">
+        <div class="figure-placeholder" style="background: linear-gradient(135deg, #10b981 0%, #059669 100%);">
+          📊
+        </div>
+        <p class="figure-caption">
+          <strong data-lang="en">Figure 3: Main Dashboard</strong>
+          <strong data-lang="cs">Obrázek 3: Hlavní panel</strong>
+          <span data-lang="en">— Overview of available assessment modules with progress indicators and estimated completion times.</span>
+          <span data-lang="cs">— Přehled dostupných hodnotících modulů s indikátory pokroku a odhadovanými časy dokončení.</span>
+        </p>
+      </div>
+
+      <!-- Screenshots 2-3: Tests -->
+      <div class="figures-row">
+        <div class="figure">
+          <div class="figure-placeholder" style="background: linear-gradient(135deg, #06b6d4 0%, #0891b2 100%);">
+            🎨
+          </div>
+          <p class="figure-caption">
+            <strong data-lang="en">Figure 4: Stroop Test</strong>
+            <strong data-lang="cs">Obrázek 4: Stroopův test</strong>
+            <span data-lang="en">— Interactive color-word interference test with webcam monitoring.</span>
+            <span data-lang="cs">— Interaktivní test barevně-slovní interference s monitorováním webkamerou.</span>
+          </p>
+        </div>
+        <div class="figure">
+          <div class="figure-placeholder" style="background: linear-gradient(135deg, #8b5cf6 0%, #7c3aed 100%);">
+            🔷
+          </div>
+          <p class="figure-caption">
+            <strong data-lang="en">Figure 5: Mental Rotation Test</strong>
+            <strong data-lang="cs">Obrázek 5: Test mentální rotace</strong>
+            <span data-lang="en">— Spatial visualization assessment with progressive difficulty.</span>
+            <span data-lang="cs">— Hodnocení prostorové představivosti s progresivní obtížností.</span>
+          </p>
+        </div>
+      </div>
+
+      <!-- Screenshot 4: AI Analysis Results -->
+      <div class="figure">
+        <div class="figure-placeholder" style="background: linear-gradient(135deg, #f59e0b 0%, #d97706 100%);">
+          🤖📈
+        </div>
+        <p class="figure-caption">
+          <strong data-lang="en">Figure 6: AI-Generated Analysis</strong>
+          <strong data-lang="cs">Obrázek 6: AI generovaná analýza</strong>
+          <span data-lang="en">— Comprehensive student profile with GPT-4 synthesized insights, showing cognitive strengths, learning style summary, and personalized recommendations.</span>
+          <span data-lang="cs">— Komplexní profil studenta s poznatky syntetizovanými GPT-4, zobrazující kognitivní silné stránky, shrnutí učebního stylu a personalizovaná doporučení.</span>
+        </p>
+      </div>
+
+      <!-- Screenshots 5-6: Chat and Profile -->
+      <div class="figures-row">
+        <div class="figure">
+          <div class="figure-placeholder" style="background: linear-gradient(135deg, #ec4899 0%, #db2777 100%);">
+            💬
+          </div>
+          <p class="figure-caption">
+            <strong data-lang="en">Figure 7: AI Chat Interface</strong>
+            <strong data-lang="cs">Obrázek 7: AI Chat rozhraní</strong>
+            <span data-lang="en">— Conversational AI for follow-up questions and clarifications.</span>
+            <span data-lang="cs">— Konverzační AI pro doplňující otázky a vysvětlení.</span>
+          </p>
+        </div>
+        <div class="figure">
+          <div class="figure-placeholder" style="background: linear-gradient(135deg, #6366f1 0%, #4f46e5 100%);">
+            📋
+          </div>
+          <p class="figure-caption">
+            <strong data-lang="en">Figure 8: Complete Student Profile</strong>
+            <strong data-lang="cs">Obrázek 8: Kompletní profil studenta</strong>
+            <span data-lang="en">— Aggregated results across all modules with AI coaching tips.</span>
+            <span data-lang="cs">— Agregované výsledky ze všech modulů s AI koučovacími tipy.</span>
+          </p>
+        </div>
+      </div>
+    </section>
+
+    <!-- Demo Conversation -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">6. Sample AI Conversation</span>
+        <span data-lang="cs">6. Ukázka AI konverzace</span>
+      </h2>
+
+      <div data-lang="en">
+        <p>The following demonstrates a typical interaction between a student and the AI Academic Navigator after completing assessments:</p>
+      </div>
+      <div data-lang="cs">
+        <p>Následující ukázka demonstruje typickou interakci mezi studentem a AI Akademickým Navigátorem po dokončení hodnocení:</p>
+      </div>
+
+      <div class="demo-box">
+        <div class="demo-header">
+          <span data-lang="en">🤖 AI Academic Navigator - Live Demo</span>
+          <span data-lang="cs">🤖 AI Akademický Navigátor - Živé demo</span>
+        </div>
+        <div class="demo-chat" id="demoChat"></div>
+        <div class="demo-controls">
+          <button class="demo-btn" onclick="runDemo()">
+            <span data-lang="en">▶ Play Demo</span>
+            <span data-lang="cs">▶ Spustit</span>
+          </button>
+          <button class="demo-btn secondary" onclick="resetDemo()">
+            <span data-lang="en">↺ Reset</span>
+            <span data-lang="cs">↺ Reset</span>
+          </button>
+        </div>
+      </div>
+    </section>
+
+    <!-- Discussion -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">7. Discussion</span>
+        <span data-lang="cs">7. Diskuze</span>
+      </h2>
+
+      <div data-lang="en">
+        <p>
+          The AI Academic Navigator demonstrates the potential for large language models to enhance traditional psychometric assessment in higher education. By combining validated instruments with AI-powered analysis, we create a more engaging and personalized assessment experience.
+        </p>
+
+        <h3 class="subsection-title">Key Contributions</h3>
+        <ul>
+          <li><strong>Integration of AI with validated instruments:</strong> The platform preserves the psychometric rigor of established tests while adding conversational AI capabilities.</li>
+          <li><strong>Real-time synthesis:</strong> GPT-4's ability to integrate results across multiple dimensions provides insights that would require extensive manual interpretation.</li>
+          <li><strong>Personalized recommendations:</strong> AI-generated study strategies are tailored to individual cognitive profiles rather than generic advice.</li>
+        </ul>
+
+        <h3 class="subsection-title">Limitations and Future Work</h3>
+        <p>
+          Current limitations include reliance on self-report measures, the need for larger-scale validation studies, and considerations around AI interpretation accuracy. Future work will focus on longitudinal tracking of student outcomes and integration with institutional learning management systems.
+        </p>
+      </div>
+
+      <div data-lang="cs">
+        <p>
+          AI Akademický Navigátor demonstruje potenciál velkých jazykových modelů pro zlepšení tradičního psychometrického hodnocení ve vysokoškolském vzdělávání.
+        </p>
+
+        <h3 class="subsection-title">Klíčové přínosy</h3>
+        <ul>
+          <li><strong>Integrace AI s validovanými nástroji:</strong> Platforma zachovává psychometrickou přísnost zavedených testů.</li>
+          <li><strong>Syntéza v reálném čase:</strong> Schopnost GPT-4 integrovat výsledky napříč více dimenzemi.</li>
+          <li><strong>Personalizovaná doporučení:</strong> AI-generované studijní strategie přizpůsobené individuálním kognitivním profilům.</li>
+        </ul>
+
+        <h3 class="subsection-title">Omezení a budoucí práce</h3>
+        <p>
+          Současná omezení zahrnují spoléhání na sebehodnotící měření a potřebu rozsáhlejších validačních studií. Budoucí práce se zaměří na longitudinální sledování výsledků studentů.
+        </p>
+      </div>
+    </section>
+
+    <!-- Conclusion -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">8. Conclusion</span>
+        <span data-lang="cs">8. Závěr</span>
+      </h2>
+
+      <div data-lang="en">
+        <p>
+          The AI Academic Navigator represents a promising approach to leveraging large language models for educational assessment. By combining the analytical power of GPT-4 with validated psychological instruments, we can provide students with deeper insights into their cognitive profiles and more actionable guidance for their learning journey. As AI capabilities continue to evolve, we anticipate significant opportunities for enhancing personalized education in higher education contexts.
+        </p>
+      </div>
+
+      <div data-lang="cs">
+        <p>
+          AI Akademický Navigátor představuje slibný přístup k využití velkých jazykových modelů pro vzdělávací hodnocení. Kombinací analytické síly GPT-4 s validovanými psychologickými nástroji můžeme studentům poskytnout hlubší vhled do jejich kognitivních profilů a praktičtější vedení pro jejich vzdělávací cestu.
+        </p>
+      </div>
+    </section>
+
+    <!-- References -->
+    <section class="paper-section">
+      <h2 class="section-title">
+        <span data-lang="en">References</span>
+        <span data-lang="cs">Reference</span>
+      </h2>
+
+      <div class="references">
+        <p>Duckworth, A. L., Peterson, C., Matthews, M. D., & Kelly, D. R. (2007). Grit: Perseverance and passion for long-term goals. <em>Journal of Personality and Social Psychology</em>, 92(6), 1087–1101.</p>
+        <p>Dweck, C. S. (2006). <em>Mindset: The new psychology of success</em>. Random House.</p>
+        <p>Fleming, N. D. (1987). <em>Teaching and learning styles: VARK strategies</em>. Neil D. Fleming.</p>
+        <p>Goleman, D. (1995). <em>Emotional intelligence</em>. Bantam Books.</p>
+        <p>Holland, J. L. (1959). A theory of vocational choice. <em>Journal of Counseling Psychology</em>, 6(1), 35–45.</p>
+        <p>OpenAI. (2023). GPT-4 Technical Report. <em>arXiv preprint arXiv:2303.08774</em>.</p>
+        <p>Shepard, R. N., & Metzler, J. (1971). Mental rotation of three-dimensional objects. <em>Science</em>, 171(3972), 701–703.</p>
+        <p>Stroop, J. R. (1935). Studies of interference in serial verbal reactions. <em>Journal of Experimental Psychology</em>, 18(6), 643–662.</p>
+      </div>
+    </section>
+
+    <!-- Footer -->
+    <footer class="paper-footer">
+      <div class="logo">ESCP Business School</div>
+      <p>AI in Higher Education Summit 2026 • Paris, March 17–18</p>
+      <p>© 2026. For correspondence: email@institution.edu</p>
+    </footer>
+
+  </article>
+
+  <script>
+    // Language
+    function setLang(lang) {
+      document.body.setAttribute('data-active-lang', lang);
+      document.getElementById('langEn').classList.toggle('active', lang === 'en');
+      document.getElementById('langCs').classList.toggle('active', lang === 'cs');
+      localStorage.setItem('preferredLang', lang);
+    }
+    const savedLang = localStorage.getItem('preferredLang');
+    if (savedLang) setLang(savedLang);
+
+    // Accessibility
+    function toggleAccessibility() { document.getElementById('accessibilityPanel').classList.toggle('open'); }
+    function toggleHighContrast() { document.body.classList.toggle('high-contrast'); }
+    function toggleLargeText() { document.body.classList.toggle('large-text'); }
+    function resetAccessibility() { document.body.classList.remove('high-contrast', 'large-text'); }
+
+    document.addEventListener('keydown', (e) => {
+      if (e.ctrlKey && e.key === 'F10') { e.preventDefault(); toggleAccessibility(); }
+    });
+
+    // Demo
+    const demoEN = [
+      { type: 'ai', text: "Based on your completed assessments, I've analyzed your cognitive profile. Your Stroop Test results show excellent selective attention (92% accuracy, 580ms avg reaction time). Combined with your strong Growth Mindset score (85%), you demonstrate high cognitive flexibility." },
+      { type: 'user', text: "What does this mean for my studies?" },
+      { type: 'ai', text: "Your profile suggests you excel at filtering distractions and adapting to new challenges. I recommend techniques like interleaved practice—mixing different subjects rather than blocking. Your RIASEC results (Investigative-Artistic) indicate you'd thrive in research-oriented courses with creative elements." },
+      { type: 'user', text: "I often struggle with spatial problems. How can I improve?" },
+      { type: 'ai', text: "Your Mental Rotation score (68%) is in the average range—and importantly, spatial ability is highly trainable! I recommend: (1) Regular practice with 3D puzzles or games like Tetris, (2) Sketching objects from different angles, (3) Using physical models when learning abstract concepts. These strategies align with your kinesthetic learning preference from your VAK results." }
+    ];
+
+    const demoCS = [
+      { type: 'ai', text: "Na základě dokončených hodnocení jsem provedl analýzu tvého kognitivního profilu. Výsledky Stroopova testu ukazují vynikající selektivní pozornost (92% přesnost, 580ms průměrná reakce). V kombinaci se silným skóre růstového myšlení (85%) prokazuješ vysokou kognitivní flexibilitu." },
+      { type: 'user', text: "Co to znamená pro mé studium?" },
+      { type: 'ai', text: "Tvůj profil naznačuje, že vynikáš ve filtrování rozptýlení a přizpůsobování se novým výzvám. Doporučuji techniky jako prokládané učení—střídání různých předmětů místo blokování. Výsledky RIASEC (Investigativní-Umělecký) naznačují, že by ti vyhovovaly výzkumně orientované kurzy s kreativními prvky." },
+      { type: 'user', text: "Často mám problémy s prostorovými úlohami. Jak se mohu zlepšit?" },
+      { type: 'ai', text: "Tvoje skóre mentální rotace (68%) je v průměrném rozmezí—a důležité je, že prostorové schopnosti jsou vysoce trénovatelné! Doporučuji: (1) Pravidelné cvičení s 3D puzzle nebo hrami jako Tetris, (2) Skicování objektů z různých úhlů, (3) Používání fyzických modelů při učení abstraktních konceptů." }
+    ];
+
+    let demoIndex = 0, demoRunning = false;
+
+    function runDemo() {
+      if (demoRunning) return;
+      demoRunning = true; demoIndex = 0;
+      document.getElementById('demoChat').innerHTML = '';
+      const msgs = document.body.getAttribute('data-active-lang') === 'cs' ? demoCS : demoEN;
+
+      function next() {
+        if (demoIndex >= msgs.length) { demoRunning = false; return; }
+        const m = msgs[demoIndex];
+        const div = document.createElement('div');
+        div.className = 'chat-msg';
+        div.innerHTML = `<div class="chat-avatar ${m.type}">${m.type === 'ai' ? '🤖' : '👤'}</div><div class="chat-bubble ${m.type}">${m.text}</div>`;
+        document.getElementById('demoChat').appendChild(div);
+        document.getElementById('demoChat').scrollTop = 99999;
+        demoIndex++;
+        setTimeout(next, 2500);
+      }
+      next();
+    }
+
+    function resetDemo() {
+      demoRunning = false; demoIndex = 0;
+      const isCS = document.body.getAttribute('data-active-lang') === 'cs';
+      document.getElementById('demoChat').innerHTML = `<p style="text-align:center;color:#888;padding:40px;">${isCS ? 'Klikněte na "Spustit" pro zobrazení demo konverzace' : 'Click "Play Demo" to see a sample AI conversation'}</p>`;
+    }
+    resetDemo();
+  </script>
+
+</body>
+</html>

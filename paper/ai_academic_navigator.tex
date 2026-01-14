@@ -1,0 +1,330 @@
+\documentclass[11pt,a4paper]{article}
+
+% Packages
+\usepackage[utf8]{inputenc}
+\usepackage[T1]{fontenc}
+\usepackage{times}
+\usepackage{graphicx}
+\usepackage{booktabs}
+\usepackage{hyperref}
+\usepackage{amsmath}
+\usepackage{xcolor}
+\usepackage{geometry}
+\usepackage{float}
+\usepackage{caption}
+\usepackage{subcaption}
+\usepackage{enumitem}
+\usepackage{natbib}
+\usepackage{abstract}
+
+% Page geometry
+\geometry{margin=2.5cm}
+
+% Hyperref settings
+\hypersetup{
+    colorlinks=true,
+    linkcolor=blue!60!black,
+    citecolor=blue!60!black,
+    urlcolor=blue!60!black
+}
+
+% Title formatting
+\title{\textbf{AI Academic Navigator: Leveraging Large Language Models for Comprehensive Student Cognitive Assessment and Personalized Learning}}
+
+\author{
+    \textbf{Jan Saro}\\
+    Faculty of Economics and Management\\
+    Czech University of Life Sciences Prague\\
+    Kamýcká 129, 165 00 Prague, Czech Republic\\
+    \texttt{saro@pef.czu.cz}
+}
+
+\date{March 2026}
+
+\begin{document}
+
+\maketitle
+
+% Abstract
+\begin{abstract}
+\noindent
+This paper presents \textbf{AI Academic Navigator}, a web-based platform that employs GPT-4 large language models to conduct comprehensive cognitive and metacognitive assessments of university students. The system integrates seven validated psychological instruments---including the Stroop Test, Mental Rotation Test, VAK learning styles, Grit Scale, Growth Mindset inventory, RIASEC career interests, and Emotional Intelligence assessment---within an AI-guided conversational interface. The AI analyzes student responses in real-time, providing personalized feedback, synthesizing results across multiple dimensions, and generating actionable learning recommendations. Unlike traditional static assessments, our approach leverages the contextual understanding capabilities of large language models to adapt to individual student needs and provide nuanced, personalized insights. We demonstrate the platform's architecture, present the system design, and discuss implications for the future of AI-assisted student assessment in higher education.
+
+\vspace{0.5em}
+\noindent\textbf{Keywords:} artificial intelligence, cognitive assessment, personalized learning, large language models, GPT-4, higher education, learning analytics
+\end{abstract}
+
+\section{Introduction}
+
+The integration of artificial intelligence in higher education has accelerated dramatically with the advent of large language models (LLMs). While much attention has focused on AI's role in content generation and automated grading, less explored is the potential for AI to conduct sophisticated student assessments and provide personalized learning guidance \citep{openai2023gpt4}.
+
+Traditional psychometric assessments, though validated and reliable, often suffer from static delivery, delayed feedback, and limited personalization. Students complete standardized questionnaires and receive results that may feel disconnected from their individual context. We propose that conversational AI can bridge this gap, analyzing student responses dynamically and providing immediate, contextualized insights.
+
+The AI Academic Navigator addresses this opportunity by combining established psychological instruments with the conversational and analytical capabilities of GPT-4. The system does not replace validated assessment methodologies; rather, it enhances the delivery and interpretation of results through AI-powered analysis and personalized recommendations.
+
+\subsection{Research Objectives}
+
+This paper aims to:
+\begin{enumerate}[noitemsep]
+    \item Present the architecture of an AI-powered student assessment platform
+    \item Demonstrate the integration of validated psychological instruments with LLM capabilities
+    \item Discuss the role of AI in synthesizing multi-dimensional student profiles
+    \item Explore implications for personalized learning in higher education
+\end{enumerate}
+
+\section{The Role of AI in Student Analysis}
+
+\subsection{Core AI Capabilities}
+
+The GPT-4 model serves as the analytical engine of the AI Academic Navigator, processing student responses across all assessment modules to generate comprehensive cognitive profiles, identify learning patterns, and produce personalized recommendations in natural language.
+
+The AI system performs several critical functions in the assessment process:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Real-time Response Analysis:} As students complete each assessment module, the AI analyzes patterns in their responses, timing data, and consistency to generate immediate insights.
+
+    \item \textbf{Cross-Module Synthesis:} The AI integrates results across all seven assessment instruments, identifying correlations and generating a holistic student profile that no single test could provide.
+
+    \item \textbf{Personalized Feedback Generation:} Using the student's specific results, the AI crafts individualized feedback in conversational language, explaining what results mean and how they apply to the student's academic journey.
+
+    \item \textbf{Actionable Recommendations:} Based on the comprehensive profile, the AI generates specific, practical study strategies tailored to the student's cognitive style, strengths, and areas for development.
+
+    \item \textbf{Conversational Clarification:} Students can ask follow-up questions about their results, and the AI provides contextual explanations drawing on the full assessment data.
+\end{itemize}
+
+\subsection{AI-Driven Personalization}
+
+Unlike traditional assessment systems that provide generic interpretations, the AI Academic Navigator uses the contextual understanding of LLMs to personalize every interaction. The system considers:
+
+\begin{itemize}[noitemsep]
+    \item The student's complete assessment history
+    \item Patterns and correlations across different cognitive dimensions
+    \item Individual strengths that can be leveraged for learning
+    \item Specific areas where targeted intervention may be beneficial
+\end{itemize}
+
+\section{System Architecture}
+
+The AI Academic Navigator is built as a modern web application using React 19 with TypeScript, ensuring type safety and maintainability. The architecture follows a layered approach separating presentation, business logic, AI integration, and data management.
+
+\subsection{Technology Stack}
+
+\begin{table}[H]
+\centering
+\caption{System Technology Stack}
+\label{tab:techstack}
+\begin{tabular}{@{}lll@{}}
+\toprule
+\textbf{Layer} & \textbf{Technology} & \textbf{Purpose} \\
+\midrule
+Presentation & React 19, TypeScript & User interface \\
+Styling & Tailwind CSS & Responsive design \\
+Build & Vite & Fast development \\
+AI Integration & OpenAI GPT-4 API & Analysis \& synthesis \\
+Data & LocalStorage & Client-side persistence \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Architectural Layers}
+
+The system comprises four distinct layers:
+
+\begin{enumerate}[noitemsep]
+    \item \textbf{Presentation Layer:} React components providing the user interface, including assessment modules, results visualization, and the AI chat interface.
+
+    \item \textbf{Business Logic Layer:} Assessment modules implementing validated instruments, scoring engines applying psychometric algorithms, and session management for multi-module workflows.
+
+    \item \textbf{AI Layer:} Integration with OpenAI's GPT-4 API, prompt engineering for educational contexts, and context management for maintaining conversation coherence.
+
+    \item \textbf{Data Layer:} Client-side storage for student profiles, assessment results, and session state, ensuring privacy while enabling personalization.
+\end{enumerate}
+
+\section{Assessment Modules}
+
+The platform integrates seven validated psychological instruments, each measuring distinct cognitive and metacognitive dimensions (see Table~\ref{tab:modules}).
+
+\begin{table}[H]
+\centering
+\caption{Integrated Assessment Modules}
+\label{tab:modules}
+\begin{tabular}{@{}llp{5cm}@{}}
+\toprule
+\textbf{Module} & \textbf{Theoretical Basis} & \textbf{Measures} \\
+\midrule
+Stroop Test & Stroop (1935) & Selective attention, cognitive flexibility \\
+Mental Rotation & Shepard \& Metzler (1971) & Spatial visualization ability \\
+VAK Assessment & Fleming (1987) & Learning style preferences \\
+Grit Scale & Duckworth (2007) & Perseverance and passion \\
+Growth Mindset & Dweck (2006) & Implicit theories of intelligence \\
+RIASEC & Holland (1959) & Career interests \\
+Emotional Intelligence & Goleman (1995) & Self and social awareness \\
+\bottomrule
+\end{tabular}
+\end{table}
+
+\subsection{Cognitive Performance Tests}
+
+\subsubsection{Stroop Test}
+
+The Stroop Test \citep{stroop1935} measures selective attention and cognitive flexibility through color-word interference. Our implementation presents 24 trials (12 congruent, 12 incongruent) measuring both accuracy and reaction time. The ``Stroop effect''---the difference between incongruent and congruent reaction times---serves as the primary indicator of cognitive control.
+
+\subsubsection{Mental Rotation Test}
+
+Based on the seminal work of \citet{shepard1971}, our Mental Rotation Test presents 16 trials across three difficulty levels. Students must identify which rotated shapes match a reference figure, distinguishing between rotations and mirror images. This test is a validated predictor of success in STEM fields.
+
+\subsection{Self-Report Instruments}
+
+The remaining five modules employ validated self-report questionnaires:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{VAK (Visual-Auditory-Kinesthetic):} 10-item assessment of learning modality preferences
+    \item \textbf{Grit Scale:} 8-item measure of perseverance and passion for long-term goals
+    \item \textbf{Growth Mindset:} 8-item inventory assessing beliefs about intelligence malleability
+    \item \textbf{RIASEC:} 12-item Holland career interest inventory
+    \item \textbf{Emotional Intelligence:} 8-item assessment of self-awareness and empathy
+\end{itemize}
+
+\section{Application Interface}
+
+The AI Academic Navigator features a clean, modern interface designed to minimize cognitive load while guiding students through the assessment process.
+
+\subsection{Dashboard}
+
+The main dashboard presents all available assessment modules in a card-based layout, showing:
+\begin{itemize}[noitemsep]
+    \item Module title and estimated completion time
+    \item Brief description of what the module measures
+    \item Completion status and progress indicators
+    \item Quick-action buttons to start or view results
+\end{itemize}
+
+\subsection{Assessment Interfaces}
+
+Each assessment module features a dedicated interface optimized for its specific requirements:
+\begin{itemize}[noitemsep]
+    \item \textbf{Stroop Test:} Full-screen color display with large response buttons
+    \item \textbf{Mental Rotation:} Side-by-side comparison of reference and option shapes
+    \item \textbf{Questionnaires:} Progressive question display with clear option selection
+\end{itemize}
+
+\subsection{AI Chat Interface}
+
+After completing assessments, students interact with the AI through a conversational interface. The AI:
+\begin{itemize}[noitemsep]
+    \item Summarizes key findings from all completed assessments
+    \item Answers questions about specific results
+    \item Provides personalized study recommendations
+    \item Helps students understand their cognitive profile
+\end{itemize}
+
+\section{AI-Generated Analysis}
+
+\subsection{Synthesis Process}
+
+Upon completion of multiple assessment modules, the AI generates a comprehensive synthesis that:
+
+\begin{enumerate}[noitemsep]
+    \item Identifies the student's cognitive strengths based on performance data
+    \item Correlates results across modules to identify patterns
+    \item Generates a narrative summary in accessible language
+    \item Provides specific, actionable recommendations
+\end{enumerate}
+
+\subsection{Sample AI Output}
+
+A typical AI synthesis might include:
+
+\begin{quote}
+\textit{``Based on your completed assessments, your profile shows strong cognitive flexibility (Stroop accuracy: 92\%) combined with a growth mindset orientation (85\%). Your RIASEC results (Investigative-Artistic) suggest you would thrive in research-oriented courses with creative elements. Your VAK assessment indicates a kinesthetic learning preference---consider incorporating hands-on activities and physical models when studying abstract concepts.''}
+\end{quote}
+
+\section{Discussion}
+
+\subsection{Key Contributions}
+
+The AI Academic Navigator demonstrates several key contributions to AI-assisted education:
+
+\begin{itemize}[noitemsep]
+    \item \textbf{Integration of AI with validated instruments:} The platform preserves the psychometric rigor of established tests while adding conversational AI capabilities for interpretation and personalization.
+
+    \item \textbf{Real-time synthesis:} GPT-4's ability to integrate results across multiple dimensions provides insights that would require extensive manual interpretation in traditional settings.
+
+    \item \textbf{Personalized recommendations:} AI-generated study strategies are tailored to individual cognitive profiles rather than generic advice.
+
+    \item \textbf{Accessible design:} The web-based platform requires no special software installation and works across devices.
+\end{itemize}
+
+\subsection{Limitations}
+
+Current limitations include:
+\begin{itemize}[noitemsep]
+    \item Reliance on self-report measures for several constructs
+    \item Need for larger-scale validation studies
+    \item Considerations around AI interpretation accuracy
+    \item Privacy concerns with AI processing of student data
+\end{itemize}
+
+\subsection{Future Work}
+
+Future development will focus on:
+\begin{itemize}[noitemsep]
+    \item Longitudinal tracking of student outcomes
+    \item Integration with institutional learning management systems
+    \item Expansion of cognitive assessment battery
+    \item Multi-language support for international deployment
+\end{itemize}
+
+\section{Conclusion}
+
+The AI Academic Navigator represents a promising approach to leveraging large language models for educational assessment. By combining the analytical power of GPT-4 with validated psychological instruments, we can provide students with deeper insights into their cognitive profiles and more actionable guidance for their learning journey.
+
+As AI capabilities continue to evolve, we anticipate significant opportunities for enhancing personalized education in higher education contexts. The platform demonstrates that AI can serve not as a replacement for established psychometric approaches, but as a powerful tool for making assessment results more accessible, actionable, and personally meaningful for students.
+
+% References
+\bibliographystyle{apalike}
+\begin{thebibliography}{99}
+
+\bibitem[Duckworth et al., 2007]{duckworth2007}
+Duckworth, A.~L., Peterson, C., Matthews, M.~D., \& Kelly, D.~R. (2007).
+\newblock Grit: Perseverance and passion for long-term goals.
+\newblock \emph{Journal of Personality and Social Psychology}, 92(6), 1087--1101.
+
+\bibitem[Dweck, 2006]{dweck2006}
+Dweck, C.~S. (2006).
+\newblock \emph{Mindset: The New Psychology of Success}.
+\newblock Random House.
+
+\bibitem[Fleming, 1987]{fleming1987}
+Fleming, N.~D. (1987).
+\newblock \emph{Teaching and Learning Styles: VARK Strategies}.
+\newblock Neil D. Fleming.
+
+\bibitem[Goleman, 1995]{goleman1995}
+Goleman, D. (1995).
+\newblock \emph{Emotional Intelligence}.
+\newblock Bantam Books.
+
+\bibitem[Holland, 1959]{holland1959}
+Holland, J.~L. (1959).
+\newblock A theory of vocational choice.
+\newblock \emph{Journal of Counseling Psychology}, 6(1), 35--45.
+
+\bibitem[OpenAI, 2023]{openai2023gpt4}
+OpenAI (2023).
+\newblock GPT-4 Technical Report.
+\newblock \emph{arXiv preprint arXiv:2303.08774}.
+
+\bibitem[Shepard \& Metzler, 1971]{shepard1971}
+Shepard, R.~N., \& Metzler, J. (1971).
+\newblock Mental rotation of three-dimensional objects.
+\newblock \emph{Science}, 171(3972), 701--703.
+
+\bibitem[Stroop, 1935]{stroop1935}
+Stroop, J.~R. (1935).
+\newblock Studies of interference in serial verbal reactions.
+\newblock \emph{Journal of Experimental Psychology}, 18(6), 643--662.
+
+\end{thebibliography}
+
+\end{document}

@@ -1,320 +1,3204 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
+import { Brain, Eye, MessageCircle, CalendarDays, Sparkles, Medal, ArrowRight, Check, ChevronLeft, ExternalLink, Zap, Users, Trash2, User } from 'lucide-react';
 import { Message, AppStatus, Report, Skill } from './types';
-import { navigatorService } from './services/geminiService';
+import { navigatorService } from './services/openaiService';
+import { getStudents, saveStudent, deleteStudent, getStudentByName, updateStudentResults, StudentProfile } from './services/studentStorage';
+import { Language, t, tModule } from './src/i18n/translations';
+import {
+  typologyQuestions,
+  dimensionsMeta,
+  scoreTypology,
+  TypologyResult,
+  AnswerKey,
+  vakQuestions,
+  scoreVak,
+  VakResult,
+  VakOption,
+  // New assessments
+  growthMindsetQuestions,
+  scoreGrowthMindset,
+  gritQuestions,
+  scoreGrit,
+  selfEfficacyQuestions,
+  scoreSelfEfficacy,
+  testAnxietyQuestions,
+  scoreTestAnxiety,
+  metacognitionQuestions,
+  scoreMetacognition,
+  riasecQuestions,
+  scoreRiasec,
+  eqQuestions,
+  scoreEQ,
+  AssessmentResult,
+  RiasecResult,
+  // Stroop Test
+  generateStroopTrials,
+  generatePracticeTrials,
+  scoreStroopTest,
+  COLORS,
+  COLOR_NAMES,
+  StroopTrial,
+  StroopTrialResult,
+  StroopResult,
+  // Mental Rotation Test
+  generateMentalRotationTrials,
+  generateMRTPracticeTrials,
+  scoreMentalRotationTest,
+  getShapeSvgData,
+  MentalRotationTrial,
+  MentalRotationTrialResult,
+  MentalRotationResult
+} from './src/modules';
+
+type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation';
+
+interface ModuleProgress {
+  chat: boolean;
+  typology: boolean;
+  vak: boolean;
+  habits: boolean;
+  motivation: boolean;
+  strengths: boolean;
+  gemini: boolean;
+  growthMindset: boolean;
+  grit: boolean;
+  selfEfficacy: boolean;
+  testAnxiety: boolean;
+  metacognition: boolean;
+  riasec: boolean;
+  eq: boolean;
+  stroop: boolean;
+  mentalRotation: boolean;
+}
+
+interface ModuleCard {
+  id: string;
+  title: string;
+  description: string;
+  time: string;
+  icon: string;
+  color: string;
+  view: View;
+  tags: string[];
+  previewBg: string;
+  previewIcon?: string;
+  external?: boolean;
+  externalUrl?: string;
+}
+
+const modules: ModuleCard[] = [
+  {
+    id: 'typology',
+    title: 'Jak přemýšlíš',
+    description: 'Zjisti svůj myšlenkový styl: abstraktní vs konkrétní, aktivní vs reflektivní, vizuální vs verbální.',
+    time: '~14 min',
+    icon: 'brain',
+    color: 'amber',
+    view: 'typology',
+    tags: ['30 otázek', 'Typologie', 'Myšlení'],
+    previewBg: 'from-amber-600 via-yellow-600 to-amber-700',
+    previewIcon: 'brain'
+  },
+  {
+    id: 'vak',
+    title: 'Učební styl (VAK)',
+    description: 'Jsi vizuální, auditivní nebo kinestetický typ? Zjisti, jak se nejlépe učíš.',
+    time: '~5 min',
+    icon: 'eye',
+    color: 'stone',
+    view: 'vak',
+    tags: ['10 otázek', 'VAK test', 'Učení'],
+    previewBg: 'from-stone-500 via-stone-600 to-stone-700',
+    previewIcon: 'eye'
+  },
+  {
+    id: 'chat',
+    title: 'AI Koučink',
+    description: 'Interaktivní rozhovor s AI mentorem o tvých zájmech, studiu a silných stránkách.',
+    time: '~12 min',
+    icon: 'chat',
+    color: 'amber',
+    view: 'chat',
+    tags: ['GPT-4o', 'Rozhovor', 'Personalizace'],
+    previewBg: 'from-amber-500 via-amber-600 to-yellow-700',
+    previewIcon: 'chat'
+  },
+  {
+    id: 'habits',
+    title: 'Studijní návyky',
+    description: 'Analyzuj své studijní návyky: plánování, prokrastinace, soustředění a práce s časem.',
+    time: '~6 min',
+    icon: 'clock',
+    color: 'orange',
+    view: 'habits',
+    tags: ['8 otázek', 'Time management', 'Produktivita'],
+    previewBg: 'from-orange-500 via-amber-500 to-yellow-600',
+    previewIcon: 'clock'
+  },
+  {
+    id: 'motivation',
+    title: 'Motivace',
+    description: 'Co tě pohání vpřed? Zjisti svůj typ motivace a jak ji využít pro lepší výsledky.',
+    time: '~5 min',
+    icon: 'fire',
+    color: 'red',
+    view: 'motivation',
+    tags: ['8 otázek', 'Vnitřní motivace', 'Cíle'],
+    previewBg: 'from-red-600 via-orange-600 to-amber-600',
+    previewIcon: 'fire'
+  },
+  {
+    id: 'strengths',
+    title: 'Silné stránky',
+    description: 'Objeví své talenty a oblasti, ve kterých vynikáš. Analytika, kreativita nebo komunikace?',
+    time: '~4 min',
+    icon: 'star',
+    color: 'yellow',
+    view: 'strengths',
+    tags: ['6 otázek', 'Talent', 'Sebepoznání'],
+    previewBg: 'from-yellow-500 via-amber-500 to-orange-500',
+    previewIcon: 'star'
+  },
+  {
+    id: 'gemini',
+    title: 'Gemini AI Studio',
+    description: 'Otevři Google AI Studio a vyzkoušej nejnovější Gemini modely pro analýzu a generování.',
+    time: 'Web app',
+    icon: 'sparkles',
+    color: 'stone',
+    view: 'gemini',
+    tags: ['Gemini 2.5', 'Google AI', 'External'],
+    previewBg: 'from-stone-600 via-stone-700 to-neutral-800',
+    previewIcon: 'sparkles',
+    external: true,
+    externalUrl: 'https://aistudio.google.com'
+  },
+  // New evidence-based assessments
+  {
+    id: 'growthMindset',
+    title: 'Growth Mindset',
+    description: 'Zjisti, jestli máš fixní nebo růstové myšlení. Klíč k rozvoji schopností (Carol Dweck).',
+    time: '~3 min',
+    icon: 'brain',
+    color: 'emerald',
+    view: 'growthMindset',
+    tags: ['8 otázek', 'Dweck', 'Myšlení'],
+    previewBg: 'from-emerald-600 via-green-600 to-teal-700',
+    previewIcon: 'brain'
+  },
+  {
+    id: 'grit',
+    title: 'Grit (Vytrvalost)',
+    description: 'Změř svou vytrvalost a vášeň pro dlouhodobé cíle (Angela Duckworth).',
+    time: '~3 min',
+    icon: 'fire',
+    color: 'orange',
+    view: 'grit',
+    tags: ['8 otázek', 'Duckworth', 'Vytrvalost'],
+    previewBg: 'from-orange-600 via-red-600 to-rose-700',
+    previewIcon: 'fire'
+  },
+  {
+    id: 'selfEfficacy',
+    title: 'Self-Efficacy',
+    description: 'Jak moc věříš ve své schopnosti? Klíčový prediktor úspěchu (Albert Bandura).',
+    time: '~3 min',
+    icon: 'star',
+    color: 'yellow',
+    view: 'selfEfficacy',
+    tags: ['8 otázek', 'Bandura', 'Sebevědomí'],
+    previewBg: 'from-yellow-600 via-amber-600 to-orange-600',
+    previewIcon: 'star'
+  },
+  {
+    id: 'testAnxiety',
+    title: 'Testová úzkost',
+    description: 'Jak moc tě stresují zkoušky? Najdi strategie pro zvládání.',
+    time: '~3 min',
+    icon: 'clock',
+    color: 'rose',
+    view: 'testAnxiety',
+    tags: ['8 otázek', 'Stres', 'Zkoušky'],
+    previewBg: 'from-rose-600 via-red-600 to-orange-700',
+    previewIcon: 'clock'
+  },
+  {
+    id: 'metacognition',
+    title: 'Metakognice',
+    description: 'Jak dobře znáš své vlastní myšlení a učení? "Učení se učit".',
+    time: '~3 min',
+    icon: 'brain',
+    color: 'amber',
+    view: 'metacognition',
+    tags: ['8 otázek', 'Učení', 'Strategie'],
+    previewBg: 'from-amber-700 via-yellow-700 to-orange-700',
+    previewIcon: 'brain'
+  },
+  {
+    id: 'riasec',
+    title: 'RIASEC (Kariéra)',
+    description: 'Holland test kariérních zájmů. Zjisti, které obory ti sedí.',
+    time: '~4 min',
+    icon: 'star',
+    color: 'stone',
+    view: 'riasec',
+    tags: ['12 otázek', 'Holland', 'Kariéra'],
+    previewBg: 'from-stone-600 via-amber-700 to-stone-700',
+    previewIcon: 'star'
+  },
+  {
+    id: 'eq',
+    title: 'Emoční inteligence',
+    description: 'Jak dobře rozumíš emocím svým i ostatních? EQ test.',
+    time: '~3 min',
+    icon: 'chat',
+    color: 'rose',
+    view: 'eq',
+    tags: ['8 otázek', 'EQ', 'Empatie'],
+    previewBg: 'from-rose-500 via-pink-600 to-red-600',
+    previewIcon: 'chat'
+  },
+  {
+    id: 'stroop',
+    title: 'Stroop Test (Kamera)',
+    description: 'Validovaný kognitivní test měřící pozornost, rychlost a kognitivní flexibilitu. S kamerou!',
+    time: '~4 min',
+    icon: 'eye',
+    color: 'cyan',
+    view: 'stroop',
+    tags: ['24 úkolů', 'Pozornost', 'Kamera'],
+    previewBg: 'from-cyan-500 via-blue-500 to-indigo-600',
+    previewIcon: 'eye'
+  },
+  {
+    id: 'mentalRotation',
+    title: 'Prostorová představivost',
+    description: 'Test mentální rotace (Shepard & Metzler). Měří prostorovou představivost - klíčová dovednost pro STEM obory.',
+    time: '~5 min',
+    icon: 'shapes',
+    color: 'violet',
+    view: 'mentalRotation',
+    tags: ['16 úkolů', 'Prostorové myšlení', 'STEM'],
+    previewBg: 'from-violet-500 via-purple-600 to-fuchsia-600',
+    previewIcon: 'shapes'
+  }
+];
+
+// Habits questions (8 questions)
+interface SimpleQuestion {
+  id: string;
+  text: string;
+  options: { key: 'A' | 'B' | 'C' | 'D'; text: string; score: number }[];
+}
+
+const habitsQuestions: SimpleQuestion[] = [
+  { id: 'H1', text: 'Jak si plánuješ učení?', options: [
+    { key: 'A', text: 'Mám detailní plán na každý den', score: 4 },
+    { key: 'B', text: 'Plánuju týden dopředu, volně', score: 3 },
+    { key: 'C', text: 'Učím se, když mám deadline', score: 2 },
+    { key: 'D', text: 'Neplánuju, učím se náhodně', score: 1 }
+  ]},
+  { id: 'H2', text: 'Když máš velký úkol, co uděláš?', options: [
+    { key: 'A', text: 'Rozložím na menší kroky hned', score: 4 },
+    { key: 'B', text: 'Začnu a uvidím, jak to půjde', score: 3 },
+    { key: 'C', text: 'Odkládám, pak udělám najednou', score: 2 },
+    { key: 'D', text: 'Panikařím na poslední chvíli', score: 1 }
+  ]},
+  { id: 'H3', text: 'Jak často odkládáš učení?', options: [
+    { key: 'A', text: 'Skoro nikdy', score: 4 },
+    { key: 'B', text: 'Občas, ale zvládnu to', score: 3 },
+    { key: 'C', text: 'Dost často, ale deadline splním', score: 2 },
+    { key: 'D', text: 'Pořád, je to problém', score: 1 }
+  ]},
+  { id: 'H4', text: 'Když se zasekneš na úkolu:', options: [
+    { key: 'A', text: 'Zeptám se spolužáka/učitele hned', score: 4 },
+    { key: 'B', text: 'Googluji a hledám řešení', score: 3 },
+    { key: 'C', text: 'Nechám to a vrátím se později', score: 2 },
+    { key: 'D', text: 'Vzdám to a dělám něco jiného', score: 1 }
+  ]},
+  { id: 'H5', text: 'Kde se nejlíp učíš?', options: [
+    { key: 'A', text: 'V tichu, bez rozptýlení', score: 4 },
+    { key: 'B', text: 'S hudbou na pozadí', score: 3 },
+    { key: 'C', text: 'V kavárně nebo s lidmi', score: 2 },
+    { key: 'D', text: 'V posteli nebo na gauči', score: 1 }
+  ]},
+  { id: 'H6', text: 'Jak dlouho vydržíš soustředěně pracovat?', options: [
+    { key: 'A', text: '60+ minut bez přestávky', score: 4 },
+    { key: 'B', text: '30-45 minut, pak pauza', score: 3 },
+    { key: 'C', text: '15-25 minut max', score: 2 },
+    { key: 'D', text: 'Pár minut, pak koukám na mobil', score: 1 }
+  ]},
+  { id: 'H7', text: 'Co děláš večer před testem?', options: [
+    { key: 'A', text: 'Nic, už mám naučeno', score: 4 },
+    { key: 'B', text: 'Rychle projedu poznámky', score: 3 },
+    { key: 'C', text: 'Učím se do noci', score: 2 },
+    { key: 'D', text: 'Panikařím a nespím', score: 1 }
+  ]},
+  { id: 'H8', text: 'Děláš si pravidelně poznámky?', options: [
+    { key: 'A', text: 'Ano, vlastní strukturované', score: 4 },
+    { key: 'B', text: 'Ano, ale chaoticky', score: 3 },
+    { key: 'C', text: 'Občas, když je to důležité', score: 2 },
+    { key: 'D', text: 'Ne, spoléhám na paměť', score: 1 }
+  ]}
+];
+
+// Motivation questions (8 questions)
+const motivationQuestions: SimpleQuestion[] = [
+  { id: 'M1', text: 'Proč chodíš do školy?', options: [
+    { key: 'A', text: 'Baví mě učit se nové věci', score: 4 },
+    { key: 'B', text: 'Chci mít dobrý základ pro budoucnost', score: 3 },
+    { key: 'C', text: 'Kvůli rodičům a známkám', score: 2 },
+    { key: 'D', text: 'Musím, jinak bych nešel/la', score: 1 }
+  ]},
+  { id: 'M2', text: 'Když dostaneš špatnou známku:', options: [
+    { key: 'A', text: 'Motivuje mě to více pracovat', score: 4 },
+    { key: 'B', text: 'Zamyslím se, co zlepšit', score: 3 },
+    { key: 'C', text: 'Je mi to jedno', score: 2 },
+    { key: 'D', text: 'Vzdám to, nejde mi to', score: 1 }
+  ]},
+  { id: 'M3', text: 'Máš jasné cíle, čeho chceš dosáhnout?', options: [
+    { key: 'A', text: 'Ano, vím přesně co a kdy', score: 4 },
+    { key: 'B', text: 'Mám obecnou představu', score: 3 },
+    { key: 'C', text: 'Nad tím moc nepřemýšlím', score: 2 },
+    { key: 'D', text: 'Ne, žiju přítomností', score: 1 }
+  ]},
+  { id: 'M4', text: 'Co tě nejvíc motivuje?', options: [
+    { key: 'A', text: 'Pocit, že jsem něco zvládl/a', score: 4 },
+    { key: 'B', text: 'Pochvala od ostatních', score: 3 },
+    { key: 'C', text: 'Odměna (peníze, dárky)', score: 2 },
+    { key: 'D', text: 'Strach z trestu/neúspěchu', score: 1 }
+  ]},
+  { id: 'M5', text: 'Když se ti něco nedaří:', options: [
+    { key: 'A', text: 'Nevzdávám se, zkouším dál', score: 4 },
+    { key: 'B', text: 'Udělám pauzu a zkusím znovu', score: 3 },
+    { key: 'C', text: 'Požádám o pomoc a nechám to na jiných', score: 2 },
+    { key: 'D', text: 'Vzdám to rychle', score: 1 }
+  ]},
+  { id: 'M6', text: 'Učíš se i věci mimo školu?', options: [
+    { key: 'A', text: 'Ano, pořád se učím něco nového', score: 4 },
+    { key: 'B', text: 'Občas, když mě něco zaujme', score: 3 },
+    { key: 'C', text: 'Jen když to potřebuju', score: 2 },
+    { key: 'D', text: 'Ne, stačí mi škola', score: 1 }
+  ]},
+  { id: 'M7', text: 'Jak se cítíš ráno před školou?', options: [
+    { key: 'A', text: 'Těším se, co nového se naučím', score: 4 },
+    { key: 'B', text: 'Neutrálně, je to rutina', score: 3 },
+    { key: 'C', text: 'Radši bych zůstal/a doma', score: 2 },
+    { key: 'D', text: 'Stresuju se a nechce se mi', score: 1 }
+  ]},
+  { id: 'M8', text: 'Srovnáváš se s ostatními?', options: [
+    { key: 'A', text: 'Soutěžím hlavně sám/sama se sebou', score: 4 },
+    { key: 'B', text: 'Inspiruju se, ale netlačím se', score: 3 },
+    { key: 'C', text: 'Ano a demotivuje mě to', score: 2 },
+    { key: 'D', text: 'Ano, často se cítím horší', score: 1 }
+  ]}
+];
+
+// Strengths questions (6 questions)
+const strengthsQuestions: SimpleQuestion[] = [
+  { id: 'S1', text: 'Ve které oblasti se cítíš nejjistější?', options: [
+    { key: 'A', text: 'Matematika a logika', score: 1 },
+    { key: 'B', text: 'Jazyky a komunikace', score: 2 },
+    { key: 'C', text: 'Kreativita a umění', score: 3 },
+    { key: 'D', text: 'Praktické a manuální práce', score: 4 }
+  ]},
+  { id: 'S2', text: 'Když pracuješ ve skupině:', options: [
+    { key: 'A', text: 'Přirozeně vedu ostatní', score: 4 },
+    { key: 'B', text: 'Přicházím s nápady', score: 3 },
+    { key: 'C', text: 'Pomáhám realizovat plán', score: 2 },
+    { key: 'D', text: 'Spíš se držím zpátky', score: 1 }
+  ]},
+  { id: 'S3', text: 'Co ti jde nejlépe?', options: [
+    { key: 'A', text: 'Analyzovat a řešit problémy', score: 4 },
+    { key: 'B', text: 'Komunikovat a přesvědčovat', score: 3 },
+    { key: 'C', text: 'Tvořit a vymýšlet', score: 2 },
+    { key: 'D', text: 'Organizovat a plánovat', score: 1 }
+  ]},
+  { id: 'S4', text: 'Když se učíš něco nového:', options: [
+    { key: 'A', text: 'Rychle pochopím princip', score: 4 },
+    { key: 'B', text: 'Potřebuju příklady a praxi', score: 3 },
+    { key: 'C', text: 'Trvá mi to, ale pak to sedne', score: 2 },
+    { key: 'D', text: 'Je to pro mě většinou těžké', score: 1 }
+  ]},
+  { id: 'S5', text: 'Za co tě ostatní chválí?', options: [
+    { key: 'A', text: 'Chytrost a znalosti', score: 4 },
+    { key: 'B', text: 'Kreativitu a originalitu', score: 3 },
+    { key: 'C', text: 'Spolehlivost a pečlivost', score: 2 },
+    { key: 'D', text: 'Ochotu pomáhat', score: 1 }
+  ]},
+  { id: 'S6', text: 'V čem chceš být v budoucnu lepší?', options: [
+    { key: 'A', text: 'V odborných znalostech', score: 4 },
+    { key: 'B', text: 'V komunikaci a prezentaci', score: 3 },
+    { key: 'C', text: 'V time managementu', score: 2 },
+    { key: 'D', text: 'V sebevědomí', score: 1 }
+  ]}
+];
+
+interface SimpleResult {
+  score: number;
+  maxScore: number;
+  percent: number;
+  label: string;
+  tips: string[];
+}
+
+function scoreHabits(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): SimpleResult {
+  let total = 0;
+  for (const q of habitsQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = habitsQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+  let label = '';
+  let tips: string[] = [];
+  if (percent >= 75) {
+    label = 'Skvělé studijní návyky';
+    tips = ['Pokračuj v tom, co děláš!', 'Zkus mentorovat spolužáky'];
+  } else if (percent >= 50) {
+    label = 'Dobré návyky s prostorem pro zlepšení';
+    tips = ['Zkus Pomodoro techniku (25 min práce, 5 min pauza)', 'Plánuj si učení den dopředu'];
+  } else if (percent >= 25) {
+    label = 'Návyky potřebují práci';
+    tips = ['Začni s malými cíli každý den', 'Odstraň rozptýlení (mobil do šuplíku)', 'Najdi si study buddy'];
+  } else {
+    label = 'Čas na změnu přístupu';
+    tips = ['Začni úplně od základů - 15 min denně', 'Najdi si místo jen pro učení', 'Odmění se za splněné úkoly'];
+  }
+  return { score: total, maxScore, percent, label, tips };
+}
+
+function scoreMotivation(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): SimpleResult {
+  let total = 0;
+  for (const q of motivationQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = motivationQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+  let label = '';
+  let tips: string[] = [];
+  if (percent >= 75) {
+    label = 'Vysoká vnitřní motivace';
+    tips = ['Tvá motivace je tvá superschopnost!', 'Postav si větší cíle'];
+  } else if (percent >= 50) {
+    label = 'Dobrá motivace, lze posílit';
+    tips = ['Najdi si proč - co tě na předmětu baví?', 'Propoj učivo s reálným životem'];
+  } else if (percent >= 25) {
+    label = 'Motivace potřebuje podporu';
+    tips = ['Najdi si smysl v tom, co děláš', 'Postav si malé, dosažitelné cíle', 'Odmění se za úspěchy'];
+  } else {
+    label = 'Čas najít novou jiskru';
+    tips = ['Promluvte si s někým o svých cílech', 'Zkus něco nového mimo školu', 'Malé kroky vedou k velkým změnám'];
+  }
+  return { score: total, maxScore, percent, label, tips };
+}
+
+function scoreStrengths(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): { areas: { label: string; score: number }[]; topStrength: string; tips: string[] } {
+  const areas = [
+    { label: 'Analytické myšlení', score: 0 },
+    { label: 'Komunikace', score: 0 },
+    { label: 'Kreativita', score: 0 },
+    { label: 'Leadership', score: 0 }
+  ];
+
+  // Score based on patterns in answers
+  for (const q of strengthsQuestions) {
+    const answer = answers[q.id];
+    if (answer === 'A') areas[0].score += 25;
+    if (answer === 'B') areas[1].score += 25;
+    if (answer === 'C') areas[2].score += 25;
+    if (answer === 'D') areas[3].score += 25;
+  }
+
+  // Normalize to percentage
+  areas.forEach(a => a.score = Math.min(100, Math.round(a.score / strengthsQuestions.length * 4)));
+
+  const sorted = [...areas].sort((a, b) => b.score - a.score);
+  const topStrength = sorted[0].label;
+
+  const tips: string[] = [];
+  if (topStrength === 'Analytické myšlení') {
+    tips.push('Tvá silná stránka je logika - využij ji v matice a vědách');
+    tips.push('Zkus programování nebo šachy');
+  } else if (topStrength === 'Komunikace') {
+    tips.push('Umíš dobře vyjádřit myšlenky - rozvíjej jazyky');
+    tips.push('Zkus debatní klub nebo psaní');
+  } else if (topStrength === 'Kreativita') {
+    tips.push('Máš kreativní myšlení - nech ho projevit');
+    tips.push('Zkus design, hudbu nebo umění');
+  } else {
+    tips.push('Máš vůdčí schopnosti - neboj se vést projekty');
+    tips.push('Organizuj skupinové aktivity');
+  }
+
+  return { areas, topStrength, tips };
+}
 
 const SkillBar: React.FC<{ skill: Skill; index: number }> = ({ skill, index }) => {
   const [width, setWidth] = useState(0);
-
   useEffect(() => {
     const timer = setTimeout(() => setWidth(skill.value), 100 * index);
     return () => clearTimeout(timer);
   }, [skill.value, index]);
 
   return (
-    <div className="space-y-3">
-      <div className="flex justify-between items-center text-sm font-semibold tracking-tight">
-        <span className="text-slate-600 uppercase text-[11px] tracking-wider">{skill.label}</span>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center text-sm font-semibold">
+        <span className="text-slate-600 text-xs uppercase tracking-wider">{skill.label}</span>
         <span className="text-indigo-600">{skill.value}%</span>
       </div>
       <div className="h-2 w-full bg-slate-100 rounded-full overflow-hidden">
-        <div 
-          className="h-full bg-indigo-600 transition-all duration-1000 ease-out rounded-full shadow-[0_0_10px_rgba(79,70,229,0.3)]"
-          style={{ width: `${width}%` }}
-        />
+        <div className="h-full bg-indigo-600 transition-all duration-1000 ease-out rounded-full" style={{ width: `${width}%` }} />
       </div>
     </div>
   );
 };
 
-const App: React.FC = () => {
-  const [status, setStatus] = useState<AppStatus>(AppStatus.INITIAL);
-  const [messages, setMessages] = useState<Message[]>([]);
-  const [inputText, setInputText] = useState('');
-  const [isLoading, setIsLoading] = useState(false);
-  const [report, setReport] = useState<Report | null>(null);
-  const messagesEndRef = useRef<HTMLDivElement>(null);
-
-  const scrollToBottom = () => {
-    messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
-  };
-
+const DimensionBar: React.FC<{ leftLabel: string; rightLabel: string; leftScore: number; rightScore: number; index: number }> = ({ leftLabel, rightLabel, leftScore, rightScore, index }) => {
+  const [animatedRight, setAnimatedRight] = useState(50);
   useEffect(() => {
-    scrollToBottom();
-  }, [messages]);
+    const timer = setTimeout(() => setAnimatedRight(rightScore), 100 * index);
+    return () => clearTimeout(timer);
+  }, [rightScore, index]);
 
-  const handleStart = async () => {
-    setIsLoading(true);
-    try {
-      const welcomeText = await navigatorService.startChat();
-      setMessages([{
-        role: 'model',
-        text: welcomeText,
-        timestamp: new Date()
-      }]);
-      setStatus(AppStatus.CHATTING);
-    } catch (error) {
-      console.error(error);
-      alert("Chyba spojení.");
-    } finally {
-      setIsLoading(false);
-    }
-  };
+  return (
+    <div className="space-y-2">
+      <div className="flex justify-between items-center text-xs font-semibold">
+        <span className="text-slate-500">{leftLabel} {leftScore}%</span>
+        <span className="text-purple-600">{rightLabel} {rightScore}%</span>
+      </div>
+      <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden relative">
+        <div className="absolute left-0 h-full bg-slate-300 transition-all duration-1000 ease-out rounded-l-full" style={{ width: `${100 - animatedRight}%` }} />
+        <div className="absolute right-0 h-full bg-purple-500 transition-all duration-1000 ease-out rounded-r-full" style={{ width: `${animatedRight}%` }} />
+      </div>
+    </div>
+  );
+};
 
-  const handleSend = async (e?: React.FormEvent) => {
-    e?.preventDefault();
-    if (!inputText.trim() || isLoading) return;
+const VakBar: React.FC<{ label: string; value: number; color: string; index: number }> = ({ label, value, color, index }) => {
+  const [width, setWidth] = useState(0);
+  useEffect(() => {
+    const timer = setTimeout(() => setWidth(value), 100 * index);
+    return () => clearTimeout(timer);
+  }, [value, index]);
 
-    const userMessage: Message = {
-      role: 'user',
-      text: inputText,
-      timestamp: new Date()
-    };
-
-    setMessages(prev => [...prev, userMessage]);
-    setInputText('');
-    setIsLoading(true);
-
-    try {
-      const reply = await navigatorService.sendMessage(inputText);
-      setMessages(prev => [...prev, {
-        role: 'model',
-        text: reply,
-        timestamp: new Date()
-      }]);
-    } catch (error) {
-      console.error(error);
-      setMessages(prev => [...prev, {
-        role: 'model',
-        text: "Omlouvám se, došlo k chybě.",
-        timestamp: new Date()
-      }]);
-    } finally {
-      setIsLoading(false);
-    }
-  };
-
-  const handleEvaluate = async () => {
-    setIsLoading(true);
-    setStatus(AppStatus.EVALUATING);
-    try {
-      const result = await navigatorService.generateReport();
-      setReport(result);
-      setStatus(AppStatus.FINISHED);
-    } catch (error) {
-      console.error(error);
-      alert("Chyba při generování.");
-      setStatus(AppStatus.CHATTING);
-    } finally {
-      setIsLoading(false);
-    }
+  const colors: Record<string, string> = {
+    visual: 'bg-blue-500',
+    auditory: 'bg-green-500',
+    kinesthetic: 'bg-orange-500'
   };
 
   return (
-    <div className="min-h-screen bg-[#fcfcfd] text-slate-900 flex flex-col font-sans">
-      {/* Header */}
-      <header className="px-8 py-6 flex items-center justify-between">
-        <div className="flex items-center gap-4">
-          <div className="w-12 h-12 bg-white rounded-xl shadow-sm border border-slate-100 flex items-center justify-center">
-            <svg viewBox="0 0 24 24" className="w-6 h-6 text-indigo-600" fill="none" stroke="currentColor" strokeWidth="2">
-               <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
-            </svg>
+    <div className="space-y-2">
+      <div className="flex justify-between items-center text-sm font-semibold">
+        <span className="text-slate-600">{label}</span>
+        <span className="text-slate-900">{value}%</span>
+      </div>
+      <div className="h-3 w-full bg-slate-100 rounded-full overflow-hidden">
+        <div className={`h-full ${colors[color] || 'bg-blue-500'} transition-all duration-1000 ease-out rounded-full`} style={{ width: `${width}%` }} />
+      </div>
+    </div>
+  );
+};
+
+const IconComponent: React.FC<{ name: string; className?: string }> = ({ name, className = "w-7 h-7" }) => {
+  const icons: Record<string, React.ReactElement> = {
+    brain: <Brain className={className} />,
+    eye: <Eye className={className} />,
+    chat: <MessageCircle className={className} />,
+    check: <Check className={className} />,
+    clock: <CalendarDays className={className} />,
+    fire: <Sparkles className={className} />,
+    star: <Medal className={className} />,
+    sparkles: <Zap className={className} />,
+    external: <ExternalLink className={className} />
+  };
+  return icons[name] || null;
+};
+
+// Demo data - pre-filled typology result for demonstration
+const demoTypologyResult: TypologyResult = {
+  dimensions: [
+    { dimension: 'D1', leftLabel: 'Abstraktní', rightLabel: 'Konkrétní', leftScore: 35, rightScore: 65, label: 'spíš konkrétní', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D2', leftLabel: 'Aktivní', rightLabel: 'Reflektivní', leftScore: 60, rightScore: 40, label: 'spíš aktivní', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D3', leftLabel: 'Vizuální', rightLabel: 'Verbální', leftScore: 70, rightScore: 30, label: 'vizuální', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D4', leftLabel: 'Sekvenční', rightLabel: 'Globální', leftScore: 45, rightScore: 55, label: 'vyvážený', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D5', leftLabel: 'Struktura', rightLabel: 'Flexibilita', leftScore: 50, rightScore: 50, label: 'vyvážený', answeredCount: 6, totalQuestions: 6 }
+  ],
+  answersDetail: [],
+  overallProfile: 'Vizuálně-praktický typ s aktivním přístupem',
+  tips: [
+    'Využívej diagramy a vizuální pomůcky při učení',
+    'Zkoušej si látku aktivně vysvětlovat nahlas',
+    'Střídej teoretické a praktické úkoly'
+  ]
+};
+
+const App: React.FC = () => {
+  const [lang, setLang] = useState<Language>('cs');
+  const [view, setView] = useState<View>('welcome');
+  const [progress, setProgress] = useState<ModuleProgress>({
+    chat: false, typology: true, vak: false, habits: false, motivation: false, strengths: false, gemini: false,
+    growthMindset: false, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false
+  });
+  const [studentName, setStudentName] = useState<string>('');
+  const [nameInput, setNameInput] = useState<string>('');
+
+  // Students list
+  const [students, setStudents] = useState<StudentProfile[]>([]);
+  const [showStudentsList, setShowStudentsList] = useState(false);
+
+  // Chat state
+  const [messages, setMessages] = useState<Message[]>([]);
+  const [inputText, setInputText] = useState('');
+  const [isLoading, setIsLoading] = useState(false);
+  const [chatReport, setChatReport] = useState<Report | null>(null);
+  const messagesEndRef = useRef<HTMLDivElement>(null);
+
+  // Typology state
+  const [currentDimension, setCurrentDimension] = useState<number>(0);
+  const [typologyAnswers, setTypologyAnswers] = useState<Record<string, AnswerKey>>({});
+  const [typologyResult, setTypologyResult] = useState<TypologyResult | null>(demoTypologyResult);
+
+  // VAK state
+  const [currentVakQuestion, setCurrentVakQuestion] = useState<number>(0);
+  const [vakAnswers, setVakAnswers] = useState<VakOption[]>([]);
+  const [vakResult, setVakResult] = useState<VakResult | null>(null);
+
+  // Habits state
+  const [currentHabitsQuestion, setCurrentHabitsQuestion] = useState<number>(0);
+  const [habitsAnswers, setHabitsAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [habitsResult, setHabitsResult] = useState<SimpleResult | null>(null);
+
+  // Motivation state
+  const [currentMotivationQuestion, setCurrentMotivationQuestion] = useState<number>(0);
+  const [motivationAnswers, setMotivationAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [motivationResult, setMotivationResult] = useState<SimpleResult | null>(null);
+
+  // Strengths state
+  const [currentStrengthsQuestion, setCurrentStrengthsQuestion] = useState<number>(0);
+  const [strengthsAnswers, setStrengthsAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [strengthsResult, setStrengthsResult] = useState<{ areas: { label: string; score: number }[]; topStrength: string; tips: string[] } | null>(null);
+
+  // New assessments state
+  const [currentGMQuestion, setCurrentGMQuestion] = useState(0);
+  const [gmAnswers, setGmAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [gmResult, setGmResult] = useState<AssessmentResult | null>(null);
+
+  const [currentGritQuestion, setCurrentGritQuestion] = useState(0);
+  const [gritAnswers, setGritAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [gritResult, setGritResult] = useState<AssessmentResult | null>(null);
+
+  const [currentSEQuestion, setCurrentSEQuestion] = useState(0);
+  const [seAnswers, setSeAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [seResult, setSeResult] = useState<AssessmentResult | null>(null);
+
+  const [currentTAQuestion, setCurrentTAQuestion] = useState(0);
+  const [taAnswers, setTaAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [taResult, setTaResult] = useState<AssessmentResult | null>(null);
+
+  const [currentMCQuestion, setCurrentMCQuestion] = useState(0);
+  const [mcAnswers, setMcAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [mcResult, setMcResult] = useState<AssessmentResult | null>(null);
+
+  const [currentRiasecQuestion, setCurrentRiasecQuestion] = useState(0);
+  const [riasecAnswers, setRiasecAnswers] = useState<Record<string, number>>({});
+  const [riasecResult, setRiasecResult] = useState<RiasecResult | null>(null);
+
+  const [currentEQQuestion, setCurrentEQQuestion] = useState(0);
+  const [eqAnswers, setEqAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [eqResult, setEqResult] = useState<AssessmentResult | null>(null);
+
+  // Stroop Test state
+  const [stroopPhase, setStroopPhase] = useState<'intro' | 'practice' | 'test' | 'done'>('intro');
+  const [stroopTrials, setStroopTrials] = useState<StroopTrial[]>([]);
+  const [stroopCurrentTrial, setStroopCurrentTrial] = useState(0);
+  const [stroopResults, setStroopResults] = useState<StroopTrialResult[]>([]);
+  const [stroopTrialStart, setStroopTrialStart] = useState<number>(0);
+  const [stroopResult, setStroopResult] = useState<StroopResult | null>(null);
+  const [stroopShowStimulus, setStroopShowStimulus] = useState(false);
+  const videoRef = useRef<HTMLVideoElement>(null);
+
+  // Mental Rotation Test state
+  const [mrtPhase, setMrtPhase] = useState<'intro' | 'practice' | 'test' | 'done'>('intro');
+  const [mrtTrials, setMrtTrials] = useState<MentalRotationTrial[]>([]);
+  const [mrtCurrentTrial, setMrtCurrentTrial] = useState(0);
+  const [mrtResults, setMrtResults] = useState<MentalRotationTrialResult[]>([]);
+  const [mrtTrialStart, setMrtTrialStart] = useState<number>(0);
+  const [mrtResult, setMrtResult] = useState<MentalRotationResult | null>(null);
+  const [cameraActive, setCameraActive] = useState(false);
+
+  // Results page state
+  const [resultsTab, setResultsTab] = useState<'overview' | 'synthesis' | 'coaching'>('overview');
+  const [synthesis, setSynthesis] = useState<{ synthesis: string; studyTips: string[]; youtubeVideos: { videoId: string; title: string; description: string }[] } | null>(null);
+  const [isSynthesisLoading, setIsSynthesisLoading] = useState(false);
+
+  // AI Feedback modal state (after each test)
+  const [showFeedbackModal, setShowFeedbackModal] = useState(false);
+  const [currentFeedback, setCurrentFeedback] = useState<{
+    title: string;
+    feedback: string;
+    actionSteps: string[];
+    resources: { title: string; description: string; videoId?: string }[];
+  } | null>(null);
+  const [isFeedbackLoading, setIsFeedbackLoading] = useState(false);
+
+  // AI Coaching state
+  const [coaching, setCoaching] = useState<{
+    summary: string;
+    keyInsights: string[];
+    weeklyPlan: { day: string; focus: string; activities: string[] }[];
+    habitTracker: { habit: string; why: string; howToTrack: string }[];
+    motivationalMessage: string;
+  } | null>(null);
+  const [isCoachingLoading, setIsCoachingLoading] = useState(false);
+
+  const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
+  useEffect(() => { scrollToBottom(); }, [messages]);
+
+  // Load students on mount
+  useEffect(() => {
+    setStudents(getStudents());
+  }, []);
+
+  // Auto-save student results when they change
+  useEffect(() => {
+    if (!studentName) return;
+    const hasAnyResult = typologyResult || vakResult || habitsResult || motivationResult || strengthsResult || chatReport;
+    if (!hasAnyResult) return;
+
+    updateStudentResults(studentName, {
+      typology: typologyResult || undefined,
+      vak: vakResult || undefined,
+      habits: habitsResult || undefined,
+      motivation: motivationResult || undefined,
+      strengths: strengthsResult || undefined,
+      chatReport: chatReport || undefined,
+      synthesis: synthesis || undefined
+    });
+    setStudents(getStudents());
+  }, [studentName, typologyResult, vakResult, habitsResult, motivationResult, strengthsResult, chatReport, synthesis]);
+
+  // Load student profile
+  const loadStudent = (profile: StudentProfile) => {
+    setStudentName(profile.name);
+    if (profile.results.typology) {
+      setTypologyResult(profile.results.typology as any);
+      setProgress(p => ({ ...p, typology: true }));
+    }
+    if (profile.results.vak) {
+      setVakResult(profile.results.vak as any);
+      setProgress(p => ({ ...p, vak: true }));
+    }
+    if (profile.results.habits) {
+      setHabitsResult(profile.results.habits);
+      setProgress(p => ({ ...p, habits: true }));
+    }
+    if (profile.results.motivation) {
+      setMotivationResult(profile.results.motivation);
+      setProgress(p => ({ ...p, motivation: true }));
+    }
+    if (profile.results.strengths) {
+      setStrengthsResult(profile.results.strengths);
+      setProgress(p => ({ ...p, strengths: true }));
+    }
+    if (profile.results.chatReport) {
+      setChatReport(profile.results.chatReport);
+      setProgress(p => ({ ...p, chat: true }));
+    }
+    if (profile.results.synthesis) {
+      setSynthesis(profile.results.synthesis);
+    }
+    setShowStudentsList(false);
+    setView('dashboard');
+  };
+
+  // Delete student
+  const handleDeleteStudent = (id: string, e: React.MouseEvent) => {
+    e.stopPropagation();
+    if (confirm('Opravdu chceš smazat tohoto studenta?')) {
+      deleteStudent(id);
+      setStudents(getStudents());
+    }
+  };
+
+  const completedCount = Object.values(progress).filter(Boolean).length;
+
+  // Generate AI synthesis
+  const handleGenerateSynthesis = async () => {
+    if (synthesis || isSynthesisLoading) return;
+
+    setIsSynthesisLoading(true);
+    try {
+      const profileData = {
+        studentName: studentName || 'Student',
+        typology: typologyResult ? {
+          dimensions: typologyResult.dimensions.map(d => ({
+            leftLabel: d.leftLabel,
+            rightLabel: d.rightLabel,
+            leftScore: d.leftScore,
+            rightScore: d.rightScore
+          })),
+          overallProfile: typologyResult.overallProfile
+        } : undefined,
+        vak: vakResult ? {
+          visual: vakResult.visual,
+          auditory: vakResult.auditory,
+          kinesthetic: vakResult.kinesthetic,
+          label: vakResult.label
+        } : undefined,
+        habits: habitsResult ? {
+          percent: habitsResult.percent,
+          label: habitsResult.label
+        } : undefined,
+        motivation: motivationResult ? {
+          percent: motivationResult.percent,
+          label: motivationResult.label
+        } : undefined,
+        strengths: strengthsResult ? {
+          areas: strengthsResult.areas,
+          topStrength: strengthsResult.topStrength
+        } : undefined
+      };
+
+      const result = await navigatorService.generateSynthesis(profileData);
+      setSynthesis(result);
+    } catch (error) {
+      console.error('Failed to generate synthesis:', error);
+    } finally {
+      setIsSynthesisLoading(false);
+    }
+  };
+
+  // Generate AI feedback for a specific assessment
+  const handleGenerateFeedback = async (assessmentType: string, title: string, result: { score: number; percent: number; label: string; description?: string }) => {
+    setShowFeedbackModal(true);
+    setIsFeedbackLoading(true);
+    setCurrentFeedback(null);
+
+    try {
+      const feedback = await navigatorService.generateAssessmentFeedback(assessmentType, result, studentName);
+      setCurrentFeedback({ title, ...feedback });
+    } catch (error) {
+      console.error('Failed to generate feedback:', error);
+      setCurrentFeedback({
+        title,
+        feedback: 'Nepodařilo se vygenerovat zpětnou vazbu. Zkus to prosím znovu.',
+        actionSteps: [],
+        resources: []
+      });
+    } finally {
+      setIsFeedbackLoading(false);
+    }
+  };
+
+  // Generate comprehensive AI coaching
+  const handleGenerateCoaching = async () => {
+    if (coaching || isCoachingLoading) return;
+
+    setIsCoachingLoading(true);
+    try {
+      const allResults = {
+        studentName: studentName || 'Student',
+        typology: typologyResult,
+        vak: vakResult,
+        habits: habitsResult,
+        motivation: motivationResult,
+        strengths: strengthsResult,
+        growthMindset: gmResult,
+        grit: gritResult,
+        selfEfficacy: seResult,
+        testAnxiety: taResult,
+        metacognition: mcResult,
+        riasec: riasecResult,
+        eq: eqResult
+      };
+
+      const result = await navigatorService.generateCoaching(allResults);
+      setCoaching(result);
+    } catch (error) {
+      console.error('Failed to generate coaching:', error);
+    } finally {
+      setIsCoachingLoading(false);
+    }
+  };
+
+  // Handle name submission
+  const handleNameSubmit = (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (nameInput.trim().length >= 2) {
+      setStudentName(nameInput.trim());
+      setView('dashboard');
+    }
+  };
+
+  // Welcome/Home screen
+  const renderWelcome = () => (
+    <div className="flex-1 px-6 py-10" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className="max-w-4xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center space-y-4">
+          <div className="flex justify-center">
+            <div className="w-16 h-16 bg-gradient-to-br from-[#C5A059] to-[#8B7355] rounded-2xl flex items-center justify-center shadow-lg">
+              <svg viewBox="0 0 24 24" className="w-8 h-8 text-white" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
           </div>
           <div>
-            <h1 className="font-bold text-xl text-slate-900 tracking-tight leading-none">Navigator</h1>
-            <p className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em] mt-1">Academic Core v1.2</p>
+            <h1 className="text-h1 font-serif" style={{ color: 'var(--color-text)' }}>
+              AI Academic <span style={{ color: 'var(--color-primary)' }}>Navigator</span>
+            </h1>
+            <p className="mt-2" style={{ color: 'var(--color-text-secondary)' }}>
+              Poznej studijní profil a zjisti, jak se učíš nejlépe.
+            </p>
           </div>
         </div>
-        
-        {status === AppStatus.CHATTING && (
+
+        {/* Create new student card */}
+        <div className="card p-6" style={{ borderStyle: 'dashed', borderWidth: '2px' }}>
+          <h2 className="font-serif text-lg font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+            <div className="w-8 h-8 flex items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}>
+              <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
+            </div>
+            Nový student
+          </h2>
+          <form onSubmit={handleNameSubmit} className="flex gap-3">
+            <input
+              type="text"
+              value={nameInput}
+              onChange={(e) => setNameInput(e.target.value)}
+              placeholder="Jméno nebo přezdívka..."
+              className="flex-1 px-4 py-3 outline-none transition-all"
+              style={{
+                border: '1px solid var(--color-border)',
+                borderRadius: 'var(--radius-md)',
+                fontFamily: 'var(--font-sans)'
+              }}
+            />
+            <button
+              type="submit"
+              disabled={nameInput.trim().length < 2}
+              className="px-6 py-3 text-white font-medium disabled:opacity-50 disabled:cursor-not-allowed transition-all flex items-center gap-2"
+              style={{
+                backgroundColor: 'var(--color-primary)',
+                borderRadius: 'var(--radius-md)'
+              }}
+            >
+              Vytvořit
+              <ArrowRight className="w-4 h-4" />
+            </button>
+          </form>
+        </div>
+
+        {/* Existing students */}
+        {students.length > 0 && (
+          <div className="space-y-4">
+            <h2 className="font-serif text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+              <Users className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+              Uložení studenti ({students.length})
+            </h2>
+            <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+              {students.map(student => {
+                const testsCount = Object.values(student.results).filter(Boolean).length;
+                const hasSynthesis = !!student.results.synthesis;
+                return (
+                  <button
+                    key={student.id}
+                    onClick={() => loadStudent(student)}
+                    className="card p-4 text-left flex items-start gap-4 transition-all hover:-translate-y-1 hover:shadow-lg group"
+                  >
+                    <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-xl font-bold" style={{ backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-full)', color: '#fff' }}>
+                      {student.name.charAt(0).toUpperCase()}
+                    </div>
+                    <div className="flex-1 min-w-0">
+                      <p className="font-medium truncate group-hover:text-[var(--color-primary)] transition-colors" style={{ color: 'var(--color-text)' }}>
+                        {student.name}
+                      </p>
+                      <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                        {new Date(student.updatedAt).toLocaleDateString('cs-CZ', { day: 'numeric', month: 'short', year: 'numeric' })}
+                      </p>
+                      <div className="flex items-center gap-2 mt-2">
+                        <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text-secondary)' }}>
+                          {testsCount} {testsCount === 1 ? 'test' : testsCount >= 2 && testsCount <= 4 ? 'testy' : 'testů'}
+                        </span>
+                        {hasSynthesis && (
+                          <span className="text-xs px-2 py-0.5 rounded-full bg-emerald-50 text-emerald-700">
+                            AI syntéza
+                          </span>
+                        )}
+                      </div>
+                    </div>
+                    <button
+                      onClick={(e) => handleDeleteStudent(student.id, e)}
+                      className="p-2 opacity-0 group-hover:opacity-100 hover:bg-red-50 transition-all"
+                      style={{ borderRadius: 'var(--radius-md)', color: 'var(--color-text-muted)' }}
+                      title="Smazat studenta"
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </button>
+                  </button>
+                );
+              })}
+            </div>
+          </div>
+        )}
+
+        {/* Empty state */}
+        {students.length === 0 && (
+          <div className="text-center py-12" style={{ color: 'var(--color-text-muted)' }}>
+            <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
+            <p>Zatím nemáš žádné uložené studenty.</p>
+            <p className="text-sm mt-1">Vytvoř nového studenta výše a začni s testy.</p>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Students list modal
+  const renderStudentsModal = () => showStudentsList && (
+    <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStudentsList(false)}>
+      <div className="bg-white w-full max-w-md mx-4 max-h-[70vh] overflow-hidden flex flex-col" style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }} onClick={e => e.stopPropagation()}>
+        <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
+          <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Uložení studenti</h2>
+          <button onClick={() => setShowStudentsList(false)} style={{ color: 'var(--color-text-muted)' }} className="hover:opacity-70">
+            <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+          </button>
+        </div>
+        <div className="flex-1 overflow-y-auto p-4 space-y-2">
+          {students.map(student => (
+            <button
+              key={student.id}
+              onClick={() => loadStudent(student)}
+              className="w-full p-4 text-left flex items-center gap-4 transition-all hover:bg-slate-50"
+              style={{ borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+            >
+              <div className="w-10 h-10 flex items-center justify-center" style={{ backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-full)' }}>
+                <User className="w-5 h-5 text-white" />
+              </div>
+              <div className="flex-1 min-w-0">
+                <p className="font-medium truncate" style={{ color: 'var(--color-text)' }}>{student.name}</p>
+                <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                  {new Date(student.updatedAt).toLocaleDateString('cs-CZ')} • {Object.values(student.results).filter(Boolean).length} testů
+                </p>
+              </div>
+              <button
+                onClick={(e) => handleDeleteStudent(student.id, e)}
+                className="p-2 hover:bg-red-50 transition-colors"
+                style={{ borderRadius: 'var(--radius-md)', color: 'var(--color-text-muted)' }}
+              >
+                <Trash2 className="w-4 h-4" />
+              </button>
+            </button>
+          ))}
+        </div>
+      </div>
+    </div>
+  );
+
+  // Generic Assessment Renderer
+  const renderAssessment = (
+    title: string,
+    questions: { id: string; text: string; options: { key: 'A' | 'B' | 'C' | 'D'; text: string }[] }[],
+    currentQuestion: number,
+    setCurrentQuestion: (n: number) => void,
+    answers: Record<string, 'A' | 'B' | 'C' | 'D'>,
+    setAnswers: (a: Record<string, 'A' | 'B' | 'C' | 'D'>) => void,
+    onComplete: () => void
+  ) => {
+    const q = questions[currentQuestion];
+    const progressPercent = Math.round((currentQuestion / questions.length) * 100);
+
+    const handleAnswer = (answer: 'A' | 'B' | 'C' | 'D') => {
+      const newAnswers = { ...answers, [q.id]: answer };
+      setAnswers(newAnswers);
+      if (currentQuestion < questions.length - 1) {
+        setCurrentQuestion(currentQuestion + 1);
+      } else {
+        onComplete();
+      }
+    };
+
+    return (
+      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
+            <ChevronLeft className="w-5 h-5" />
+            Zpět
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentQuestion + 1} / {questions.length}</span>
+        </div>
+        <div className="h-2 overflow-hidden mb-4" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+          <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
+        </div>
+        <h2 className="text-lg font-serif font-semibold mb-6 text-center" style={{ color: 'var(--color-text)' }}>{title}</h2>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <div className="space-y-3">
+              {q.options.map((opt) => (
+                <button
+                  key={opt.key}
+                  onClick={() => handleAnswer(opt.key)}
+                  className={`option-button flex items-center gap-4 w-full ${answers[q.id] === opt.key ? 'selected' : ''}`}
+                  style={{
+                    borderColor: answers[q.id] === opt.key ? 'var(--color-primary)' : 'var(--color-border)',
+                    backgroundColor: answers[q.id] === opt.key ? 'rgba(74, 95, 168, 0.08)' : 'var(--color-bg-card)'
+                  }}
+                >
+                  <span className="w-8 h-8 flex items-center justify-center font-semibold text-sm" style={{ borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
+                    {opt.key}
+                  </span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{opt.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // RIASEC Assessment Renderer (uses 1-4 scale)
+  const renderRiasecAssessment = () => {
+    const q = riasecQuestions[currentRiasecQuestion];
+    const progressPercent = Math.round((currentRiasecQuestion / riasecQuestions.length) * 100);
+
+    const handleAnswer = (score: number) => {
+      const newAnswers = { ...riasecAnswers, [q.id]: score };
+      setRiasecAnswers(newAnswers);
+      if (currentRiasecQuestion < riasecQuestions.length - 1) {
+        setCurrentRiasecQuestion(currentRiasecQuestion + 1);
+      } else {
+        const result = scoreRiasec(newAnswers);
+        setRiasecResult(result);
+        setProgress(p => ({ ...p, riasec: true }));
+        // RIASEC has different structure, create a simplified result for feedback
+        const topScore = result.scores[0];
+        handleGenerateFeedback('riasec', 'RIASEC Kariérní zájmy', {
+          score: topScore.score,
+          percent: topScore.percent,
+          label: `${result.code} - ${topScore.label}`
+        });
+        setView('results');
+      }
+    };
+
+    return (
+      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
+            <ChevronLeft className="w-5 h-5" />
+            Zpět
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentRiasecQuestion + 1} / {riasecQuestions.length}</span>
+        </div>
+        <div className="h-2 overflow-hidden mb-4" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+          <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
+        </div>
+        <h2 className="text-lg font-serif font-semibold mb-6 text-center" style={{ color: 'var(--color-text)' }}>RIASEC - Kariérní zájmy</h2>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <div className="flex justify-center gap-3">
+              {[1, 2, 3, 4].map((score) => (
+                <button
+                  key={score}
+                  onClick={() => handleAnswer(score)}
+                  className={`w-16 h-16 flex flex-col items-center justify-center font-semibold transition-all hover:scale-105 ${riasecAnswers[q.id] === score ? 'ring-2 ring-offset-2' : ''}`}
+                  style={{
+                    borderRadius: 'var(--radius-lg)',
+                    backgroundColor: score === 1 ? '#fee2e2' : score === 2 ? '#fef3c7' : score === 3 ? '#d1fae5' : '#bbf7d0',
+                    color: 'var(--color-text)',
+                    ringColor: 'var(--color-primary)'
+                  }}
+                >
+                  <span className="text-lg">{score}</span>
+                  <span className="text-[10px]">{score === 1 ? 'Ne' : score === 2 ? 'Spíše ne' : score === 3 ? 'Spíše ano' : 'Ano'}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Dashboard
+  const renderDashboard = () => (
+    <div className="flex-1 px-6 py-10" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className="max-w-6xl mx-auto space-y-8">
+        {/* Header */}
+        <div className="text-center">
+          <h1 className="text-h1 font-serif" style={{ color: 'var(--color-text)' }}>
+            {studentName ? `${t('greeting', lang)}, ${studentName}!` : (lang === 'cs' ? 'Poznej svůj' : 'Discover your')} <span style={{ color: 'var(--color-primary)' }}>{t('studyProfile', lang)}</span>
+          </h1>
+          <p className="mx-auto mt-3 max-w-xl" style={{ color: 'var(--color-text-secondary)', lineHeight: 'var(--leading-relaxed)' }}>
+            {t('selectTest', lang)}
+          </p>
+          {completedCount > 0 && (
+            <div className="mt-4 inline-flex items-center gap-2 bg-emerald-50 text-emerald-700 px-4 py-2 text-sm font-medium" style={{ borderRadius: 'var(--radius-full)' }}>
+              <Check className="w-4 h-4" />
+              {completedCount} {lang === 'cs' ? 'z' : 'of'} {modules.length - 1} {t('ofDone', lang)}
+            </div>
+          )}
+        </div>
+
+        {/* Module Cards Grid - Gallery Style */}
+        <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-6">
+          {modules.map((mod) => {
+            const isDone = !mod.external && progress[mod.id as keyof ModuleProgress];
+
+            return (
+              <button
+                key={mod.id}
+                onClick={() => handleModuleClick(mod)}
+                className="card group relative text-left transition-all hover:-translate-y-1 hover:shadow-xl focus:outline-none overflow-hidden"
+                style={{
+                  borderColor: isDone ? 'rgb(167, 243, 208)' : 'var(--color-border)',
+                  borderRadius: 'var(--radius-lg)'
+                }}
+              >
+                {/* Preview Image/Gradient Area */}
+                <div className={`relative h-40 bg-gradient-to-br ${mod.previewBg} flex items-center justify-center overflow-hidden`}>
+                  {/* Background Pattern */}
+                  <div className="absolute inset-0 opacity-20">
+                    <div className="absolute top-4 left-4 w-16 h-16 border-2 border-white/30 rounded-full" />
+                    <div className="absolute bottom-4 right-4 w-24 h-24 border-2 border-white/20 rounded-full" />
+                    <div className="absolute top-1/2 left-1/2 -translate-x-1/2 -translate-y-1/2 w-32 h-32 border border-white/10 rounded-full" />
+                  </div>
+
+                  {/* Central Icon */}
+                  <div className="relative z-10 w-20 h-20 bg-white/20 backdrop-blur-sm rounded-2xl flex items-center justify-center text-white shadow-lg">
+                    {isDone ? (
+                      <Check className="w-10 h-10" strokeWidth={2.5} />
+                    ) : (
+                      <IconComponent name={mod.previewIcon || mod.icon} className="w-10 h-10" />
+                    )}
+                  </div>
+
+                  {/* External Link Badge */}
+                  {mod.external && (
+                    <div className="absolute top-3 right-3 bg-white/20 backdrop-blur-sm px-2 py-1 rounded-full flex items-center gap-1.5 text-white text-xs font-medium">
+                      <ExternalLink className="w-3 h-3" />
+                      {t('external', lang)}
+                    </div>
+                  )}
+
+                  {/* Done Badge */}
+                  {isDone && (
+                    <div className="absolute top-3 left-3 bg-emerald-500 px-2 py-1 rounded-full flex items-center gap-1.5 text-white text-xs font-medium">
+                      <Check className="w-3 h-3" />
+                      {t('done', lang)}
+                    </div>
+                  )}
+                </div>
+
+                {/* Content */}
+                <div className="p-5">
+                  {/* Title & Time */}
+                  <div className="flex items-start justify-between gap-3 mb-2">
+                    <h3 className="card-title group-hover:text-[var(--color-primary)] transition-colors">{tModule(mod.id, 'title', lang) as string}</h3>
+                    <span className="text-xs whitespace-nowrap px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
+                      {mod.time}
+                    </span>
+                  </div>
+
+                  {/* Tags */}
+                  <div className="flex flex-wrap gap-1.5 mb-3">
+                    {(tModule(mod.id, 'tags', lang) as string[]).map((tag, idx) => (
+                      <span
+                        key={idx}
+                        className="text-xs px-2 py-0.5 rounded-md font-medium"
+                        style={{
+                          backgroundColor: 'var(--color-border)',
+                          color: 'var(--color-text-secondary)'
+                        }}
+                      >
+                        {tag}
+                      </span>
+                    ))}
+                  </div>
+
+                  {/* Description */}
+                  <p className="card-description line-clamp-2 mb-4">{tModule(mod.id, 'description', lang) as string}</p>
+
+                  {/* Footer */}
+                  <div className="flex items-center gap-2 text-sm font-medium" style={{ color: 'var(--color-primary)' }}>
+                    {mod.external ? (
+                      <>
+                        {t('openApp', lang)}
+                        <ExternalLink className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                      </>
+                    ) : isDone ? (
+                      <>
+                        {t('showResults', lang)}
+                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                      </>
+                    ) : (
+                      <>
+                        {t('startTest', lang)}
+                        <ArrowRight className="h-4 w-4 transition group-hover:translate-x-0.5" />
+                      </>
+                    )}
+                  </div>
+                </div>
+              </button>
+            );
+          })}
+        </div>
+
+        {/* Results Button */}
+        {completedCount > 0 && (
+          <div className="text-center pt-4">
+            <button
+              onClick={() => setView('results')}
+              className="text-white px-8 py-4 font-semibold transition-all shadow-lg hover:shadow-xl inline-flex items-center gap-3"
+              style={{ backgroundColor: 'var(--color-text)', borderRadius: 'var(--radius-full)' }}
+            >
+              {t('showCompleteProfile', lang)}
+              <ArrowRight className="w-5 h-5" />
+            </button>
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  const handleModuleClick = (mod: ModuleCard) => {
+    // Handle external links
+    if (mod.external && mod.externalUrl) {
+      window.open(mod.externalUrl, '_blank', 'noopener,noreferrer');
+      return;
+    }
+
+    if (mod.id === 'chat' && progress.chat && chatReport) {
+      setView('results');
+    } else if (mod.id === 'typology' && progress.typology) {
+      setView('results');
+    } else if (mod.id === 'vak' && progress.vak) {
+      setView('results');
+    } else if (mod.id === 'habits' && progress.habits) {
+      setView('results');
+    } else if (mod.id === 'motivation' && progress.motivation) {
+      setView('results');
+    } else if (mod.id === 'strengths' && progress.strengths) {
+      setView('results');
+    } else if (mod.id === 'growthMindset' && progress.growthMindset) {
+      setView('results');
+    } else if (mod.id === 'grit' && progress.grit) {
+      setView('results');
+    } else if (mod.id === 'selfEfficacy' && progress.selfEfficacy) {
+      setView('results');
+    } else if (mod.id === 'testAnxiety' && progress.testAnxiety) {
+      setView('results');
+    } else if (mod.id === 'metacognition' && progress.metacognition) {
+      setView('results');
+    } else if (mod.id === 'riasec' && progress.riasec) {
+      setView('results');
+    } else if (mod.id === 'eq' && progress.eq) {
+      setView('results');
+    } else if (mod.id === 'stroop' && progress.stroop) {
+      setView('results');
+    } else if (mod.id === 'chat') {
+      handleStartChat();
+    } else if (mod.id === 'stroop') {
+      // Reset Stroop state when starting
+      setStroopPhase('intro');
+      setStroopTrials([]);
+      setStroopCurrentTrial(0);
+      setStroopResults([]);
+      setStroopResult(null);
+      setView('stroop');
+    } else {
+      setView(mod.view);
+    }
+  };
+
+  // Chat handlers
+  const handleStartChat = async () => {
+    setView('chat');
+    if (messages.length > 0) return;
+    setIsLoading(true);
+    try {
+      const welcomeText = await navigatorService.startChat();
+      setMessages([{ role: 'model', text: welcomeText, timestamp: new Date() }]);
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleSendMessage = async (e?: React.FormEvent) => {
+    e?.preventDefault();
+    if (!inputText.trim() || isLoading) return;
+    const userMessage: Message = { role: 'user', text: inputText, timestamp: new Date() };
+    setMessages(prev => [...prev, userMessage]);
+    setInputText('');
+    setIsLoading(true);
+    try {
+      const reply = await navigatorService.sendMessage(inputText);
+      setMessages(prev => [...prev, { role: 'model', text: reply, timestamp: new Date() }]);
+      const name = navigatorService.getStudentName();
+      if (name && !studentName) setStudentName(name);
+    } catch (error) {
+      setMessages(prev => [...prev, { role: 'model', text: "Chyba.", timestamp: new Date() }]);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  const handleFinishChat = async () => {
+    setIsLoading(true);
+    try {
+      const result = await navigatorService.generateReport();
+      setChatReport(result);
+      setProgress(p => ({ ...p, chat: true }));
+      setView('results');
+    } catch (error) {
+      console.error(error);
+    } finally {
+      setIsLoading(false);
+    }
+  };
+
+  // Chat View
+  const renderChat = () => (
+    <div className="flex-1 flex flex-col card overflow-hidden mx-4 my-4 max-w-3xl self-center w-full" style={{ boxShadow: 'var(--shadow-lg)' }}>
+      <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Rozhovor s AI</h2>
+        <button onClick={() => setView('dashboard')} style={{ color: 'var(--color-text-muted)' }} className="hover:opacity-70 transition-opacity">
+          <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+        </button>
+      </div>
+      <div className="flex-1 overflow-y-auto p-6 space-y-4" style={{ backgroundColor: 'var(--color-bg)' }}>
+        {messages.map((m, i) => (
+          <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'}`}>
+            <div className={`max-w-[85%] px-5 py-4 ${m.role === 'user' ? 'text-white' : ''}`} style={{
+              backgroundColor: m.role === 'user' ? 'var(--color-primary)' : 'var(--color-bg-card)',
+              border: m.role === 'user' ? 'none' : '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-lg)',
+              color: m.role === 'user' ? '#fff' : 'var(--color-text)'
+            }}>
+              <ReactMarkdown className={`prose-sm max-w-none ${m.role === 'user' ? 'text-white' : ''}`}>{m.text}</ReactMarkdown>
+            </div>
+          </div>
+        ))}
+        {isLoading && (
+          <div className="flex justify-start">
+            <div className="px-5 py-4 flex gap-1.5" style={{ backgroundColor: 'var(--color-bg-card)', borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)' }}>
+              <div className="w-2 h-2 rounded-full animate-bounce" style={{ backgroundColor: 'var(--color-primary)' }}></div>
+              <div className="w-2 h-2 rounded-full animate-bounce [animation-delay:0.2s]" style={{ backgroundColor: 'var(--color-primary)' }}></div>
+              <div className="w-2 h-2 rounded-full animate-bounce [animation-delay:0.4s]" style={{ backgroundColor: 'var(--color-primary)' }}></div>
+            </div>
+          </div>
+        )}
+        <div ref={messagesEndRef} />
+      </div>
+      <div className="p-4" style={{ borderTop: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}>
+        <form onSubmit={handleSendMessage} className="flex gap-3">
+          <input
+            type="text"
+            value={inputText}
+            onChange={(e) => setInputText(e.target.value)}
+            placeholder="Napiš odpověď..."
+            disabled={isLoading}
+            className="flex-1 px-5 py-3 outline-none transition-all"
+            style={{
+              backgroundColor: 'var(--color-bg)',
+              border: '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              fontFamily: 'var(--font-sans)'
+            }}
+          />
           <button
-            onClick={handleEvaluate}
-            className="bg-slate-900 text-white px-6 py-2.5 rounded-full text-sm font-bold transition-all hover:bg-indigo-600 shadow-lg active:scale-95 disabled:opacity-50"
-            disabled={messages.length < 3 || isLoading}
+            type="submit"
+            disabled={!inputText.trim() || isLoading}
+            className="px-5 py-3 text-white font-medium disabled:opacity-50 transition-all"
+            style={{ backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}
           >
-            Analyzovat
+            Odeslat
+          </button>
+        </form>
+        {messages.length >= 6 && (
+          <button
+            onClick={handleFinishChat}
+            disabled={isLoading}
+            className="w-full mt-3 py-3 text-white font-medium disabled:opacity-50 transition-all"
+            style={{ backgroundColor: 'var(--color-text)', borderRadius: 'var(--radius-md)' }}
+          >
+            Dokončit a zobrazit profil
           </button>
         )}
-      </header>
+      </div>
+    </div>
+  );
 
-      {/* Main Content */}
-      <main className="flex-1 max-w-5xl w-full mx-auto px-6 py-4 flex flex-col overflow-hidden">
-        {status === AppStatus.INITIAL && (
-          <div className="flex-1 flex flex-col items-center justify-center text-center space-y-10 animate-in fade-in duration-1000">
-            <div className="max-w-2xl space-y-6">
-              <h2 className="text-5xl font-extrabold text-slate-900 tracking-tight leading-[1.1]">
-                Poznejte svůj <span className="text-indigo-600 italic font-serif">akademický otisk.</span>
+  // Typology
+  const currentDimensionQuestions = typologyQuestions.filter(q => q.dimension === dimensionsMeta[currentDimension]?.id);
+  const allTypologyAnswered = currentDimensionQuestions.every(q => typologyAnswers[q.id]);
+
+  const handleNextDimension = () => {
+    if (currentDimension < dimensionsMeta.length - 1) {
+      setCurrentDimension(d => d + 1);
+    } else {
+      const result = scoreTypology(typologyAnswers);
+      setTypologyResult(result);
+      setProgress(p => ({ ...p, typology: true }));
+      setView('results');
+    }
+  };
+
+  const renderTypology = () => {
+    const dim = dimensionsMeta[currentDimension];
+    const progressPercent = Math.round(((currentDimension) / dimensionsMeta.length) * 100);
+    return (
+      <div className="flex-1 flex flex-col max-w-3xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
+            <ChevronLeft className="w-5 h-5" />
+            Zpět
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentDimension + 1} / {dimensionsMeta.length}</span>
+        </div>
+        <div className="h-2 overflow-hidden mb-8" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+          <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
+        </div>
+        <div className="text-center mb-8">
+          <h2 className="text-h2 font-serif mb-2" style={{ color: 'var(--color-text)' }}>{dim.leftLabel} vs {dim.rightLabel}</h2>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Vyber odpověď, která tě nejlépe vystihuje</p>
+        </div>
+        <div className="space-y-6 flex-1 overflow-y-auto">
+          {currentDimensionQuestions.map((q, idx) => (
+            <div key={q.id} className="card p-6">
+              <p className="font-medium mb-4" style={{ color: 'var(--color-text)' }}>{idx + 1}. {q.text}</p>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
+                {q.options.map(opt => (
+                  <button
+                    key={opt.key}
+                    onClick={() => setTypologyAnswers(prev => ({ ...prev, [q.id]: opt.key }))}
+                    className={`option-button ${typologyAnswers[q.id] === opt.key ? 'selected' : ''}`}
+                    style={{
+                      borderColor: typologyAnswers[q.id] === opt.key ? 'var(--color-primary)' : 'var(--color-border)',
+                      backgroundColor: typologyAnswers[q.id] === opt.key ? 'rgba(74, 95, 168, 0.08)' : 'var(--color-bg-card)'
+                    }}
+                  >
+                    <span className="option-key mr-2">{opt.key})</span>{opt.text}
+                  </button>
+                ))}
+              </div>
+            </div>
+          ))}
+        </div>
+        <div className="flex gap-4 mt-8">
+          {currentDimension > 0 && <button onClick={() => setCurrentDimension(d => d - 1)} className="flex-1 py-4 font-medium transition-all" style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)' }}>Zpět</button>}
+          <button onClick={handleNextDimension} disabled={!allTypologyAnswered} className="flex-1 py-4 text-white font-medium disabled:opacity-50 transition-all" style={{ backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}>
+            {currentDimension === dimensionsMeta.length - 1 ? 'Dokončit' : 'Další'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // VAK Test
+  const handleVakAnswer = (answer: VakOption) => {
+    const newAnswers = [...vakAnswers, answer];
+    setVakAnswers(newAnswers);
+    if (currentVakQuestion < vakQuestions.length - 1) {
+      setCurrentVakQuestion(q => q + 1);
+    } else {
+      const result = scoreVak(newAnswers);
+      setVakResult(result);
+      setProgress(p => ({ ...p, vak: true }));
+      setView('results');
+    }
+  };
+
+  const renderVak = () => {
+    const q = vakQuestions[currentVakQuestion];
+    const progressPercent = Math.round((currentVakQuestion / vakQuestions.length) * 100);
+    return (
+      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
+            <ChevronLeft className="w-5 h-5" />
+            Zpět
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentVakQuestion + 1} / {vakQuestions.length}</span>
+        </div>
+        <div className="h-2 overflow-hidden mb-8" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+          <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
+        </div>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <div className="space-y-4">
+              {q.options.map((opt, idx) => (
+                <button key={opt.key} onClick={() => handleVakAnswer(opt.key)} className="option-button flex items-center gap-4">
+                  <span className="w-10 h-10 flex items-center justify-center font-semibold" style={{ borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
+                    {String.fromCharCode(65 + idx)}
+                  </span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{opt.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Habits Test
+  const handleHabitsAnswer = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
+    const newAnswers = { ...habitsAnswers, [questionId]: answer };
+    setHabitsAnswers(newAnswers);
+    if (currentHabitsQuestion < habitsQuestions.length - 1) {
+      setCurrentHabitsQuestion(q => q + 1);
+    } else {
+      const result = scoreHabits(newAnswers);
+      setHabitsResult(result);
+      setProgress(p => ({ ...p, habits: true }));
+      setView('results');
+    }
+  };
+
+  const renderHabits = () => {
+    const q = habitsQuestions[currentHabitsQuestion];
+    const progressPercent = Math.round((currentHabitsQuestion / habitsQuestions.length) * 100);
+    return (
+      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
+            <ChevronLeft className="w-5 h-5" />
+            Zpět
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentHabitsQuestion + 1} / {habitsQuestions.length}</span>
+        </div>
+        <div className="h-2 overflow-hidden mb-8" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+          <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
+        </div>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <div className="space-y-4">
+              {q.options.map((opt, idx) => (
+                <button key={opt.key} onClick={() => handleHabitsAnswer(q.id, opt.key)} className="option-button flex items-center gap-4">
+                  <span className="w-10 h-10 flex items-center justify-center font-semibold" style={{ borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
+                    {opt.key}
+                  </span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{opt.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Motivation Test
+  const handleMotivationAnswer = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
+    const newAnswers = { ...motivationAnswers, [questionId]: answer };
+    setMotivationAnswers(newAnswers);
+    if (currentMotivationQuestion < motivationQuestions.length - 1) {
+      setCurrentMotivationQuestion(q => q + 1);
+    } else {
+      const result = scoreMotivation(newAnswers);
+      setMotivationResult(result);
+      setProgress(p => ({ ...p, motivation: true }));
+      setView('results');
+    }
+  };
+
+  const renderMotivation = () => {
+    const q = motivationQuestions[currentMotivationQuestion];
+    const progressPercent = Math.round((currentMotivationQuestion / motivationQuestions.length) * 100);
+    return (
+      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
+            <ChevronLeft className="w-5 h-5" />
+            Zpět
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentMotivationQuestion + 1} / {motivationQuestions.length}</span>
+        </div>
+        <div className="h-2 overflow-hidden mb-8" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+          <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
+        </div>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <div className="space-y-4">
+              {q.options.map((opt, idx) => (
+                <button key={opt.key} onClick={() => handleMotivationAnswer(q.id, opt.key)} className="option-button flex items-center gap-4">
+                  <span className="w-10 h-10 flex items-center justify-center font-semibold" style={{ borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
+                    {opt.key}
+                  </span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{opt.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Strengths Test
+  const handleStrengthsAnswer = (questionId: string, answer: 'A' | 'B' | 'C' | 'D') => {
+    const newAnswers = { ...strengthsAnswers, [questionId]: answer };
+    setStrengthsAnswers(newAnswers);
+    if (currentStrengthsQuestion < strengthsQuestions.length - 1) {
+      setCurrentStrengthsQuestion(q => q + 1);
+    } else {
+      const result = scoreStrengths(newAnswers);
+      setStrengthsResult(result);
+      setProgress(p => ({ ...p, strengths: true }));
+      setView('results');
+    }
+  };
+
+  const renderStrengths = () => {
+    const q = strengthsQuestions[currentStrengthsQuestion];
+    const progressPercent = Math.round((currentStrengthsQuestion / strengthsQuestions.length) * 100);
+    return (
+      <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="flex items-center justify-between mb-6">
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
+            <ChevronLeft className="w-5 h-5" />
+            Zpět
+          </button>
+          <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentStrengthsQuestion + 1} / {strengthsQuestions.length}</span>
+        </div>
+        <div className="h-2 overflow-hidden mb-8" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+          <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
+        </div>
+        <div className="flex-1 flex flex-col justify-center">
+          <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <div className="space-y-4">
+              {q.options.map((opt, idx) => (
+                <button key={opt.key} onClick={() => handleStrengthsAnswer(q.id, opt.key)} className="option-button flex items-center gap-4">
+                  <span className="w-10 h-10 flex items-center justify-center font-semibold" style={{ borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
+                    {opt.key}
+                  </span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{opt.text}</span>
+                </button>
+              ))}
+            </div>
+          </div>
+        </div>
+      </div>
+    );
+  };
+
+  // Stroop Test with Camera
+  const startCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (videoRef.current) {
+        videoRef.current.srcObject = stream;
+        setCameraActive(true);
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+    }
+  };
+
+  const stopCamera = () => {
+    if (videoRef.current && videoRef.current.srcObject) {
+      const tracks = (videoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+      setCameraActive(false);
+    }
+  };
+
+  const startStroopPractice = () => {
+    setStroopPhase('practice');
+    setStroopTrials(generatePracticeTrials());
+    setStroopCurrentTrial(0);
+    setStroopResults([]);
+    setTimeout(() => {
+      setStroopShowStimulus(true);
+      setStroopTrialStart(Date.now());
+    }, 1000);
+  };
+
+  const startStroopTest = () => {
+    setStroopPhase('test');
+    setStroopTrials(generateStroopTrials(12, 12));
+    setStroopCurrentTrial(0);
+    setStroopResults([]);
+    setTimeout(() => {
+      setStroopShowStimulus(true);
+      setStroopTrialStart(Date.now());
+    }, 1000);
+  };
+
+  const handleStroopAnswer = (colorName: string) => {
+    if (!stroopShowStimulus) return;
+
+    const reactionTime = Date.now() - stroopTrialStart;
+    const currentTrialData = stroopTrials[stroopCurrentTrial];
+    const isCorrect = colorName === currentTrialData.correctAnswer;
+
+    const result: StroopTrialResult = {
+      trial: currentTrialData,
+      userAnswer: colorName,
+      isCorrect,
+      reactionTimeMs: reactionTime
+    };
+
+    const newResults = [...stroopResults, result];
+    setStroopResults(newResults);
+    setStroopShowStimulus(false);
+
+    if (stroopCurrentTrial < stroopTrials.length - 1) {
+      // Next trial after brief pause
+      setTimeout(() => {
+        setStroopCurrentTrial(stroopCurrentTrial + 1);
+        setStroopShowStimulus(true);
+        setStroopTrialStart(Date.now());
+      }, 500);
+    } else {
+      // Test complete
+      if (stroopPhase === 'practice') {
+        // After practice, prompt to start real test
+        setStroopPhase('test');
+        setTimeout(startStroopTest, 500);
+      } else {
+        // Score and finish
+        const finalResult = scoreStroopTest(newResults);
+        setStroopResult(finalResult);
+        setProgress(p => ({ ...p, stroop: true }));
+        stopCamera();
+        handleGenerateFeedback('stroop', 'Stroop Test', {
+          score: finalResult.accuracy,
+          percent: finalResult.accuracy,
+          label: finalResult.label,
+          description: `Stroop efekt: ${finalResult.stroopEffect}ms (${finalResult.stroopEffectPercent}%)`
+        });
+        setView('results');
+      }
+    }
+  };
+
+  const renderStroopTest = () => (
+    <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
+      {/* Header */}
+      <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        <button onClick={() => { stopCamera(); setView('dashboard'); }} className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <ChevronLeft className="w-5 h-5" /> Zpět
+        </button>
+        <div className="text-center">
+          <h2 className="font-serif font-semibold" style={{ color: 'var(--color-text)' }}>Stroop Test</h2>
+          {stroopPhase !== 'intro' && (
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {stroopPhase === 'practice' ? 'Cvičení' : `${stroopCurrentTrial + 1} / ${stroopTrials.length}`}
+            </p>
+          )}
+        </div>
+        <div className="w-20" />
+      </div>
+
+      <div className="flex-1 flex">
+        {/* Main Test Area */}
+        <div className="flex-1 flex flex-col items-center justify-center p-8">
+          {stroopPhase === 'intro' && (
+            <div className="max-w-xl text-center space-y-6">
+              <div className="w-20 h-20 mx-auto bg-gradient-to-br from-cyan-500 to-blue-600 rounded-2xl flex items-center justify-center">
+                <Eye className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-serif font-semibold" style={{ color: 'var(--color-text)' }}>
+                Stroop Test - Měření pozornosti
               </h2>
-              <p className="text-slate-500 text-xl leading-relaxed academic-text max-w-xl mx-auto">
-                Vstupte do řízeného dialogu navrženého k odhalení vašich kognitivních procesů a studijních mechanismů.
+              <div className="text-left space-y-4 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  <strong>Jak to funguje:</strong> Uvidíš slova barev (např. "ČERVENÁ"), ale zobrazené v různých barvách.
+                </p>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  <strong>Tvůj úkol:</strong> Klikni na BARVU, kterou je slovo NAPSANÉ (ne na to, co slovo říká)!
+                </p>
+                <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg)' }}>
+                  <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>Příklad:</p>
+                  <p className="text-2xl font-bold text-center" style={{ color: '#3b82f6' }}>ČERVENÁ</p>
+                  <p className="text-sm text-center mt-2" style={{ color: 'var(--color-text-muted)' }}>
+                    Správná odpověď: MODRÁ (barva textu)
+                  </p>
+                </div>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  Kamera bude sledovat tvou pozornost během testu.
+                </p>
+              </div>
+              <button
+                onClick={() => { startCamera(); startStroopPractice(); }}
+                className="px-8 py-4 text-white font-semibold text-lg transition-all hover:scale-105"
+                style={{ backgroundColor: '#0891b2', borderRadius: 'var(--radius-lg)' }}
+              >
+                Zapnout kameru a začít cvičení
+              </button>
+            </div>
+          )}
+
+          {(stroopPhase === 'practice' || stroopPhase === 'test') && (
+            <div className="w-full max-w-lg space-y-8">
+              {/* Stimulus Display */}
+              <div
+                className="h-48 flex items-center justify-center rounded-2xl"
+                style={{ backgroundColor: '#1f2937' }}
+              >
+                {stroopShowStimulus && stroopTrials[stroopCurrentTrial] ? (
+                  <span
+                    className="text-5xl font-bold tracking-wider"
+                    style={{ color: stroopTrials[stroopCurrentTrial].displayColor }}
+                  >
+                    {stroopTrials[stroopCurrentTrial].word}
+                  </span>
+                ) : (
+                  <span className="text-4xl text-white/20">+</span>
+                )}
+              </div>
+
+              {/* Answer Buttons */}
+              <div className="grid grid-cols-2 gap-4">
+                {COLOR_NAMES.map((colorName) => (
+                  <button
+                    key={colorName}
+                    onClick={() => handleStroopAnswer(colorName)}
+                    disabled={!stroopShowStimulus}
+                    className="py-6 text-white font-bold text-xl rounded-xl transition-all hover:scale-105 disabled:opacity-50 disabled:cursor-not-allowed"
+                    style={{ backgroundColor: COLORS[colorName] }}
+                  >
+                    {colorName}
+                  </button>
+                ))}
+              </div>
+
+              {/* Progress */}
+              <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }}>
+                <div
+                  className="h-full transition-all duration-300"
+                  style={{
+                    width: `${((stroopCurrentTrial + 1) / stroopTrials.length) * 100}%`,
+                    backgroundColor: '#0891b2'
+                  }}
+                />
+              </div>
+            </div>
+          )}
+        </div>
+
+        {/* Camera Panel */}
+        {cameraActive && (
+          <div className="w-64 p-4 flex flex-col gap-4" style={{ borderLeft: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}>
+            <div className="relative rounded-lg overflow-hidden" style={{ aspectRatio: '4/3' }}>
+              <video
+                ref={videoRef}
+                autoPlay
+                playsInline
+                muted
+                className="w-full h-full object-cover"
+              />
+              <div className="absolute top-2 right-2 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+            </div>
+            <div className="text-center">
+              <p className="text-xs font-medium" style={{ color: 'var(--color-text)' }}>Kamera aktivní</p>
+              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Sledujeme tvou pozornost</p>
+            </div>
+            {stroopResults.length > 0 && (
+              <div className="p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg)' }}>
+                <p className="text-xs font-medium mb-2" style={{ color: 'var(--color-text)' }}>Průběžné výsledky:</p>
+                <div className="flex justify-between text-xs">
+                  <span style={{ color: 'var(--color-text-muted)' }}>Správně:</span>
+                  <span style={{ color: '#22c55e' }}>{stroopResults.filter(r => r.isCorrect).length}</span>
+                </div>
+                <div className="flex justify-between text-xs">
+                  <span style={{ color: 'var(--color-text-muted)' }}>Špatně:</span>
+                  <span style={{ color: '#ef4444' }}>{stroopResults.filter(r => !r.isCorrect).length}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Mental Rotation Test functions
+  const startMrtPractice = () => {
+    setMrtPhase('practice');
+    setMrtTrials(generateMRTPracticeTrials());
+    setMrtCurrentTrial(0);
+    setMrtResults([]);
+    setTimeout(() => {
+      setMrtTrialStart(Date.now());
+    }, 300);
+  };
+
+  const startMrtTest = () => {
+    setMrtPhase('test');
+    setMrtTrials(generateMentalRotationTrials(4, 6, 6));
+    setMrtCurrentTrial(0);
+    setMrtResults([]);
+    setTimeout(() => {
+      setMrtTrialStart(Date.now());
+    }, 300);
+  };
+
+  const handleMrtAnswer = (selectedIndex: number) => {
+    const currentTrial = mrtTrials[mrtCurrentTrial];
+    if (!currentTrial) return;
+
+    const reactionTimeMs = Date.now() - mrtTrialStart;
+    const isCorrect = selectedIndex === currentTrial.correctIndex;
+
+    const result: MentalRotationTrialResult = {
+      trial: currentTrial,
+      selectedIndex,
+      isCorrect,
+      reactionTimeMs
+    };
+
+    const newResults = [...mrtResults, result];
+    setMrtResults(newResults);
+
+    if (mrtCurrentTrial < mrtTrials.length - 1) {
+      setTimeout(() => {
+        setMrtCurrentTrial(mrtCurrentTrial + 1);
+        setMrtTrialStart(Date.now());
+      }, 400);
+    } else {
+      if (mrtPhase === 'practice') {
+        setMrtPhase('test');
+        setTimeout(startMrtTest, 500);
+      } else {
+        const finalResult = scoreMentalRotationTest(newResults);
+        setMrtResult(finalResult);
+        setProgress(p => ({ ...p, mentalRotation: true }));
+        handleGenerateFeedback('mentalRotation', 'Mental Rotation Test', {
+          score: finalResult.accuracy,
+          percent: finalResult.accuracy,
+          label: finalResult.label,
+          description: `Prostorová schopnost: ${finalResult.spatialAbility}, STEM potenciál: ${finalResult.stemPotential}`
+        });
+        setView('results');
+      }
+    }
+  };
+
+  // SVG Shape component
+  const ShapeDisplay: React.FC<{ shape: { points: { x: number; y: number }[] }, rotation: number, size?: number, color?: string }> =
+    ({ shape, rotation, size = 100, color = '#8b5cf6' }) => {
+      const { path, viewBox } = getShapeSvgData({ type: 'L', points: shape.points }, rotation, size);
+      return (
+        <svg width={size} height={size} viewBox={viewBox} className="transition-all">
+          <path d={path} fill={color} stroke="#1f2937" strokeWidth="2" />
+        </svg>
+      );
+    };
+
+  const renderMentalRotationTest = () => (
+    <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
+      {/* Header */}
+      <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        <button onClick={() => { setMrtPhase('intro'); setView('dashboard'); }} className="flex items-center gap-2" style={{ color: 'var(--color-text-muted)' }}>
+          <ChevronLeft className="w-5 h-5" /> Zpět
+        </button>
+        <div className="text-center">
+          <h2 className="font-serif font-semibold" style={{ color: 'var(--color-text)' }}>Prostorová představivost</h2>
+          {mrtPhase !== 'intro' && (
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {mrtPhase === 'practice' ? 'Cvičení' : `${mrtCurrentTrial + 1} / ${mrtTrials.length}`}
+            </p>
+          )}
+        </div>
+        <div className="w-20" />
+      </div>
+
+      <div className="flex-1 flex flex-col items-center justify-center p-8">
+        {mrtPhase === 'intro' && (
+          <div className="max-w-xl text-center space-y-6">
+            <div className="w-20 h-20 mx-auto bg-gradient-to-br from-violet-500 to-purple-600 rounded-2xl flex items-center justify-center">
+              <Brain className="w-10 h-10 text-white" />
+            </div>
+            <h2 className="text-2xl font-serif font-semibold" style={{ color: 'var(--color-text)' }}>
+              Test mentální rotace (Shepard & Metzler)
+            </h2>
+            <div className="text-left space-y-4 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+              <p style={{ color: 'var(--color-text-secondary)' }}>
+                <strong>Co měříme:</strong> Prostorovou představivost - schopnost mentálně otáčet objekty. Klíčová dovednost pro STEM obory (inženýrství, architektura, věda).
+              </p>
+              <p style={{ color: 'var(--color-text-secondary)' }}>
+                <strong>Jak to funguje:</strong> Uvidíš vzorový tvar a několik možností. Vyber tu, která je STEJNÁ jako vzor (jen otočená, ne zrcadlená).
+              </p>
+              <div className="p-4 rounded-lg flex justify-center gap-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+                <div className="text-center">
+                  <p className="text-xs mb-2" style={{ color: 'var(--color-text-muted)' }}>Vzor:</p>
+                  <div className="w-16 h-16 bg-violet-500 flex items-center justify-center rounded" style={{ clipPath: 'polygon(0 0, 50% 0, 50% 50%, 100% 50%, 100% 100%, 0 100%)' }} />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs mb-2" style={{ color: '#22c55e' }}>Správně (otočený):</p>
+                  <div className="w-16 h-16 bg-green-500 flex items-center justify-center rounded" style={{ clipPath: 'polygon(0 0, 100% 0, 100% 50%, 50% 50%, 50% 100%, 0 100%)', transform: 'rotate(90deg)' }} />
+                </div>
+                <div className="text-center">
+                  <p className="text-xs mb-2" style={{ color: '#ef4444' }}>Špatně (zrcadlený):</p>
+                  <div className="w-16 h-16 bg-red-500 flex items-center justify-center rounded" style={{ clipPath: 'polygon(50% 0, 100% 0, 100% 100%, 0 100%, 0 50%, 50% 50%)', transform: 'rotate(0deg)' }} />
+                </div>
+              </div>
+              <p style={{ color: 'var(--color-text-secondary)' }}>
+                <strong>Tip:</strong> Zrcadlené tvary vypadají podobně, ale jsou převrácené - dej si pozor!
               </p>
             </div>
-            
             <button
-              onClick={handleStart}
-              className="group relative bg-white text-slate-900 border-2 border-slate-900 px-12 py-5 rounded-full text-lg font-bold transition-all hover:bg-slate-900 hover:text-white flex items-center gap-4 shadow-[8px_8px_0px_rgba(0,0,0,0.1)] hover:shadow-none hover:translate-x-1 hover:translate-y-1"
+              onClick={startMrtPractice}
+              className="px-8 py-4 text-white font-semibold text-lg transition-all hover:scale-105"
+              style={{ backgroundColor: '#8b5cf6', borderRadius: 'var(--radius-lg)' }}
             >
-              <span>Zahájit navigaci</span>
-              <svg xmlns="http://www.w3.org/2000/svg" className="h-5 w-5 transition-transform group-hover:translate-x-1" fill="none" viewBox="0 0 24 24" stroke="currentColor">
-                <path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M14 5l7 7m0 0l-7 7m7-7H3" />
-              </svg>
+              Začít cvičení
             </button>
           </div>
         )}
 
-        {(status === AppStatus.CHATTING || status === AppStatus.EVALUATING) && (
-          <div className="flex-1 flex flex-col bg-white rounded-[2rem] shadow-[0_20px_60px_-15px_rgba(0,0,0,0.05)] border border-slate-100 overflow-hidden relative">
-            {/* Chat History */}
-            <div className="flex-1 overflow-y-auto p-10 space-y-8">
-              {messages.map((m, i) => (
-                <div key={i} className={`flex ${m.role === 'user' ? 'justify-end' : 'justify-start'} message-anim`}>
-                  <div className={`max-w-[80%] rounded-2xl px-6 py-5 ${
-                    m.role === 'user' 
-                      ? 'bg-indigo-600 text-white shadow-md' 
-                      : 'bg-[#f8fafc] text-slate-800 border border-slate-100 shadow-sm'
-                  }`}>
-                    <div className={`prose-academic max-w-none ${m.role === 'user' ? 'text-white prose-invert prose-p:leading-snug text-base' : ''}`}>
-                      <ReactMarkdown>{m.text}</ReactMarkdown>
-                    </div>
-                    <div className={`text-[10px] mt-3 font-bold opacity-40 uppercase tracking-widest ${m.role === 'user' ? 'text-right' : 'text-left'}`}>
-                      {m.timestamp.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
-                    </div>
-                  </div>
-                </div>
-              ))}
-              {isLoading && status === AppStatus.CHATTING && (
-                <div className="flex justify-start">
-                  <div className="bg-[#f8fafc] rounded-2xl px-6 py-5 flex gap-1.5 items-center">
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce"></div>
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.2s]"></div>
-                    <div className="w-1.5 h-1.5 bg-indigo-400 rounded-full animate-bounce [animation-delay:0.4s]"></div>
-                  </div>
-                </div>
-              )}
-              {status === AppStatus.EVALUATING && (
-                <div className="absolute inset-0 bg-white/90 backdrop-blur-md z-10 flex flex-col items-center justify-center text-center p-8">
-                  <div className="w-14 h-14 border-[3px] border-indigo-600 border-t-transparent rounded-full animate-spin mb-8"></div>
-                  <h3 className="text-3xl font-bold text-slate-900 mb-3 tracking-tight">Provádím analýzu...</h3>
-                  <p className="text-slate-500 academic-text">Sestavuji váš profil na základě kognitivních parametrů.</p>
-                </div>
-              )}
-              <div ref={messagesEndRef} />
-            </div>
-
-            {/* Input Area */}
-            <div className="px-10 py-8 bg-white border-t border-slate-50">
-              <form onSubmit={handleSend} className="relative flex items-center">
-                <input
-                  type="text"
-                  value={inputText}
-                  onChange={(e) => setInputText(e.target.value)}
-                  placeholder="Zadejte svou odpověď..."
-                  disabled={isLoading || status !== AppStatus.CHATTING}
-                  className="w-full pl-8 pr-16 py-5 bg-slate-50 border border-slate-100 rounded-2xl focus:ring-2 focus:ring-indigo-500/20 focus:bg-white focus:border-indigo-500 transition-all text-lg academic-text placeholder:text-slate-400 disabled:opacity-50"
+        {(mrtPhase === 'practice' || mrtPhase === 'test') && mrtTrials[mrtCurrentTrial] && (
+          <div className="w-full max-w-3xl space-y-8">
+            {/* Original Shape */}
+            <div className="text-center">
+              <p className="text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>
+                {mrtPhase === 'practice' ? '🎯 Cvičení: ' : ''}Najdi tvar, který je STEJNÝ jako vzor (jen otočený):
+              </p>
+              <div className="inline-block p-6 rounded-2xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '2px solid #8b5cf6' }}>
+                <p className="text-xs mb-2 font-medium" style={{ color: '#8b5cf6' }}>VZOR</p>
+                <ShapeDisplay
+                  shape={{ points: mrtTrials[mrtCurrentTrial].originalShape.points }}
+                  rotation={mrtTrials[mrtCurrentTrial].originalRotation}
+                  size={120}
+                  color="#8b5cf6"
                 />
-                <button
-                  type="submit"
-                  disabled={!inputText.trim() || isLoading}
-                  className="absolute right-3 p-3 bg-indigo-600 text-white rounded-xl hover:bg-indigo-700 disabled:opacity-50 transition-all active:scale-90 shadow-md"
-                >
-                  <svg viewBox="0 0 24 24" className="w-6 h-6" fill="none" stroke="currentColor" strokeWidth="2.5">
-                    <path d="M5 12h14M12 5l7 7-7 7" />
-                  </svg>
-                </button>
-              </form>
-              <div className="mt-4 flex justify-center items-center gap-2">
-                <div className="h-[1px] w-12 bg-slate-100"></div>
-                <span className="text-[10px] text-slate-400 font-bold uppercase tracking-[0.2em]">
-                  Anonymizovaný vědecký sběr
-                </span>
-                <div className="h-[1px] w-12 bg-slate-100"></div>
               </div>
             </div>
-          </div>
-        )}
 
-        {status === AppStatus.FINISHED && report && (
-          <div className="flex-1 space-y-12 animate-in zoom-in-95 duration-700 pb-20">
-            <div className="text-center space-y-4">
-              <h2 className="text-5xl font-extrabold text-slate-900 tracking-tighter">Váš Studijní Pas</h2>
-              <p className="text-slate-500 text-lg academic-text">Syntéza vašich kognitivních předpokladů a silných stránek.</p>
+            {/* Options */}
+            <div className="flex justify-center gap-4 flex-wrap">
+              {mrtTrials[mrtCurrentTrial].options.map((option, index) => (
+                <button
+                  key={index}
+                  onClick={() => handleMrtAnswer(index)}
+                  className="p-4 rounded-xl transition-all hover:scale-105 hover:shadow-lg"
+                  style={{
+                    backgroundColor: 'var(--color-bg-card)',
+                    border: '2px solid var(--color-border)'
+                  }}
+                >
+                  <p className="text-xs mb-2 font-medium" style={{ color: 'var(--color-text-muted)' }}>
+                    Možnost {String.fromCharCode(65 + index)}
+                  </p>
+                  <ShapeDisplay
+                    shape={{ points: option.shape.points }}
+                    rotation={option.rotation}
+                    size={100}
+                    color="#64748b"
+                  />
+                </button>
+              ))}
             </div>
 
-            <div className="grid grid-cols-1 lg:grid-cols-12 gap-10">
-              {/* Left Column: Visual Profiler */}
-              <div className="lg:col-span-5 space-y-8">
-                <div className="bg-white p-10 rounded-[2.5rem] shadow-xl border border-slate-100">
-                  <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-8 border-b border-slate-50 pb-4">
-                    Kognitivní Parametry
+            {/* Progress */}
+            <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }}>
+              <div
+                className="h-full transition-all duration-300"
+                style={{
+                  width: `${((mrtCurrentTrial + 1) / mrtTrials.length) * 100}%`,
+                  backgroundColor: '#8b5cf6'
+                }}
+              />
+            </div>
+
+            {/* Stats */}
+            {mrtResults.length > 0 && (
+              <div className="flex justify-center gap-8 text-sm">
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-green-500" />
+                  <span style={{ color: 'var(--color-text-muted)' }}>Správně: {mrtResults.filter(r => r.isCorrect).length}</span>
+                </div>
+                <div className="flex items-center gap-2">
+                  <span className="w-3 h-3 rounded-full bg-red-500" />
+                  <span style={{ color: 'var(--color-text-muted)' }}>Špatně: {mrtResults.filter(r => !r.isCorrect).length}</span>
+                </div>
+              </div>
+            )}
+          </div>
+        )}
+      </div>
+    </div>
+  );
+
+  // Results
+  const renderResults = () => (
+    <div className="flex-1 overflow-y-auto px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+      <div className="max-w-5xl mx-auto space-y-8">
+        <div className="text-center">
+          <h1 className="text-h1 font-serif mb-2" style={{ color: 'var(--color-text)' }}>
+            {studentName ? `${studentName}, tvůj profil` : 'Tvůj profil'}
+          </h1>
+          <p style={{ color: 'var(--color-text-secondary)' }}>Kompletní přehled všech výsledků</p>
+        </div>
+
+        {/* Tabs */}
+        <div className="flex justify-center gap-2 flex-wrap">
+          <button
+            onClick={() => setResultsTab('overview')}
+            className={`px-6 py-3 font-medium transition-all ${resultsTab === 'overview' ? 'text-white' : ''}`}
+            style={{
+              backgroundColor: resultsTab === 'overview' ? 'var(--color-primary)' : 'var(--color-bg-card)',
+              border: resultsTab === 'overview' ? 'none' : '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              color: resultsTab === 'overview' ? '#fff' : 'var(--color-text-secondary)'
+            }}
+          >
+            Přehled výsledků
+          </button>
+          <button
+            onClick={() => {
+              setResultsTab('synthesis');
+              handleGenerateSynthesis();
+            }}
+            className={`px-6 py-3 font-medium transition-all ${resultsTab === 'synthesis' ? 'text-white' : ''}`}
+            style={{
+              backgroundColor: resultsTab === 'synthesis' ? 'var(--color-primary)' : 'var(--color-bg-card)',
+              border: resultsTab === 'synthesis' ? 'none' : '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              color: resultsTab === 'synthesis' ? '#fff' : 'var(--color-text-secondary)'
+            }}
+          >
+            AI Syntéza & Tipy
+          </button>
+          <button
+            onClick={() => {
+              setResultsTab('coaching');
+              handleGenerateCoaching();
+            }}
+            className={`px-6 py-3 font-medium transition-all flex items-center gap-2 ${resultsTab === 'coaching' ? 'text-white' : ''}`}
+            style={{
+              backgroundColor: resultsTab === 'coaching' ? '#10b981' : 'var(--color-bg-card)',
+              border: resultsTab === 'coaching' ? 'none' : '1px solid var(--color-border)',
+              borderRadius: 'var(--radius-md)',
+              color: resultsTab === 'coaching' ? '#fff' : 'var(--color-text-secondary)'
+            }}
+          >
+            <Sparkles className="w-4 h-4" />
+            AI Kouč & Plán
+          </button>
+        </div>
+
+        {resultsTab === 'synthesis' ? (
+          /* Synthesis Tab */
+          <div className="space-y-8">
+            {isSynthesisLoading ? (
+              <div className="card p-12 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
+                </div>
+                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>Generuji AI syntézu...</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>Analyzuji tvůj kompletní profil a připravuji personalizované tipy</p>
+              </div>
+            ) : synthesis ? (
+              <>
+                {/* AI Synthesis */}
+                <div className="card p-8">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                    <Sparkles className="w-4 h-4" /> Komplexní syntéza tvého profilu
                   </h3>
-                  
-                  <div className="space-y-8">
-                    {report.skills.map((skill, i) => (
-                      <SkillBar key={i} skill={skill} index={i} />
+                  <div className="prose max-w-none" style={{ color: 'var(--color-text)' }}>
+                    <ReactMarkdown>{synthesis.synthesis}</ReactMarkdown>
+                  </div>
+                </div>
+
+                {/* Study Tips */}
+                <div className="card p-8">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-6 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                    <Medal className="w-4 h-4" /> Jak využít své silné stránky pro úspěch
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    {synthesis.studyTips.map((tip, i) => (
+                      <div key={i} className="flex gap-4 p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center font-bold text-sm" style={{ backgroundColor: 'var(--color-primary)', color: '#fff', borderRadius: 'var(--radius-full)' }}>
+                          {i + 1}
+                        </div>
+                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)', lineHeight: '1.6' }}>{tip}</p>
+                      </div>
                     ))}
                   </div>
-                  
-                  <div className="mt-12 p-6 bg-slate-50 rounded-3xl border border-slate-100 flex items-start gap-5">
-                     <div className="w-10 h-10 bg-indigo-600 rounded-xl flex shrink-0 items-center justify-center text-white shadow-lg">
-                        <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24">
-                          <path strokeLinecap="round" strokeLinejoin="round" strokeWidth="2" d="M13 10V3L4 14h7v7l9-11h-7z" />
-                        </svg>
-                     </div>
-                     <div>
-                        <p className="text-xs font-bold text-indigo-600 uppercase tracking-wider mb-1">Syntéza profilu</p>
-                        <p className="text-sm text-slate-600 leading-relaxed font-medium">Váš styl uvažování vykazuje silnou orientaci na strukturální logiku s kreativním přesahem.</p>
-                     </div>
+                </div>
+
+                {/* YouTube Videos */}
+                {synthesis.youtubeVideos && synthesis.youtubeVideos.length > 0 && (
+                  <div className="card p-8">
+                    <h3 className="text-xs font-semibold uppercase tracking-wider mb-6 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                      <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                        <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                      </svg>
+                      Doporučená videa pro tebe
+                    </h3>
+                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+                      {synthesis.youtubeVideos.map((video, i) => (
+                        <a
+                          key={i}
+                          href={`https://www.youtube.com/watch?v=${video.videoId}`}
+                          target="_blank"
+                          rel="noopener noreferrer"
+                          className="group block overflow-hidden transition-all hover:-translate-y-1 hover:shadow-lg"
+                          style={{ borderRadius: 'var(--radius-lg)', border: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}
+                        >
+                          {/* Thumbnail */}
+                          <div className="relative aspect-video bg-slate-200 overflow-hidden">
+                            <img
+                              src={`https://img.youtube.com/vi/${video.videoId}/mqdefault.jpg`}
+                              alt={video.title}
+                              className="w-full h-full object-cover group-hover:scale-105 transition-transform duration-300"
+                            />
+                            {/* Play button overlay */}
+                            <div className="absolute inset-0 flex items-center justify-center bg-black/20 group-hover:bg-black/30 transition-colors">
+                              <div className="w-12 h-12 flex items-center justify-center bg-red-600 rounded-full shadow-lg">
+                                <svg className="w-5 h-5 text-white ml-1" fill="currentColor" viewBox="0 0 24 24">
+                                  <path d="M8 5v14l11-7z"/>
+                                </svg>
+                              </div>
+                            </div>
+                          </div>
+                          {/* Content */}
+                          <div className="p-4">
+                            <h4 className="font-medium text-sm mb-1 line-clamp-2 group-hover:text-[var(--color-primary)] transition-colors" style={{ color: 'var(--color-text)' }}>
+                              {video.title}
+                            </h4>
+                            <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>
+                              {video.description}
+                            </p>
+                          </div>
+                        </a>
+                      ))}
+                    </div>
+                  </div>
+                )}
+              </>
+            ) : (
+              <div className="card p-12 text-center">
+                <p style={{ color: 'var(--color-text-secondary)' }}>Klikni na tlačítko výše pro vygenerování AI syntézy</p>
+              </div>
+            )}
+          </div>
+        ) : resultsTab === 'coaching' ? (
+          /* Coaching Tab */
+          <div className="space-y-8">
+            {isCoachingLoading ? (
+              <div className="card p-12 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#10b981', borderTopColor: 'transparent' }}></div>
+                </div>
+                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>Připravuji tvůj koučovací plán...</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>Analyzuji všechny výsledky a vytvářím personalizované doporučení</p>
+              </div>
+            ) : coaching ? (
+              <>
+                {/* Motivational Message */}
+                <div className="card p-6" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                  <div className="flex items-start gap-4">
+                    <div className="flex-shrink-0 w-12 h-12 bg-white/20 rounded-full flex items-center justify-center">
+                      <Sparkles className="w-6 h-6 text-white" />
+                    </div>
+                    <div>
+                      <h3 className="text-white font-semibold mb-2">Osobní zpráva pro tebe</h3>
+                      <p className="text-white/90">{coaching.motivationalMessage}</p>
+                    </div>
                   </div>
                 </div>
 
-                <div className="bg-slate-900 text-slate-400 p-10 rounded-[2.5rem] shadow-2xl relative overflow-hidden">
-                  <h3 className="text-xs font-bold text-white/40 uppercase tracking-[0.2em] mb-6">Metodika Q2</h3>
-                  <code className="block bg-black/30 p-5 rounded-2xl text-[11px] font-mono text-indigo-400 border border-white/5 break-all leading-relaxed">
-                    {report.researchBlock}
-                  </code>
-                  <button 
-                    onClick={() => window.location.reload()}
-                    className="mt-10 w-full py-4 bg-white text-slate-900 font-bold rounded-2xl hover:bg-slate-100 transition-all flex items-center justify-center gap-3 active:scale-95"
-                  >
-                    Nová diagnostika
-                  </button>
+                {/* Summary */}
+                <div className="card p-8">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
+                    <Brain className="w-4 h-4" /> Celkové shrnutí
+                  </h3>
+                  <div className="prose max-w-none" style={{ color: 'var(--color-text)' }}>
+                    <ReactMarkdown>{coaching.summary}</ReactMarkdown>
+                  </div>
                 </div>
-              </div>
 
-              {/* Right Column: Detailed Analysis */}
-              <div className="lg:col-span-7 bg-white p-12 rounded-[2.5rem] shadow-xl border border-slate-100 relative h-fit">
-                <div className="absolute top-8 right-8 text-indigo-100">
-                   <svg className="w-24 h-24" fill="currentColor" viewBox="0 0 24 24">
-                    <path d="M14 2H6a2 2 0 00-2 2v16a2 2 0 002 2h12a2 2 0 002-2V8z" />
-                  </svg>
+                {/* Key Insights */}
+                <div className="card p-8">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
+                    <Sparkles className="w-4 h-4" /> Klíčové poznatky
+                  </h3>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
+                    {coaching.keyInsights.map((insight, i) => (
+                      <div key={i} className="flex gap-3 p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                        <div className="flex-shrink-0 w-8 h-8 flex items-center justify-center font-bold text-sm" style={{ backgroundColor: '#10b981', color: '#fff', borderRadius: 'var(--radius-full)' }}>
+                          {i + 1}
+                        </div>
+                        <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{insight}</p>
+                      </div>
+                    ))}
+                  </div>
                 </div>
-                <h3 className="text-xs font-bold text-slate-400 uppercase tracking-[0.2em] mb-10 border-b border-slate-50 pb-4">
-                  Slovní analýza
-                </h3>
-                <div className="prose-academic max-w-none">
-                  <ReactMarkdown>{report.studentPassport}</ReactMarkdown>
+
+                {/* Weekly Plan */}
+                <div className="card p-8">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
+                    <CalendarDays className="w-4 h-4" /> Týdenní plán
+                  </h3>
+                  <div className="space-y-4">
+                    {coaching.weeklyPlan.map((day, i) => (
+                      <div key={i} className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid #10b981' }}>
+                        <div className="flex items-center justify-between mb-2">
+                          <span className="font-semibold" style={{ color: 'var(--color-text)' }}>{day.day}</span>
+                          <span className="text-xs px-2 py-1 rounded-full" style={{ backgroundColor: '#d1fae5', color: '#059669' }}>{day.focus}</span>
+                        </div>
+                        <ul className="space-y-1">
+                          {day.activities.map((activity, j) => (
+                            <li key={j} className="text-sm flex items-start gap-2" style={{ color: 'var(--color-text-secondary)' }}>
+                              <Check className="w-4 h-4 mt-0.5 text-emerald-500 flex-shrink-0" />
+                              {activity}
+                            </li>
+                          ))}
+                        </ul>
+                      </div>
+                    ))}
+                  </div>
+                </div>
+
+                {/* Habit Tracker */}
+                <div className="card p-8">
+                  <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
+                    <Medal className="w-4 h-4" /> Návyky k sledování
+                  </h3>
+                  <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
+                    Sleduj tyto návyky každý den. Vytiskni si nebo si je napiš - jsou klíčem k úspěchu!
+                  </p>
+                  <div className="overflow-x-auto">
+                    <table className="w-full text-sm">
+                      <thead>
+                        <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
+                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>Návyk</th>
+                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>Proč?</th>
+                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>Jak měřit</th>
+                        </tr>
+                      </thead>
+                      <tbody>
+                        {coaching.habitTracker.map((habit, i) => (
+                          <tr key={i} style={{ borderBottom: '1px solid var(--color-border)' }}>
+                            <td className="py-3 px-4 font-medium" style={{ color: 'var(--color-text)' }}>
+                              <div className="flex items-center gap-2">
+                                <div className="w-5 h-5 border-2 rounded" style={{ borderColor: '#10b981' }} />
+                                {habit.habit}
+                              </div>
+                            </td>
+                            <td className="py-3 px-4" style={{ color: 'var(--color-text-secondary)' }}>{habit.why}</td>
+                            <td className="py-3 px-4" style={{ color: 'var(--color-text-muted)' }}>{habit.howToTrack}</td>
+                          </tr>
+                        ))}
+                      </tbody>
+                    </table>
+                  </div>
+                </div>
+
+                {/* Print/Export hint */}
+                <div className="text-center p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                    💡 Tip: Vytiskni si tento plán (Ctrl+P) nebo si ho vyfotit a dej na viditelné místo!
+                  </p>
+                </div>
+              </>
+            ) : (
+              <div className="card p-12 text-center">
+                <Brain className="w-16 h-16 mx-auto mb-4" style={{ color: 'var(--color-text-muted)', opacity: 0.3 }} />
+                <p className="text-lg font-medium mb-2" style={{ color: 'var(--color-text)' }}>Připrav si svůj koučovací plán</p>
+                <p style={{ color: 'var(--color-text-secondary)' }}>Klikni na tlačítko výše pro vygenerování personalizovaného plánu</p>
+              </div>
+            )}
+          </div>
+        ) : (
+          /* Overview Tab */
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {/* Typology */}
+          {typologyResult && (
+            <div className="card p-6 md:col-span-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="brain" className="w-4 h-4" /> Jak přemýšlíš
+              </h3>
+              <div className="space-y-4 mb-4">
+                {typologyResult.dimensions.map((d, i) => (
+                  <DimensionBar key={d.dimension} leftLabel={d.leftLabel} rightLabel={d.rightLabel} leftScore={d.leftScore} rightScore={d.rightScore} index={i} />
+                ))}
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-medium text-sm mb-2" style={{ color: 'var(--color-text)' }}>{typologyResult.overallProfile}</p>
+                <ul className="space-y-1">
+                  {typologyResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* VAK */}
+          {vakResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="eye" className="w-4 h-4" /> Jak se učíš (VAK)
+              </h3>
+              <div className="space-y-4 mb-4">
+                <VakBar label="Vizuální" value={vakResult.visual} color="visual" index={0} />
+                <VakBar label="Auditivní" value={vakResult.auditory} color="auditory" index={1} />
+                <VakBar label="Kinestetický" value={vakResult.kinesthetic} color="kinesthetic" index={2} />
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{vakResult.label}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Chat */}
+          {chatReport && (
+            <div className="card p-6 md:col-span-2 lg:col-span-3">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="chat" className="w-4 h-4" /> Z rozhovoru
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-3">
+                  {chatReport.skills.map((skill, i) => (
+                    <SkillBar key={i} skill={skill} index={i} />
+                  ))}
+                </div>
+                <div className="prose-sm max-w-none" style={{ color: 'var(--color-text-secondary)' }}>
+                  <ReactMarkdown>{chatReport.studentPassport}</ReactMarkdown>
                 </div>
               </div>
             </div>
-          </div>
-        )}
-      </main>
+          )}
 
-      {/* Footer */}
-      <footer className="py-10 px-8 opacity-40 hover:opacity-100 transition-opacity">
-        <div className="max-w-5xl mx-auto flex flex-col md:flex-row items-center justify-between text-[10px] font-bold uppercase tracking-[0.2em] gap-6">
-          <div className="flex items-center gap-3">
-            <span className="w-1.5 h-1.5 bg-green-500 rounded-full shadow-[0_0_8px_#22c55e]"></span>
-            Diagnostic Session Active
+          {/* Habits */}
+          {habitsResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="clock" className="w-4 h-4" /> Studijní návyky
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Celkové skóre</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{habitsResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${habitsResult.percent}%`, backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{habitsResult.label}</p>
+                <ul className="space-y-1">
+                  {habitsResult.tips.map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Motivation */}
+          {motivationResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="fire" className="w-4 h-4" /> Motivace
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Úroveň motivace</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{motivationResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${motivationResult.percent}%`, backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{motivationResult.label}</p>
+                <ul className="space-y-1">
+                  {motivationResult.tips.map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Strengths */}
+          {strengthsResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="star" className="w-4 h-4" /> Silné stránky
+              </h3>
+              <div className="space-y-3 mb-4">
+                {strengthsResult.areas.map((area, i) => (
+                  <div key={area.label} className="space-y-2">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span style={{ color: 'var(--color-text-secondary)' }}>{area.label}</span>
+                      <span style={{ color: 'var(--color-primary)' }}>{area.score}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${area.score}%`, backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-full)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>Nejsilnější: {strengthsResult.topStrength}</p>
+                <ul className="space-y-1">
+                  {strengthsResult.tips.map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Growth Mindset */}
+          {gmResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="brain" className="w-4 h-4" /> Growth Mindset
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Růstové myšlení</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{gmResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${gmResult.percent}%`, backgroundColor: '#10b981', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{gmResult.label}</p>
+                <ul className="space-y-1">
+                  {gmResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Grit */}
+          {gritResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="fire" className="w-4 h-4" /> Vytrvalost (Grit)
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Grit skóre</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{gritResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${gritResult.percent}%`, backgroundColor: '#f97316', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{gritResult.label}</p>
+                <ul className="space-y-1">
+                  {gritResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Self-Efficacy */}
+          {seResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="star" className="w-4 h-4" /> Self-Efficacy
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Víra ve schopnosti</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{seResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${seResult.percent}%`, backgroundColor: '#eab308', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{seResult.label}</p>
+                <ul className="space-y-1">
+                  {seResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Test Anxiety */}
+          {taResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="clock" className="w-4 h-4" /> Testová úzkost
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Úroveň úzkosti</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{taResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${taResult.percent}%`, backgroundColor: '#ef4444', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{taResult.label}</p>
+                <ul className="space-y-1">
+                  {taResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Metacognition */}
+          {mcResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="brain" className="w-4 h-4" /> Metakognice
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Metakognitivní dovednosti</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{mcResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${mcResult.percent}%`, backgroundColor: '#8b5cf6', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{mcResult.label}</p>
+                <ul className="space-y-1">
+                  {mcResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* RIASEC */}
+          {riasecResult && (
+            <div className="card p-6 md:col-span-2">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="star" className="w-4 h-4" /> Kariérní zájmy (RIASEC)
+              </h3>
+              <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
+                {riasecResult.scores.map((s) => (
+                  <div key={s.type} className="p-3" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                    <div className="flex items-center justify-between mb-2">
+                      <span className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{s.type}</span>
+                      <span className="text-xs font-medium" style={{ color: 'var(--color-primary)' }}>{s.score}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                      <div className="h-full" style={{ width: `${s.score}%`, backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-full)' }} />
+                    </div>
+                    <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{s.label}</p>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>
+                  Tvůj kód: {riasecResult.code} - {riasecResult.scores[0]?.label}
+                </p>
+                <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>{riasecResult.description}</p>
+                <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Doporučené kariéry:</p>
+                <ul className="space-y-1">
+                  {riasecResult.scores[0]?.careers.slice(0, 3).map((career, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {career}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* EQ */}
+          {eqResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="chat" className="w-4 h-4" /> Emoční inteligence
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>EQ skóre</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{eqResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${eqResult.percent}%`, backgroundColor: '#ec4899', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{eqResult.label}</p>
+                <ul className="space-y-1">
+                  {eqResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Stroop Test */}
+          {stroopResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="eye" className="w-4 h-4" /> Stroop Test (Pozornost)
+              </h3>
+              <div className="space-y-3 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>Přesnost</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{stroopResult.accuracy}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${stroopResult.accuracy}%`, backgroundColor: '#06b6d4', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+                <div className="grid grid-cols-2 gap-3 mt-3">
+                  <div className="p-2 text-center" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-sm)' }}>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Průměrný čas</p>
+                    <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{stroopResult.averageReactionTime} ms</p>
+                  </div>
+                  <div className="p-2 text-center" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-sm)' }}>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Stroop efekt</p>
+                    <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{stroopResult.stroopEffect} ms</p>
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{stroopResult.label}</p>
+                <div className="flex gap-4 text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                  <span>Kogn. flexibilita: <strong>{stroopResult.cognitiveFlexibility}</strong></span>
+                  <span>Kontrola pozornosti: <strong>{stroopResult.attentionControl}</strong></span>
+                </div>
+                <ul className="space-y-1">
+                  {stroopResult.tips.slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+        </div>
+        )}
+
+        <div className="text-center pt-4">
+          <button onClick={() => setView('dashboard')} className="font-medium transition-opacity hover:opacity-70" style={{ color: 'var(--color-text-muted)' }}>
+            ← Zpět na výběr testů
+          </button>
+        </div>
+      </div>
+    </div>
+  );
+
+  return (
+    <div className="min-h-screen flex flex-col" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text)', fontFamily: 'var(--font-sans)' }}>
+      {view !== 'welcome' && (
+        <header className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}>
+          <button onClick={() => setView('dashboard')} className="flex items-center gap-3 hover:opacity-80">
+            <div className="w-10 h-10 bg-gradient-to-br from-[#C5A059] to-[#8B7355] flex items-center justify-center" style={{ borderRadius: 'var(--radius-md)', boxShadow: 'var(--shadow-gold)' }}>
+              <svg viewBox="0 0 24 24" className="w-5 h-5 text-white" fill="none" stroke="currentColor" strokeWidth="1.5">
+                <path d="M12 2L2 7l10 5 10-5-10-5zM2 17l10 5 10-5M2 12l10 5 10-5" />
+              </svg>
+            </div>
+            <div>
+              <h1 className="font-serif text-lg leading-none" style={{ color: 'var(--color-text)', fontWeight: 600 }}>Navigator</h1>
+              <p className="text-[10px] font-medium uppercase" style={{ color: 'var(--color-text-muted)', letterSpacing: '0.05em' }}>Academic v2</p>
+            </div>
+          </button>
+          <div className="flex items-center gap-4">
+            {studentName && <span className="text-sm hidden sm:block" style={{ color: 'var(--color-text-secondary)' }}>{t('greeting', lang)}, <span className="font-medium" style={{ color: 'var(--color-text)' }}>{studentName}</span></span>}
+            {/* Language Switcher */}
+            <div className="flex border rounded-md overflow-hidden" style={{ borderColor: 'var(--color-border)' }}>
+              <button
+                onClick={() => setLang('cs')}
+                className={`px-2 py-1 text-xs font-medium transition-colors ${lang === 'cs' ? 'bg-amber-500 text-white' : 'hover:bg-slate-100'}`}
+                style={{ color: lang === 'cs' ? undefined : 'var(--color-text-muted)' }}
+              >
+                CZ
+              </button>
+              <button
+                onClick={() => setLang('en')}
+                className={`px-2 py-1 text-xs font-medium transition-colors ${lang === 'en' ? 'bg-amber-500 text-white' : 'hover:bg-slate-100'}`}
+                style={{ color: lang === 'en' ? undefined : 'var(--color-text-muted)' }}
+              >
+                EN
+              </button>
+            </div>
+            <button
+              onClick={() => setView('welcome')}
+              className="p-2 hover:bg-slate-100 transition-colors"
+              style={{ borderRadius: 'var(--radius-md)', color: 'var(--color-text-muted)' }}
+              title={lang === 'cs' ? 'Domů - všichni studenti' : 'Home - all students'}
+            >
+              <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
+            </button>
+            <div className="flex gap-1.5">
+              {modules.map(m => (
+                <div key={m.id} className={`w-3 h-3 ${progress[m.id as keyof ModuleProgress] ? 'bg-emerald-500' : ''}`} style={{ borderRadius: 'var(--radius-full)', backgroundColor: progress[m.id as keyof ModuleProgress] ? undefined : 'var(--color-border)' }} title={m.title} />
+              ))}
+            </div>
           </div>
-          <p>© 2024 University Research Hub</p>
-          <div className="flex gap-8">
-            <a href="#" className="hover:text-indigo-600 transition-colors">GDPR</a>
-            <a href="#" className="hover:text-indigo-600 transition-colors">Methodology</a>
+        </header>
+      )}
+      <main className="flex-1 flex flex-col">
+        {view === 'welcome' && renderWelcome()}
+        {view === 'dashboard' && renderDashboard()}
+        {view === 'chat' && renderChat()}
+        {view === 'typology' && renderTypology()}
+        {view === 'vak' && renderVak()}
+        {view === 'habits' && renderHabits()}
+        {view === 'motivation' && renderMotivation()}
+        {view === 'strengths' && renderStrengths()}
+        {view === 'growthMindset' && renderAssessment(
+          'Growth Mindset (Carol Dweck)',
+          growthMindsetQuestions,
+          currentGMQuestion,
+          setCurrentGMQuestion,
+          gmAnswers,
+          setGmAnswers,
+          () => {
+            const result = scoreGrowthMindset(gmAnswers);
+            setGmResult(result);
+            setProgress(p => ({ ...p, growthMindset: true }));
+            handleGenerateFeedback('growthMindset', 'Growth Mindset', result);
+            setView('results');
+          }
+        )}
+        {view === 'grit' && renderAssessment(
+          'Grit Scale (Angela Duckworth)',
+          gritQuestions,
+          currentGritQuestion,
+          setCurrentGritQuestion,
+          gritAnswers,
+          setGritAnswers,
+          () => {
+            const result = scoreGrit(gritAnswers);
+            setGritResult(result);
+            setProgress(p => ({ ...p, grit: true }));
+            handleGenerateFeedback('grit', 'Vytrvalost (Grit)', result);
+            setView('results');
+          }
+        )}
+        {view === 'selfEfficacy' && renderAssessment(
+          'Self-Efficacy (Albert Bandura)',
+          selfEfficacyQuestions,
+          currentSEQuestion,
+          setCurrentSEQuestion,
+          seAnswers,
+          setSeAnswers,
+          () => {
+            const result = scoreSelfEfficacy(seAnswers);
+            setSeResult(result);
+            setProgress(p => ({ ...p, selfEfficacy: true }));
+            handleGenerateFeedback('selfEfficacy', 'Self-Efficacy', result);
+            setView('results');
+          }
+        )}
+        {view === 'testAnxiety' && renderAssessment(
+          'Testová úzkost',
+          testAnxietyQuestions,
+          currentTAQuestion,
+          setCurrentTAQuestion,
+          taAnswers,
+          setTaAnswers,
+          () => {
+            const result = scoreTestAnxiety(taAnswers);
+            setTaResult(result);
+            setProgress(p => ({ ...p, testAnxiety: true }));
+            handleGenerateFeedback('testAnxiety', 'Testová úzkost', result);
+            setView('results');
+          }
+        )}
+        {view === 'metacognition' && renderAssessment(
+          'Metakognice',
+          metacognitionQuestions,
+          currentMCQuestion,
+          setCurrentMCQuestion,
+          mcAnswers,
+          setMcAnswers,
+          () => {
+            const result = scoreMetacognition(mcAnswers);
+            setMcResult(result);
+            setProgress(p => ({ ...p, metacognition: true }));
+            handleGenerateFeedback('metacognition', 'Metakognice', result);
+            setView('results');
+          }
+        )}
+        {view === 'riasec' && renderRiasecAssessment()}
+        {view === 'eq' && renderAssessment(
+          'Emoční inteligence (EQ)',
+          eqQuestions,
+          currentEQQuestion,
+          setCurrentEQQuestion,
+          eqAnswers,
+          setEqAnswers,
+          () => {
+            const result = scoreEQ(eqAnswers);
+            setEqResult(result);
+            setProgress(p => ({ ...p, eq: true }));
+            handleGenerateFeedback('eq', 'Emoční inteligence', result);
+            setView('results');
+          }
+        )}
+        {view === 'stroop' && renderStroopTest()}
+        {view === 'mentalRotation' && renderMentalRotationTest()}
+        {view === 'results' && renderResults()}
+      </main>
+      {renderStudentsModal()}
+
+      {/* AI Feedback Modal - shown after each test */}
+      {showFeedbackModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowFeedbackModal(false)}>
+          <div
+            className="bg-white w-full max-w-2xl max-h-[85vh] overflow-y-auto"
+            style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }}
+            onClick={e => e.stopPropagation()}
+          >
+            {isFeedbackLoading ? (
+              <div className="p-12 text-center">
+                <div className="flex justify-center mb-4">
+                  <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
+                </div>
+                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>Generuji AI doporučení...</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>Analyzuji tvůj výsledek a připravuji personalizované tipy</p>
+              </div>
+            ) : currentFeedback && (
+              <>
+                {/* Header */}
+                <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)', background: 'linear-gradient(135deg, #C5A059 0%, #8B7355 100%)' }}>
+                  <div className="flex items-center gap-3">
+                    <Sparkles className="w-6 h-6 text-white" />
+                    <h2 className="text-lg font-serif font-semibold text-white">{currentFeedback.title}</h2>
+                  </div>
+                  <button onClick={() => setShowFeedbackModal(false)} className="text-white/80 hover:text-white">
+                    <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
+                  </button>
+                </div>
+
+                {/* Content */}
+                <div className="p-6 space-y-6">
+                  {/* AI Feedback */}
+                  <div>
+                    <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                      <MessageCircle className="w-4 h-4" /> Co to znamená pro tebe
+                    </h3>
+                    <div className="prose prose-sm max-w-none" style={{ color: 'var(--color-text)' }}>
+                      <ReactMarkdown>{currentFeedback.feedback}</ReactMarkdown>
+                    </div>
+                  </div>
+
+                  {/* Action Steps */}
+                  {currentFeedback.actionSteps.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                        <Check className="w-4 h-4" /> Co můžeš udělat HNED
+                      </h3>
+                      <div className="space-y-2">
+                        {currentFeedback.actionSteps.map((step, i) => (
+                          <div key={i} className="flex gap-3 p-3" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                            <div className="flex-shrink-0 w-6 h-6 flex items-center justify-center font-bold text-xs" style={{ backgroundColor: 'var(--color-primary)', color: '#fff', borderRadius: 'var(--radius-full)' }}>
+                              {i + 1}
+                            </div>
+                            <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{step}</p>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Resources */}
+                  {currentFeedback.resources.length > 0 && (
+                    <div>
+                      <h3 className="text-xs font-semibold uppercase tracking-wider mb-3 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                        <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
+                          <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
+                        </svg>
+                        Doporučené zdroje
+                      </h3>
+                      <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
+                        {currentFeedback.resources.map((resource, i) => (
+                          <a
+                            key={i}
+                            href={resource.videoId ? `https://www.youtube.com/watch?v=${resource.videoId}` : '#'}
+                            target="_blank"
+                            rel="noopener noreferrer"
+                            className="block p-3 hover:-translate-y-0.5 transition-all"
+                            style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)', border: '1px solid var(--color-border)' }}
+                          >
+                            {resource.videoId && (
+                              <div className="relative aspect-video mb-2 rounded overflow-hidden">
+                                <img
+                                  src={`https://img.youtube.com/vi/${resource.videoId}/mqdefault.jpg`}
+                                  alt={resource.title}
+                                  className="w-full h-full object-cover"
+                                />
+                                <div className="absolute inset-0 flex items-center justify-center bg-black/20">
+                                  <div className="w-8 h-8 flex items-center justify-center bg-red-600 rounded-full">
+                                    <svg className="w-3 h-3 text-white ml-0.5" fill="currentColor" viewBox="0 0 24 24">
+                                      <path d="M8 5v14l11-7z"/>
+                                    </svg>
+                                  </div>
+                                </div>
+                              </div>
+                            )}
+                            <p className="font-medium text-xs mb-1" style={{ color: 'var(--color-text)' }}>{resource.title}</p>
+                            <p className="text-xs line-clamp-2" style={{ color: 'var(--color-text-muted)' }}>{resource.description}</p>
+                          </a>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+                </div>
+
+                {/* Footer */}
+                <div className="px-6 py-4 flex justify-end gap-3" style={{ borderTop: '1px solid var(--color-border)' }}>
+                  <button
+                    onClick={() => setShowFeedbackModal(false)}
+                    className="px-6 py-2.5 font-medium text-white transition-all hover:opacity-90"
+                    style={{ backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}
+                  >
+                    Pokračovat na výsledky
+                  </button>
+                </div>
+              </>
+            )}
           </div>
         </div>
-      </footer>
+      )}
     </div>
   );
 };
