@@ -16,6 +16,17 @@ import {
   scoreVak,
   VakResult,
   VakOption,
+  getVakQuestionText,
+  getVakOptionText,
+  getTypologyQuestionText,
+  getTypologyOptionText,
+  getDimensionLabel,
+  getAssessmentQuestionText,
+  getAssessmentOptionText,
+  getResultLabel,
+  getResultDescription,
+  getResultTips,
+  getRiasecQuestionText,
   // New assessments
   growthMindsetQuestions,
   scoreGrowthMindset,
@@ -89,201 +100,22 @@ interface ModuleCard {
 }
 
 const modules: ModuleCard[] = [
-  {
-    id: 'typology',
-    title: 'Jak přemýšlíš',
-    description: 'Zjisti svůj myšlenkový styl: abstraktní vs konkrétní, aktivní vs reflektivní, vizuální vs verbální.',
-    time: '~14 min',
-    icon: 'brain',
-    color: 'amber',
-    view: 'typology',
-    tags: ['30 otázek', 'Typologie', 'Myšlení'],
-    previewBg: 'from-amber-600 via-yellow-600 to-amber-700',
-    previewIcon: 'brain'
-  },
-  {
-    id: 'vak',
-    title: 'Učební styl (VAK)',
-    description: 'Jsi vizuální, auditivní nebo kinestetický typ? Zjisti, jak se nejlépe učíš.',
-    time: '~5 min',
-    icon: 'eye',
-    color: 'stone',
-    view: 'vak',
-    tags: ['10 otázek', 'VAK test', 'Učení'],
-    previewBg: 'from-stone-500 via-stone-600 to-stone-700',
-    previewIcon: 'eye'
-  },
-  {
-    id: 'chat',
-    title: 'AI Koučink',
-    description: 'Interaktivní rozhovor s AI mentorem o tvých zájmech, studiu a silných stránkách.',
-    time: '~12 min',
-    icon: 'chat',
-    color: 'amber',
-    view: 'chat',
-    tags: ['GPT-4o', 'Rozhovor', 'Personalizace'],
-    previewBg: 'from-amber-500 via-amber-600 to-yellow-700',
-    previewIcon: 'chat'
-  },
-  {
-    id: 'habits',
-    title: 'Studijní návyky',
-    description: 'Analyzuj své studijní návyky: plánování, prokrastinace, soustředění a práce s časem.',
-    time: '~6 min',
-    icon: 'clock',
-    color: 'orange',
-    view: 'habits',
-    tags: ['8 otázek', 'Time management', 'Produktivita'],
-    previewBg: 'from-orange-500 via-amber-500 to-yellow-600',
-    previewIcon: 'clock'
-  },
-  {
-    id: 'motivation',
-    title: 'Motivace',
-    description: 'Co tě pohání vpřed? Zjisti svůj typ motivace a jak ji využít pro lepší výsledky.',
-    time: '~5 min',
-    icon: 'fire',
-    color: 'red',
-    view: 'motivation',
-    tags: ['8 otázek', 'Vnitřní motivace', 'Cíle'],
-    previewBg: 'from-red-600 via-orange-600 to-amber-600',
-    previewIcon: 'fire'
-  },
-  {
-    id: 'strengths',
-    title: 'Silné stránky',
-    description: 'Objeví své talenty a oblasti, ve kterých vynikáš. Analytika, kreativita nebo komunikace?',
-    time: '~4 min',
-    icon: 'star',
-    color: 'yellow',
-    view: 'strengths',
-    tags: ['6 otázek', 'Talent', 'Sebepoznání'],
-    previewBg: 'from-yellow-500 via-amber-500 to-orange-500',
-    previewIcon: 'star'
-  },
-  {
-    id: 'gemini',
-    title: 'Gemini AI Studio',
-    description: 'Otevři Google AI Studio a vyzkoušej nejnovější Gemini modely pro analýzu a generování.',
-    time: 'Web app',
-    icon: 'sparkles',
-    color: 'stone',
-    view: 'gemini',
-    tags: ['Gemini 2.5', 'Google AI', 'External'],
-    previewBg: 'from-stone-600 via-stone-700 to-neutral-800',
-    previewIcon: 'sparkles',
-    external: true,
-    externalUrl: 'https://aistudio.google.com'
-  },
-  // New evidence-based assessments
-  {
-    id: 'growthMindset',
-    title: 'Growth Mindset',
-    description: 'Zjisti, jestli máš fixní nebo růstové myšlení. Klíč k rozvoji schopností (Carol Dweck).',
-    time: '~3 min',
-    icon: 'brain',
-    color: 'emerald',
-    view: 'growthMindset',
-    tags: ['8 otázek', 'Dweck', 'Myšlení'],
-    previewBg: 'from-emerald-600 via-green-600 to-teal-700',
-    previewIcon: 'brain'
-  },
-  {
-    id: 'grit',
-    title: 'Grit (Vytrvalost)',
-    description: 'Změř svou vytrvalost a vášeň pro dlouhodobé cíle (Angela Duckworth).',
-    time: '~3 min',
-    icon: 'fire',
-    color: 'orange',
-    view: 'grit',
-    tags: ['8 otázek', 'Duckworth', 'Vytrvalost'],
-    previewBg: 'from-orange-600 via-red-600 to-rose-700',
-    previewIcon: 'fire'
-  },
-  {
-    id: 'selfEfficacy',
-    title: 'Self-Efficacy',
-    description: 'Jak moc věříš ve své schopnosti? Klíčový prediktor úspěchu (Albert Bandura).',
-    time: '~3 min',
-    icon: 'star',
-    color: 'yellow',
-    view: 'selfEfficacy',
-    tags: ['8 otázek', 'Bandura', 'Sebevědomí'],
-    previewBg: 'from-yellow-600 via-amber-600 to-orange-600',
-    previewIcon: 'star'
-  },
-  {
-    id: 'testAnxiety',
-    title: 'Testová úzkost',
-    description: 'Jak moc tě stresují zkoušky? Najdi strategie pro zvládání.',
-    time: '~3 min',
-    icon: 'clock',
-    color: 'rose',
-    view: 'testAnxiety',
-    tags: ['8 otázek', 'Stres', 'Zkoušky'],
-    previewBg: 'from-rose-600 via-red-600 to-orange-700',
-    previewIcon: 'clock'
-  },
-  {
-    id: 'metacognition',
-    title: 'Metakognice',
-    description: 'Jak dobře znáš své vlastní myšlení a učení? "Učení se učit".',
-    time: '~3 min',
-    icon: 'brain',
-    color: 'amber',
-    view: 'metacognition',
-    tags: ['8 otázek', 'Učení', 'Strategie'],
-    previewBg: 'from-amber-700 via-yellow-700 to-orange-700',
-    previewIcon: 'brain'
-  },
-  {
-    id: 'riasec',
-    title: 'RIASEC (Kariéra)',
-    description: 'Holland test kariérních zájmů. Zjisti, které obory ti sedí.',
-    time: '~4 min',
-    icon: 'star',
-    color: 'stone',
-    view: 'riasec',
-    tags: ['12 otázek', 'Holland', 'Kariéra'],
-    previewBg: 'from-stone-600 via-amber-700 to-stone-700',
-    previewIcon: 'star'
-  },
-  {
-    id: 'eq',
-    title: 'Emoční inteligence',
-    description: 'Jak dobře rozumíš emocím svým i ostatních? EQ test.',
-    time: '~3 min',
-    icon: 'chat',
-    color: 'rose',
-    view: 'eq',
-    tags: ['8 otázek', 'EQ', 'Empatie'],
-    previewBg: 'from-rose-500 via-pink-600 to-red-600',
-    previewIcon: 'chat'
-  },
-  {
-    id: 'stroop',
-    title: 'Stroop Test (Kamera)',
-    description: 'Validovaný kognitivní test měřící pozornost, rychlost a kognitivní flexibilitu. S kamerou!',
-    time: '~4 min',
-    icon: 'eye',
-    color: 'cyan',
-    view: 'stroop',
-    tags: ['24 úkolů', 'Pozornost', 'Kamera'],
-    previewBg: 'from-cyan-500 via-blue-500 to-indigo-600',
-    previewIcon: 'eye'
-  },
-  {
-    id: 'mentalRotation',
-    title: 'Prostorová představivost',
-    description: 'Test mentální rotace (Shepard & Metzler). Měří prostorovou představivost - klíčová dovednost pro STEM obory.',
-    time: '~5 min',
-    icon: 'shapes',
-    color: 'violet',
-    view: 'mentalRotation',
-    tags: ['16 úkolů', 'Prostorové myšlení', 'STEM'],
-    previewBg: 'from-violet-500 via-purple-600 to-fuchsia-600',
-    previewIcon: 'shapes'
-  }
+  { id: 'typology', title: '', description: '', time: '~14 min', icon: 'brain', color: 'amber', view: 'typology', tags: [], previewBg: 'from-amber-600 via-yellow-600 to-amber-700', previewIcon: 'brain' },
+  { id: 'vak', title: '', description: '', time: '~5 min', icon: 'eye', color: 'stone', view: 'vak', tags: [], previewBg: 'from-stone-500 via-stone-600 to-stone-700', previewIcon: 'eye' },
+  { id: 'chat', title: '', description: '', time: '~12 min', icon: 'chat', color: 'amber', view: 'chat', tags: [], previewBg: 'from-amber-500 via-amber-600 to-yellow-700', previewIcon: 'chat' },
+  { id: 'habits', title: '', description: '', time: '~6 min', icon: 'clock', color: 'orange', view: 'habits', tags: [], previewBg: 'from-orange-500 via-amber-500 to-yellow-600', previewIcon: 'clock' },
+  { id: 'motivation', title: '', description: '', time: '~5 min', icon: 'fire', color: 'red', view: 'motivation', tags: [], previewBg: 'from-red-600 via-orange-600 to-amber-600', previewIcon: 'fire' },
+  { id: 'strengths', title: '', description: '', time: '~4 min', icon: 'star', color: 'yellow', view: 'strengths', tags: [], previewBg: 'from-yellow-500 via-amber-500 to-orange-500', previewIcon: 'star' },
+  { id: 'gemini', title: '', description: '', time: 'Web app', icon: 'sparkles', color: 'stone', view: 'gemini', tags: [], previewBg: 'from-stone-600 via-stone-700 to-neutral-800', previewIcon: 'sparkles', external: true, externalUrl: 'https://aistudio.google.com' },
+  { id: 'growthMindset', title: '', description: '', time: '~3 min', icon: 'brain', color: 'emerald', view: 'growthMindset', tags: [], previewBg: 'from-emerald-600 via-green-600 to-teal-700', previewIcon: 'brain' },
+  { id: 'grit', title: '', description: '', time: '~3 min', icon: 'fire', color: 'orange', view: 'grit', tags: [], previewBg: 'from-orange-600 via-red-600 to-rose-700', previewIcon: 'fire' },
+  { id: 'selfEfficacy', title: '', description: '', time: '~3 min', icon: 'star', color: 'yellow', view: 'selfEfficacy', tags: [], previewBg: 'from-yellow-600 via-amber-600 to-orange-600', previewIcon: 'star' },
+  { id: 'testAnxiety', title: '', description: '', time: '~3 min', icon: 'clock', color: 'rose', view: 'testAnxiety', tags: [], previewBg: 'from-rose-600 via-red-600 to-orange-700', previewIcon: 'clock' },
+  { id: 'metacognition', title: '', description: '', time: '~3 min', icon: 'brain', color: 'amber', view: 'metacognition', tags: [], previewBg: 'from-amber-700 via-yellow-700 to-orange-700', previewIcon: 'brain' },
+  { id: 'riasec', title: '', description: '', time: '~4 min', icon: 'star', color: 'stone', view: 'riasec', tags: [], previewBg: 'from-stone-600 via-amber-700 to-stone-700', previewIcon: 'star' },
+  { id: 'eq', title: '', description: '', time: '~3 min', icon: 'chat', color: 'rose', view: 'eq', tags: [], previewBg: 'from-rose-500 via-pink-600 to-red-600', previewIcon: 'chat' },
+  { id: 'stroop', title: '', description: '', time: '~4 min', icon: 'eye', color: 'cyan', view: 'stroop', tags: [], previewBg: 'from-cyan-500 via-blue-500 to-indigo-600', previewIcon: 'eye' },
+  { id: 'mentalRotation', title: '', description: '', time: '~5 min', icon: 'shapes', color: 'violet', view: 'mentalRotation', tags: [], previewBg: 'from-violet-500 via-purple-600 to-fuchsia-600', previewIcon: 'shapes' }
 ];
 
 // Habits questions (8 questions)
@@ -624,27 +456,91 @@ const IconComponent: React.FC<{ name: string; className?: string }> = ({ name, c
 // Demo data - pre-filled typology result for demonstration
 const demoTypologyResult: TypologyResult = {
   dimensions: [
-    { dimension: 'D1', leftLabel: 'Abstraktní', rightLabel: 'Konkrétní', leftScore: 35, rightScore: 65, label: 'spíš konkrétní', answeredCount: 6, totalQuestions: 6 },
-    { dimension: 'D2', leftLabel: 'Aktivní', rightLabel: 'Reflektivní', leftScore: 60, rightScore: 40, label: 'spíš aktivní', answeredCount: 6, totalQuestions: 6 },
-    { dimension: 'D3', leftLabel: 'Vizuální', rightLabel: 'Verbální', leftScore: 70, rightScore: 30, label: 'vizuální', answeredCount: 6, totalQuestions: 6 },
-    { dimension: 'D4', leftLabel: 'Sekvenční', rightLabel: 'Globální', leftScore: 45, rightScore: 55, label: 'vyvážený', answeredCount: 6, totalQuestions: 6 },
-    { dimension: 'D5', leftLabel: 'Struktura', rightLabel: 'Flexibilita', leftScore: 50, rightScore: 50, label: 'vyvážený', answeredCount: 6, totalQuestions: 6 }
+    { dimension: 'D1', leftLabel: 'Abstract', rightLabel: 'Concrete', leftScore: 35, rightScore: 65, label: 'more concrete', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D2', leftLabel: 'Active', rightLabel: 'Reflective', leftScore: 60, rightScore: 40, label: 'more active', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D3', leftLabel: 'Visual', rightLabel: 'Verbal', leftScore: 70, rightScore: 30, label: 'visual', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D4', leftLabel: 'Sequential', rightLabel: 'Global', leftScore: 45, rightScore: 55, label: 'balanced', answeredCount: 6, totalQuestions: 6 },
+    { dimension: 'D5', leftLabel: 'Structure', rightLabel: 'Flexibility', leftScore: 50, rightScore: 50, label: 'balanced', answeredCount: 6, totalQuestions: 6 }
   ],
   answersDetail: [],
-  overallProfile: 'Vizuálně-praktický typ s aktivním přístupem',
+  overallProfile: 'Visual-practical type with an active approach',
   tips: [
-    'Využívej diagramy a vizuální pomůcky při učení',
-    'Zkoušej si látku aktivně vysvětlovat nahlas',
-    'Střídej teoretické a praktické úkoly'
+    'Use diagrams and visual aids when learning',
+    'Try to actively explain the material out loud',
+    'Alternate between theoretical and practical tasks'
+  ]
+};
+
+// Demo VAK result
+const demoVakResult: VakResult = {
+  visual: 60,
+  auditory: 25,
+  kinesthetic: 15,
+  dominant: 'V',
+  label: { cs: 'Vizuální typ', en: 'Visual Learner' },
+  description: { cs: 'Nejlépe se učíš pomocí obrazových materiálů, diagramů a vizuálních pomůcek.', en: 'You learn best through visual materials, diagrams, and visual aids.' },
+  tips: {
+    cs: ['Používej barevné zvýrazňovače', 'Kresli si myšlenkové mapy', 'Sleduj videa a animace'],
+    en: ['Use colored highlighters', 'Draw mind maps', 'Watch videos and animations']
+  }
+};
+
+// Demo Growth Mindset result
+const demoGmResult: AssessmentResult = {
+  score: 26,
+  maxScore: 32,
+  percent: 81,
+  label: { cs: 'Silné růstové myšlení', en: 'Strong Growth Mindset' },
+  description: { cs: 'Věříš, že schopnosti lze rozvíjet úsilím a učením.', en: 'You believe abilities can be developed through effort and learning.' },
+  tips: {
+    cs: ['Pokračuj v přijímání výzev', 'Pomáhej ostatním rozvíjet růstové myšlení', 'Sdílej své strategie učení'],
+    en: ['Continue embracing challenges', 'Help others develop growth mindset', 'Share your learning strategies']
+  }
+};
+
+// Demo Synthesis
+const demoSynthesis = {
+  synthesis: `## Your Learning Profile Summary
+
+Based on your completed assessments, here's a comprehensive view of your learning style and cognitive profile:
+
+### Thinking Style
+You show a **concrete-practical** orientation combined with an **active learning** approach. This means you prefer hands-on experiences and real-world examples over abstract theories. You learn best by doing rather than just reading or listening.
+
+### Learning Modality
+Your **visual learning preference** (60%) indicates you process information most effectively through images, diagrams, charts, and visual representations. Consider using mind maps, infographics, and color-coded notes to enhance your study sessions.
+
+### Mindset & Motivation
+With a **strong growth mindset** (81%), you believe in the power of effort and practice to develop your abilities. This is a significant strength that will help you persevere through challenges and continue learning throughout life.
+
+### Key Strengths
+- Visual information processing
+- Active, hands-on learning approach
+- Strong belief in personal development
+- Balanced approach to structure and flexibility
+
+### Areas for Development
+- Consider developing verbal/auditory learning strategies as backup
+- Practice more reflective learning techniques for complex topics`,
+  studyTips: [
+    'Use visual study aids like diagrams, flowcharts, and mind maps',
+    'Apply new concepts immediately through practice problems or projects',
+    'Color-code your notes by topic or importance level',
+    'Watch educational videos and tutorials for complex topics',
+    'Teach concepts to others to reinforce your understanding'
+  ],
+  youtubeVideos: [
+    { videoId: 'ukLnPbIffxE', title: 'How to Study Effectively', description: 'Evidence-based study techniques for visual learners' },
+    { videoId: 'IlU-zDU6aQ0', title: 'Growth Mindset by Carol Dweck', description: 'Understanding and developing a growth mindset' }
   ]
 };
 
 const App: React.FC = () => {
-  const [lang, setLang] = useState<Language>('cs');
+  const [lang, setLang] = useState<Language>('en');
   const [view, setView] = useState<View>('welcome');
   const [progress, setProgress] = useState<ModuleProgress>({
-    chat: false, typology: true, vak: false, habits: false, motivation: false, strengths: false, gemini: false,
-    growthMindset: false, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false
+    chat: false, typology: true, vak: true, habits: false, motivation: false, strengths: false, gemini: false,
+    growthMindset: true, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false
   });
   const [studentName, setStudentName] = useState<string>('');
   const [nameInput, setNameInput] = useState<string>('');
@@ -668,7 +564,7 @@ const App: React.FC = () => {
   // VAK state
   const [currentVakQuestion, setCurrentVakQuestion] = useState<number>(0);
   const [vakAnswers, setVakAnswers] = useState<VakOption[]>([]);
-  const [vakResult, setVakResult] = useState<VakResult | null>(null);
+  const [vakResult, setVakResult] = useState<VakResult | null>(demoVakResult);
 
   // Habits state
   const [currentHabitsQuestion, setCurrentHabitsQuestion] = useState<number>(0);
@@ -688,7 +584,7 @@ const App: React.FC = () => {
   // New assessments state
   const [currentGMQuestion, setCurrentGMQuestion] = useState(0);
   const [gmAnswers, setGmAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
-  const [gmResult, setGmResult] = useState<AssessmentResult | null>(null);
+  const [gmResult, setGmResult] = useState<AssessmentResult | null>(demoGmResult);
 
   const [currentGritQuestion, setCurrentGritQuestion] = useState(0);
   const [gritAnswers, setGritAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
@@ -735,7 +631,7 @@ const App: React.FC = () => {
 
   // Results page state
   const [resultsTab, setResultsTab] = useState<'overview' | 'synthesis' | 'coaching'>('overview');
-  const [synthesis, setSynthesis] = useState<{ synthesis: string; studyTips: string[]; youtubeVideos: { videoId: string; title: string; description: string }[] } | null>(null);
+  const [synthesis, setSynthesis] = useState<{ synthesis: string; studyTips: string[]; youtubeVideos: { videoId: string; title: string; description: string }[] } | null>(demoSynthesis);
   const [isSynthesisLoading, setIsSynthesisLoading] = useState(false);
 
   // AI Feedback modal state (after each test)
@@ -966,14 +862,14 @@ const App: React.FC = () => {
             <div className="w-8 h-8 flex items-center justify-center rounded-full" style={{ backgroundColor: 'var(--color-primary)', color: '#fff' }}>
               <svg className="w-4 h-4" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M12 4v16m8-8H4" /></svg>
             </div>
-            Nový student
+            New Student
           </h2>
           <form onSubmit={handleNameSubmit} className="flex gap-3">
             <input
               type="text"
               value={nameInput}
               onChange={(e) => setNameInput(e.target.value)}
-              placeholder="Jméno nebo přezdívka..."
+              placeholder="Name or nickname..."
               className="flex-1 px-4 py-3 outline-none transition-all"
               style={{
                 border: '1px solid var(--color-border)',
@@ -1053,8 +949,8 @@ const App: React.FC = () => {
         {students.length === 0 && (
           <div className="text-center py-12" style={{ color: 'var(--color-text-muted)' }}>
             <Users className="w-12 h-12 mx-auto mb-4 opacity-30" />
-            <p>Zatím nemáš žádné uložené studenty.</p>
-            <p className="text-sm mt-1">Vytvoř nového studenta výše a začni s testy.</p>
+            <p>{lang === 'cs' ? 'Zatím nemáš žádné uložené studenty.' : 'You have no saved students yet.'}</p>
+            <p className="text-sm mt-1">{lang === 'cs' ? 'Vytvoř nového studenta výše a začni s testy.' : 'Create a new student above and start testing.'}</p>
           </div>
         )}
       </div>
@@ -1066,7 +962,7 @@ const App: React.FC = () => {
     <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50" onClick={() => setShowStudentsList(false)}>
       <div className="bg-white w-full max-w-md mx-4 max-h-[70vh] overflow-hidden flex flex-col" style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }} onClick={e => e.stopPropagation()}>
         <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
-          <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>Uložení studenti</h2>
+          <h2 className="font-serif text-lg font-semibold" style={{ color: 'var(--color-text)' }}>{lang === 'cs' ? 'Uložení studenti' : 'Saved Students'}</h2>
           <button onClick={() => setShowStudentsList(false)} style={{ color: 'var(--color-text-muted)' }} className="hover:opacity-70">
             <svg className="w-6 h-6" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M6 18L18 6M6 6l12 12" /></svg>
           </button>
@@ -1105,7 +1001,7 @@ const App: React.FC = () => {
   // Generic Assessment Renderer
   const renderAssessment = (
     title: string,
-    questions: { id: string; text: string; options: { key: 'A' | 'B' | 'C' | 'D'; text: string }[] }[],
+    questions: { id: string; text: { cs: string; en: string }; options: { key: 'A' | 'B' | 'C' | 'D'; text: { cs: string; en: string }; score: number }[] }[],
     currentQuestion: number,
     setCurrentQuestion: (n: number) => void,
     answers: Record<string, 'A' | 'B' | 'C' | 'D'>,
@@ -1130,7 +1026,7 @@ const App: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
             <ChevronLeft className="w-5 h-5" />
-            Zpět
+            {t('back', lang)}
           </button>
           <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentQuestion + 1} / {questions.length}</span>
         </div>
@@ -1140,7 +1036,7 @@ const App: React.FC = () => {
         <h2 className="text-lg font-serif font-semibold mb-6 text-center" style={{ color: 'var(--color-text)' }}>{title}</h2>
         <div className="flex-1 flex flex-col justify-center">
           <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
-            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{getAssessmentQuestionText(q, lang)}</p>
             <div className="space-y-3">
               {q.options.map((opt) => (
                 <button
@@ -1155,7 +1051,7 @@ const App: React.FC = () => {
                   <span className="w-8 h-8 flex items-center justify-center font-semibold text-sm" style={{ borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
                     {opt.key}
                   </span>
-                  <span style={{ color: 'var(--color-text-secondary)' }}>{opt.text}</span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{getAssessmentOptionText(opt, lang)}</span>
                 </button>
               ))}
             </div>
@@ -1190,22 +1086,29 @@ const App: React.FC = () => {
       }
     };
 
+    const riasecLabels = {
+      1: { cs: 'Ne', en: 'No' },
+      2: { cs: 'Spíše ne', en: 'Not really' },
+      3: { cs: 'Spíše ano', en: 'Somewhat' },
+      4: { cs: 'Ano', en: 'Yes' }
+    };
+
     return (
       <div className="flex-1 flex flex-col max-w-2xl mx-auto w-full px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
             <ChevronLeft className="w-5 h-5" />
-            Zpět
+            {t('back', lang)}
           </button>
           <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentRiasecQuestion + 1} / {riasecQuestions.length}</span>
         </div>
         <div className="h-2 overflow-hidden mb-4" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
           <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
         </div>
-        <h2 className="text-lg font-serif font-semibold mb-6 text-center" style={{ color: 'var(--color-text)' }}>RIASEC - Kariérní zájmy</h2>
+        <h2 className="text-lg font-serif font-semibold mb-6 text-center" style={{ color: 'var(--color-text)' }}>{lang === 'cs' ? 'RIASEC - Kariérní zájmy' : 'RIASEC - Career Interests'}</h2>
         <div className="flex-1 flex flex-col justify-center">
           <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
-            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{getRiasecQuestionText(q, lang)}</p>
             <div className="flex justify-center gap-3">
               {[1, 2, 3, 4].map((score) => (
                 <button
@@ -1220,7 +1123,7 @@ const App: React.FC = () => {
                   }}
                 >
                   <span className="text-lg">{score}</span>
-                  <span className="text-[10px]">{score === 1 ? 'Ne' : score === 2 ? 'Spíše ne' : score === 3 ? 'Spíše ano' : 'Ano'}</span>
+                  <span className="text-[10px]">{riasecLabels[score as 1|2|3|4][lang]}</span>
                 </button>
               ))}
             </div>
@@ -1564,7 +1467,7 @@ const App: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
             <ChevronLeft className="w-5 h-5" />
-            Zpět
+            {t('back', lang)}
           </button>
           <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentDimension + 1} / {dimensionsMeta.length}</span>
         </div>
@@ -1572,13 +1475,13 @@ const App: React.FC = () => {
           <div className="h-full transition-all duration-500" style={{ width: `${progressPercent}%`, backgroundColor: 'var(--color-primary)' }} />
         </div>
         <div className="text-center mb-8">
-          <h2 className="text-h2 font-serif mb-2" style={{ color: 'var(--color-text)' }}>{dim.leftLabel} vs {dim.rightLabel}</h2>
-          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>Vyber odpověď, která tě nejlépe vystihuje</p>
+          <h2 className="text-h2 font-serif mb-2" style={{ color: 'var(--color-text)' }}>{getDimensionLabel(dim, 'left', lang)} vs {getDimensionLabel(dim, 'right', lang)}</h2>
+          <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Vyber odpověď, která tě nejlépe vystihuje' : 'Choose the answer that best describes you'}</p>
         </div>
         <div className="space-y-6 flex-1 overflow-y-auto">
           {currentDimensionQuestions.map((q, idx) => (
             <div key={q.id} className="card p-6">
-              <p className="font-medium mb-4" style={{ color: 'var(--color-text)' }}>{idx + 1}. {q.text}</p>
+              <p className="font-medium mb-4" style={{ color: 'var(--color-text)' }}>{idx + 1}. {getTypologyQuestionText(q, lang)}</p>
               <div className="grid grid-cols-1 sm:grid-cols-2 gap-3">
                 {q.options.map(opt => (
                   <button
@@ -1590,7 +1493,7 @@ const App: React.FC = () => {
                       backgroundColor: typologyAnswers[q.id] === opt.key ? 'rgba(74, 95, 168, 0.08)' : 'var(--color-bg-card)'
                     }}
                   >
-                    <span className="option-key mr-2">{opt.key})</span>{opt.text}
+                    <span className="option-key mr-2">{opt.key})</span>{getTypologyOptionText(opt, lang)}
                   </button>
                 ))}
               </div>
@@ -1598,9 +1501,9 @@ const App: React.FC = () => {
           ))}
         </div>
         <div className="flex gap-4 mt-8">
-          {currentDimension > 0 && <button onClick={() => setCurrentDimension(d => d - 1)} className="flex-1 py-4 font-medium transition-all" style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)' }}>Zpět</button>}
+          {currentDimension > 0 && <button onClick={() => setCurrentDimension(d => d - 1)} className="flex-1 py-4 font-medium transition-all" style={{ border: '2px solid var(--color-border)', borderRadius: 'var(--radius-md)', backgroundColor: 'var(--color-bg-card)' }}>{t('back', lang)}</button>}
           <button onClick={handleNextDimension} disabled={!allTypologyAnswered} className="flex-1 py-4 text-white font-medium disabled:opacity-50 transition-all" style={{ backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}>
-            {currentDimension === dimensionsMeta.length - 1 ? 'Dokončit' : 'Další'}
+            {currentDimension === dimensionsMeta.length - 1 ? t('finish', lang) : t('next', lang)}
           </button>
         </div>
       </div>
@@ -1629,7 +1532,7 @@ const App: React.FC = () => {
         <div className="flex items-center justify-between mb-6">
           <button onClick={() => setView('dashboard')} className="flex items-center gap-2 text-label" style={{ color: 'var(--color-text-muted)' }}>
             <ChevronLeft className="w-5 h-5" />
-            Zpět
+            {t('back', lang)}
           </button>
           <span className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{currentVakQuestion + 1} / {vakQuestions.length}</span>
         </div>
@@ -1638,14 +1541,14 @@ const App: React.FC = () => {
         </div>
         <div className="flex-1 flex flex-col justify-center">
           <div className="card p-8" style={{ boxShadow: 'var(--shadow-lg)' }}>
-            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{q.text}</p>
+            <p className="text-h3 font-serif mb-8 text-center" style={{ color: 'var(--color-text)' }}>{getVakQuestionText(q, lang)}</p>
             <div className="space-y-4">
               {q.options.map((opt, idx) => (
                 <button key={opt.key} onClick={() => handleVakAnswer(opt.key)} className="option-button flex items-center gap-4">
                   <span className="w-10 h-10 flex items-center justify-center font-semibold" style={{ borderRadius: 'var(--radius-full)', backgroundColor: 'var(--color-bg)', color: 'var(--color-text-muted)' }}>
                     {String.fromCharCode(65 + idx)}
                   </span>
-                  <span style={{ color: 'var(--color-text-secondary)' }}>{opt.text}</span>
+                  <span style={{ color: 'var(--color-text-secondary)' }}>{getVakOptionText(opt, lang)}</span>
                 </button>
               ))}
             </div>
@@ -2245,9 +2148,9 @@ const App: React.FC = () => {
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="text-center">
           <h1 className="text-h1 font-serif mb-2" style={{ color: 'var(--color-text)' }}>
-            {studentName ? `${studentName}, tvůj profil` : 'Tvůj profil'}
+            {studentName ? `${studentName}, ${lang === 'cs' ? 'tvůj profil' : 'your profile'}` : (lang === 'cs' ? 'Tvůj profil' : 'Your Profile')}
           </h1>
-          <p style={{ color: 'var(--color-text-secondary)' }}>Kompletní přehled všech výsledků</p>
+          <p style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Kompletní přehled všech výsledků' : 'Complete overview of all results'}</p>
         </div>
 
         {/* Tabs */}
@@ -2262,7 +2165,7 @@ const App: React.FC = () => {
               color: resultsTab === 'overview' ? '#fff' : 'var(--color-text-secondary)'
             }}
           >
-            Přehled výsledků
+            {lang === 'cs' ? 'Přehled výsledků' : 'Results Overview'}
           </button>
           <button
             onClick={() => {
@@ -2277,7 +2180,7 @@ const App: React.FC = () => {
               color: resultsTab === 'synthesis' ? '#fff' : 'var(--color-text-secondary)'
             }}
           >
-            AI Syntéza & Tipy
+            {lang === 'cs' ? 'AI Syntéza & Tipy' : 'AI Synthesis & Tips'}
           </button>
           <button
             onClick={() => {
@@ -2293,7 +2196,7 @@ const App: React.FC = () => {
             }}
           >
             <Sparkles className="w-4 h-4" />
-            AI Kouč & Plán
+            {lang === 'cs' ? 'AI Kouč & Plán' : 'AI Coach & Plan'}
           </button>
         </div>
 
@@ -2305,15 +2208,15 @@ const App: React.FC = () => {
                 <div className="flex justify-center mb-4">
                   <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: 'var(--color-primary)', borderTopColor: 'transparent' }}></div>
                 </div>
-                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>Generuji AI syntézu...</p>
-                <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>Analyzuji tvůj kompletní profil a připravuji personalizované tipy</p>
+                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>{lang === 'cs' ? 'Generuji AI syntézu...' : 'Generating AI synthesis...'}</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Analyzuji tvůj kompletní profil a připravuji personalizované tipy' : 'Analyzing your complete profile and preparing personalized tips'}</p>
               </div>
             ) : synthesis ? (
               <>
                 {/* AI Synthesis */}
                 <div className="card p-8">
                   <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                    <Sparkles className="w-4 h-4" /> Komplexní syntéza tvého profilu
+                    <Sparkles className="w-4 h-4" /> {lang === 'cs' ? 'Komplexní syntéza tvého profilu' : 'Comprehensive Profile Synthesis'}
                   </h3>
                   <div className="prose max-w-none" style={{ color: 'var(--color-text)' }}>
                     <ReactMarkdown>{synthesis.synthesis}</ReactMarkdown>
@@ -2323,7 +2226,7 @@ const App: React.FC = () => {
                 {/* Study Tips */}
                 <div className="card p-8">
                   <h3 className="text-xs font-semibold uppercase tracking-wider mb-6 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                    <Medal className="w-4 h-4" /> Jak využít své silné stránky pro úspěch
+                    <Medal className="w-4 h-4" /> {lang === 'cs' ? 'Jak využít své silné stránky pro úspěch' : 'How to Leverage Your Strengths for Success'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     {synthesis.studyTips.map((tip, i) => (
@@ -2344,7 +2247,7 @@ const App: React.FC = () => {
                       <svg className="w-4 h-4" viewBox="0 0 24 24" fill="currentColor">
                         <path d="M23.498 6.186a3.016 3.016 0 0 0-2.122-2.136C19.505 3.545 12 3.545 12 3.545s-7.505 0-9.377.505A3.017 3.017 0 0 0 .502 6.186C0 8.07 0 12 0 12s0 3.93.502 5.814a3.016 3.016 0 0 0 2.122 2.136c1.871.505 9.376.505 9.376.505s7.505 0 9.377-.505a3.015 3.015 0 0 0 2.122-2.136C24 15.93 24 12 24 12s0-3.93-.502-5.814zM9.545 15.568V8.432L15.818 12l-6.273 3.568z"/>
                       </svg>
-                      Doporučená videa pro tebe
+                      {lang === 'cs' ? 'Doporučená videa pro tebe' : 'Recommended Videos for You'}
                     </h3>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
                       {synthesis.youtubeVideos.map((video, i) => (
@@ -2401,8 +2304,8 @@ const App: React.FC = () => {
                 <div className="flex justify-center mb-4">
                   <div className="w-12 h-12 border-4 border-t-transparent rounded-full animate-spin" style={{ borderColor: '#10b981', borderTopColor: 'transparent' }}></div>
                 </div>
-                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>Připravuji tvůj koučovací plán...</p>
-                <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>Analyzuji všechny výsledky a vytvářím personalizované doporučení</p>
+                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>{lang === 'cs' ? 'Připravuji tvůj koučovací plán...' : 'Preparing your coaching plan...'}</p>
+                <p className="text-sm mt-2" style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Analyzuji všechny výsledky a vytvářím personalizované doporučení' : 'Analyzing all results and creating personalized recommendations'}</p>
               </div>
             ) : coaching ? (
               <>
@@ -2413,7 +2316,7 @@ const App: React.FC = () => {
                       <Sparkles className="w-6 h-6 text-white" />
                     </div>
                     <div>
-                      <h3 className="text-white font-semibold mb-2">Osobní zpráva pro tebe</h3>
+                      <h3 className="text-white font-semibold mb-2">{lang === 'cs' ? 'Osobní zpráva pro tebe' : 'Personal Message for You'}</h3>
                       <p className="text-white/90">{coaching.motivationalMessage}</p>
                     </div>
                   </div>
@@ -2422,7 +2325,7 @@ const App: React.FC = () => {
                 {/* Summary */}
                 <div className="card p-8">
                   <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
-                    <Brain className="w-4 h-4" /> Celkové shrnutí
+                    <Brain className="w-4 h-4" /> {lang === 'cs' ? 'Celkové shrnutí' : 'Overall Summary'}
                   </h3>
                   <div className="prose max-w-none" style={{ color: 'var(--color-text)' }}>
                     <ReactMarkdown>{coaching.summary}</ReactMarkdown>
@@ -2432,7 +2335,7 @@ const App: React.FC = () => {
                 {/* Key Insights */}
                 <div className="card p-8">
                   <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
-                    <Sparkles className="w-4 h-4" /> Klíčové poznatky
+                    <Sparkles className="w-4 h-4" /> {lang === 'cs' ? 'Klíčové poznatky' : 'Key Insights'}
                   </h3>
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-3">
                     {coaching.keyInsights.map((insight, i) => (
@@ -2449,7 +2352,7 @@ const App: React.FC = () => {
                 {/* Weekly Plan */}
                 <div className="card p-8">
                   <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
-                    <CalendarDays className="w-4 h-4" /> Týdenní plán
+                    <CalendarDays className="w-4 h-4" /> {lang === 'cs' ? 'Týdenní plán' : 'Weekly Plan'}
                   </h3>
                   <div className="space-y-4">
                     {coaching.weeklyPlan.map((day, i) => (
@@ -2474,18 +2377,18 @@ const App: React.FC = () => {
                 {/* Habit Tracker */}
                 <div className="card p-8">
                   <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: '#10b981' }}>
-                    <Medal className="w-4 h-4" /> Návyky k sledování
+                    <Medal className="w-4 h-4" /> {lang === 'cs' ? 'Návyky k sledování' : 'Habits to Track'}
                   </h3>
                   <p className="text-sm mb-4" style={{ color: 'var(--color-text-secondary)' }}>
-                    Sleduj tyto návyky každý den. Vytiskni si nebo si je napiš - jsou klíčem k úspěchu!
+                    {lang === 'cs' ? 'Sleduj tyto návyky každý den. Vytiskni si nebo si je napiš - jsou klíčem k úspěchu!' : 'Track these habits every day. Print them out or write them down - they are the key to success!'}
                   </p>
                   <div className="overflow-x-auto">
                     <table className="w-full text-sm">
                       <thead>
                         <tr style={{ borderBottom: '2px solid var(--color-border)' }}>
-                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>Návyk</th>
-                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>Proč?</th>
-                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>Jak měřit</th>
+                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>{lang === 'cs' ? 'Návyk' : 'Habit'}</th>
+                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>{lang === 'cs' ? 'Proč?' : 'Why?'}</th>
+                          <th className="text-left py-3 px-4" style={{ color: 'var(--color-text)' }}>{lang === 'cs' ? 'Jak měřit' : 'How to Measure'}</th>
                         </tr>
                       </thead>
                       <tbody>
@@ -2528,7 +2431,7 @@ const App: React.FC = () => {
           {typologyResult && (
             <div className="card p-6 md:col-span-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="brain" className="w-4 h-4" /> Jak přemýšlíš
+                <IconComponent name="brain" className="w-4 h-4" /> {lang === 'cs' ? 'Jak přemýšlíš' : 'How You Think'}
               </h3>
               <div className="space-y-4 mb-4">
                 {typologyResult.dimensions.map((d, i) => (
@@ -2550,15 +2453,15 @@ const App: React.FC = () => {
           {vakResult && (
             <div className="card p-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="eye" className="w-4 h-4" /> Jak se učíš (VAK)
+                <IconComponent name="eye" className="w-4 h-4" /> {lang === 'cs' ? 'Jak se učíš (VAK)' : 'How You Learn (VAK)'}
               </h3>
               <div className="space-y-4 mb-4">
-                <VakBar label="Vizuální" value={vakResult.visual} color="visual" index={0} />
-                <VakBar label="Auditivní" value={vakResult.auditory} color="auditory" index={1} />
-                <VakBar label="Kinestetický" value={vakResult.kinesthetic} color="kinesthetic" index={2} />
+                <VakBar label={lang === 'cs' ? 'Vizuální' : 'Visual'} value={vakResult.visual} color="visual" index={0} />
+                <VakBar label={lang === 'cs' ? 'Auditivní' : 'Auditory'} value={vakResult.auditory} color="auditory" index={1} />
+                <VakBar label={lang === 'cs' ? 'Kinestetický' : 'Kinesthetic'} value={vakResult.kinesthetic} color="kinesthetic" index={2} />
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                <p className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{vakResult.label}</p>
+                <p className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{vakResult.label[lang]}</p>
               </div>
             </div>
           )}
@@ -2567,7 +2470,7 @@ const App: React.FC = () => {
           {chatReport && (
             <div className="card p-6 md:col-span-2 lg:col-span-3">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="chat" className="w-4 h-4" /> Z rozhovoru
+                <IconComponent name="chat" className="w-4 h-4" /> {lang === 'cs' ? 'Z rozhovoru' : 'From Conversation'}
               </h3>
               <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
                 <div className="space-y-3">
@@ -2677,7 +2580,7 @@ const App: React.FC = () => {
               <div className="space-y-4 mb-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-semibold">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>Růstové myšlení</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Růstové myšlení' : 'Growth Mindset Score'}</span>
                     <span style={{ color: 'var(--color-primary)' }}>{gmResult.percent}%</span>
                   </div>
                   <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
@@ -2686,9 +2589,9 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{gmResult.label}</p>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(gmResult, lang)}</p>
                 <ul className="space-y-1">
-                  {gmResult.tips.slice(0, 2).map((tip, i) => (
+                  {getResultTips(gmResult, lang).slice(0, 2).map((tip, i) => (
                     <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
                   ))}
                 </ul>
@@ -2700,12 +2603,12 @@ const App: React.FC = () => {
           {gritResult && (
             <div className="card p-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="fire" className="w-4 h-4" /> Vytrvalost (Grit)
+                <IconComponent name="fire" className="w-4 h-4" /> {lang === 'cs' ? 'Vytrvalost (Grit)' : 'Perseverance (Grit)'}
               </h3>
               <div className="space-y-4 mb-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-semibold">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>Grit skóre</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Grit skóre' : 'Grit Score'}</span>
                     <span style={{ color: 'var(--color-primary)' }}>{gritResult.percent}%</span>
                   </div>
                   <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
@@ -2714,9 +2617,9 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{gritResult.label}</p>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(gritResult, lang)}</p>
                 <ul className="space-y-1">
-                  {gritResult.tips.slice(0, 2).map((tip, i) => (
+                  {getResultTips(gritResult, lang).slice(0, 2).map((tip, i) => (
                     <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
                   ))}
                 </ul>
@@ -2733,7 +2636,7 @@ const App: React.FC = () => {
               <div className="space-y-4 mb-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-semibold">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>Víra ve schopnosti</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Víra ve schopnosti' : 'Self-Belief'}</span>
                     <span style={{ color: 'var(--color-primary)' }}>{seResult.percent}%</span>
                   </div>
                   <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
@@ -2742,9 +2645,9 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{seResult.label}</p>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(seResult, lang)}</p>
                 <ul className="space-y-1">
-                  {seResult.tips.slice(0, 2).map((tip, i) => (
+                  {getResultTips(seResult, lang).slice(0, 2).map((tip, i) => (
                     <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
                   ))}
                 </ul>
@@ -2756,12 +2659,12 @@ const App: React.FC = () => {
           {taResult && (
             <div className="card p-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="clock" className="w-4 h-4" /> Testová úzkost
+                <IconComponent name="clock" className="w-4 h-4" /> {lang === 'cs' ? 'Testová úzkost' : 'Test Anxiety'}
               </h3>
               <div className="space-y-4 mb-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-semibold">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>Úroveň úzkosti</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Úroveň úzkosti' : 'Anxiety Level'}</span>
                     <span style={{ color: 'var(--color-primary)' }}>{taResult.percent}%</span>
                   </div>
                   <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
@@ -2770,9 +2673,9 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{taResult.label}</p>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(taResult, lang)}</p>
                 <ul className="space-y-1">
-                  {taResult.tips.slice(0, 2).map((tip, i) => (
+                  {getResultTips(taResult, lang).slice(0, 2).map((tip, i) => (
                     <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
                   ))}
                 </ul>
@@ -2784,12 +2687,12 @@ const App: React.FC = () => {
           {mcResult && (
             <div className="card p-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="brain" className="w-4 h-4" /> Metakognice
+                <IconComponent name="brain" className="w-4 h-4" /> {lang === 'cs' ? 'Metakognice' : 'Metacognition'}
               </h3>
               <div className="space-y-4 mb-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-semibold">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>Metakognitivní dovednosti</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Metakognitivní dovednosti' : 'Metacognitive Skills'}</span>
                     <span style={{ color: 'var(--color-primary)' }}>{mcResult.percent}%</span>
                   </div>
                   <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
@@ -2798,9 +2701,9 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{mcResult.label}</p>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(mcResult, lang)}</p>
                 <ul className="space-y-1">
-                  {mcResult.tips.slice(0, 2).map((tip, i) => (
+                  {getResultTips(mcResult, lang).slice(0, 2).map((tip, i) => (
                     <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
                   ))}
                 </ul>
@@ -2812,7 +2715,7 @@ const App: React.FC = () => {
           {riasecResult && (
             <div className="card p-6 md:col-span-2">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="star" className="w-4 h-4" /> Kariérní zájmy (RIASEC)
+                <IconComponent name="star" className="w-4 h-4" /> {lang === 'cs' ? 'Kariérní zájmy (RIASEC)' : 'Career Interests (RIASEC)'}
               </h3>
               <div className="grid grid-cols-2 sm:grid-cols-3 gap-3 mb-4">
                 {riasecResult.scores.map((s) => (
@@ -2830,10 +2733,10 @@ const App: React.FC = () => {
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
                 <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>
-                  Tvůj kód: {riasecResult.code} - {riasecResult.scores[0]?.label}
+                  {lang === 'cs' ? 'Tvůj kód' : 'Your code'}: {riasecResult.code} - {riasecResult.scores[0]?.label}
                 </p>
                 <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>{riasecResult.description}</p>
-                <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>Doporučené kariéry:</p>
+                <p className="text-xs font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Doporučené kariéry' : 'Recommended careers'}:</p>
                 <ul className="space-y-1">
                   {riasecResult.scores[0]?.careers.slice(0, 3).map((career, i) => (
                     <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {career}</li>
@@ -2847,12 +2750,12 @@ const App: React.FC = () => {
           {eqResult && (
             <div className="card p-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="chat" className="w-4 h-4" /> Emoční inteligence
+                <IconComponent name="chat" className="w-4 h-4" /> {lang === 'cs' ? 'Emoční inteligence' : 'Emotional Intelligence'}
               </h3>
               <div className="space-y-4 mb-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-semibold">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>EQ skóre</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'EQ skóre' : 'EQ Score'}</span>
                     <span style={{ color: 'var(--color-primary)' }}>{eqResult.percent}%</span>
                   </div>
                   <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
@@ -2861,9 +2764,9 @@ const App: React.FC = () => {
                 </div>
               </div>
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
-                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{eqResult.label}</p>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(eqResult, lang)}</p>
                 <ul className="space-y-1">
-                  {eqResult.tips.slice(0, 2).map((tip, i) => (
+                  {getResultTips(eqResult, lang).slice(0, 2).map((tip, i) => (
                     <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
                   ))}
                 </ul>
@@ -2875,12 +2778,12 @@ const App: React.FC = () => {
           {stroopResult && (
             <div className="card p-6">
               <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
-                <IconComponent name="eye" className="w-4 h-4" /> Stroop Test (Pozornost)
+                <IconComponent name="eye" className="w-4 h-4" /> {lang === 'cs' ? 'Stroop Test (Pozornost)' : 'Stroop Test (Attention)'}
               </h3>
               <div className="space-y-3 mb-4">
                 <div className="space-y-2">
                   <div className="flex justify-between items-center text-sm font-semibold">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>Přesnost</span>
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Přesnost' : 'Accuracy'}</span>
                     <span style={{ color: 'var(--color-primary)' }}>{stroopResult.accuracy}%</span>
                   </div>
                   <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
@@ -2889,11 +2792,11 @@ const App: React.FC = () => {
                 </div>
                 <div className="grid grid-cols-2 gap-3 mt-3">
                   <div className="p-2 text-center" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-sm)' }}>
-                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Průměrný čas</p>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Průměrný čas' : 'Avg. Time'}</p>
                     <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{stroopResult.averageReactionTime} ms</p>
                   </div>
                   <div className="p-2 text-center" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-sm)' }}>
-                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Stroop efekt</p>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Stroop efekt' : 'Stroop Effect'}</p>
                     <p className="font-semibold" style={{ color: 'var(--color-text)' }}>{stroopResult.stroopEffect} ms</p>
                   </div>
                 </div>
@@ -2901,8 +2804,8 @@ const App: React.FC = () => {
               <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
                 <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{stroopResult.label}</p>
                 <div className="flex gap-4 text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
-                  <span>Kogn. flexibilita: <strong>{stroopResult.cognitiveFlexibility}</strong></span>
-                  <span>Kontrola pozornosti: <strong>{stroopResult.attentionControl}</strong></span>
+                  <span>{lang === 'cs' ? 'Kogn. flexibilita' : 'Cognitive Flexibility'}: <strong>{stroopResult.cognitiveFlexibility}</strong></span>
+                  <span>{lang === 'cs' ? 'Kontrola pozornosti' : 'Attention Control'}: <strong>{stroopResult.attentionControl}</strong></span>
                 </div>
                 <ul className="space-y-1">
                   {stroopResult.tips.slice(0, 2).map((tip, i) => (
@@ -2917,7 +2820,7 @@ const App: React.FC = () => {
 
         <div className="text-center pt-4">
           <button onClick={() => setView('dashboard')} className="font-medium transition-opacity hover:opacity-70" style={{ color: 'var(--color-text-muted)' }}>
-            ← Zpět na výběr testů
+            ← {lang === 'cs' ? 'Zpět na výběr testů' : 'Back to test selection'}
           </button>
         </div>
       </div>

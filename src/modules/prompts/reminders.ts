@@ -1,11 +1,11 @@
 export const TURN_REMINDER = `
-Připomínka: Reaguj na to, co student řekl. Buď stručný (max 2–3 věty).
-Na konci polož PŘESNĚ 1 navazující otázku (jediný otazník).
-Mluv přátelsky a konkrétně.
+Reminder: Respond to what the student said. Be concise (max 2-3 sentences).
+At the end, ask EXACTLY 1 follow-up question (single question mark).
+Speak in a friendly and specific manner.
 `;
 
 export const START_PROMPT =
-  'Začni rozhovor. Krátce se představ (1 věta) a polož první otázku z Modulu A o tom, co studenta baví. Polož PŘESNĚ 1 otázku.';
+  'Start the conversation. Briefly introduce yourself (1 sentence) and ask the first question from Module A about what the student enjoys. Ask EXACTLY 1 question.';
 
 export const EVALUATE_PROMPT =
-  'VYHODNOTIT. Vygeneruj kompletní JSON analýzu. Piš povzbudivě a konstruktivně. Odpověz POUZE validním JSON bez markdown bloků.';
+  'EVALUATE. Generate a complete JSON analysis. Write encouragingly and constructively. Reply with ONLY valid JSON without markdown blocks.';

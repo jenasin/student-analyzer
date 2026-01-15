@@ -34,7 +34,7 @@ export class NavigatorService {
 
     const assistantMessage =
       response.choices[0]?.message?.content ||
-      'Ahoj! Jsem tu, abych ti pomohl lépe poznat, jak se učíš a co tě baví. Co děláš, když máš volno a nikdo ti do toho nemluví?';
+      'Hi! I\'m here to help you better understand how you learn and what you enjoy. What do you do when you have free time and no one is telling you what to do?';
 
     this.messages.push({ role: 'assistant', content: assistantMessage });
     return assistantMessage;
@@ -42,7 +42,7 @@ export class NavigatorService {
 
   async sendMessage(text: string): Promise<string> {
     if (!this.messages.length) {
-      throw new Error('Chat nebyl inicializován');
+      throw new Error('Chat was not initialized');
     }
 
     this.messages.push({ role: 'user', content: text });
@@ -66,7 +66,7 @@ export class NavigatorService {
 
   async generateReport(): Promise<Report> {
     if (!this.messages.length) {
-      throw new Error('Chat nebyl inicializován');
+      throw new Error('Chat was not initialized');
     }
 
     this.messages.push({
@@ -97,14 +97,14 @@ export class NavigatorService {
 
       const parsed = JSON.parse(cleanedJson);
       return {
-        studentPassport: parsed.studentPassport || 'Nepodařilo se vygenerovat profil.',
+        studentPassport: parsed.studentPassport || 'Failed to generate profile.',
         researchBlock: parsed.researchBlock || 'ERROR_NO_DATA',
         skills: parsed.skills || [
-          { label: 'Samostatnost', value: 50 },
-          { label: 'Organizace', value: 50 },
-          { label: 'Kreativita', value: 50 },
-          { label: 'Vytrvalost', value: 50 },
-          { label: 'Spolupráce', value: 50 }
+          { label: 'Independence', value: 50 },
+          { label: 'Organization', value: 50 },
+          { label: 'Creativity', value: 50 },
+          { label: 'Perseverance', value: 50 },
+          { label: 'Collaboration', value: 50 }
         ]
       };
     } catch (e) {
@@ -114,22 +114,22 @@ export class NavigatorService {
         studentPassport: responseText,
         researchBlock: 'ERROR_PARSING_JSON',
         skills: [
-          { label: 'Samostatnost', value: 50 },
-          { label: 'Organizace', value: 50 },
-          { label: 'Kreativita', value: 50 },
-          { label: 'Vytrvalost', value: 50 },
-          { label: 'Spolupráce', value: 50 }
+          { label: 'Independence', value: 50 },
+          { label: 'Organization', value: 50 },
+          { label: 'Creativity', value: 50 },
+          { label: 'Perseverance', value: 50 },
+          { label: 'Collaboration', value: 50 }
         ]
       };
     }
   }
 
-  // Získání historie chatu (pro debug nebo export)
+  // Get chat history (for debug or export)
   getHistory(): ChatMessage[] {
     return [...this.messages];
   }
 
-  // Reset chatu
+  // Reset chat
   reset(): void {
     this.messages = [];
   }

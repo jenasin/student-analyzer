@@ -28,50 +28,50 @@ export interface SessionJson {
 }
 
 const SYSTEM_INSTRUCTION = `
-Jsi "AI ACADEMIC NAVIGATOR" – přátelský mentor pro studenty.
-Cíl: za ~10 výměn zjistit (1) kdo student je, (2) jak se učí, (3) jak přemýšlí (abstraktně vs. konkrétně), (4) co mu jde a co zlepšit.
-Neptej se na "rok volna a peníze". Žádné dlouhé řeči.
+You are "AI ACADEMIC NAVIGATOR" – a friendly mentor for students.
+Goal: in ~10 exchanges discover (1) who the student is, (2) how they learn, (3) how they think (abstract vs. concrete), (4) their strengths and areas to improve.
+Don't ask about "gap year and money". Keep it concise.
 
-# TVRDÁ PRAVIDLA
-- Každá tvoje zpráva končí PŘESNĚ 1 otázkou.
-- Maximum 2–3 věty + 1 otázka.
-- Ptej se snadno: nabídni volby A/B/C/D, když je to vhodné.
-- Když je odpověď vágní, vyžádej 1 konkrétní příklad.
+# HARD RULES
+- Every message ends with EXACTLY 1 question.
+- Maximum 2-3 sentences + 1 question.
+- Ask easy questions: offer A/B/C/D choices when appropriate.
+- If the answer is vague, ask for 1 specific example.
 
 # START
-1) Nejdřív si vyžádej jméno/přezdívku.
-2) Pak pokračuj řízenými moduly (8–10 otázek celkem).
+1) First, ask for name/nickname.
+2) Then continue with guided modules (8-10 questions total).
 
-# MODULY (8–10 otázek)
-M0 Identita (1 otázka): jméno/přezdívka (+ volitelně ročník/obor).
-M1 Studium teď (2 otázky): co teď dává smysl, co je těžké.
-M2 Myšlení (2 otázky): abstrakt vs. konkrétní (ideálně A/B/C/D).
-M3 Učení (2–3 otázky): aktivní/reflektivní, vizuální/verbální, sekvenční/globální (A/B/C/D).
-M4 Návyky (1–2 otázky): plánování, prokrastinace, práce se zaseknutím.
+# MODULES (8-10 questions)
+M0 Identity (1 question): name/nickname (+ optionally year/major).
+M1 Current studies (2 questions): what makes sense now, what's difficult.
+M2 Thinking (2 questions): abstract vs. concrete (ideally A/B/C/D).
+M3 Learning (2-3 questions): active/reflective, visual/verbal, sequential/global (A/B/C/D).
+M4 Habits (1-2 questions): planning, procrastination, dealing with being stuck.
 
-# VÝSTUP (při "VYHODNOTIT")
-Vygeneruj POUZE validní JSON bez markdown bloků:
+# OUTPUT (when "EVALUATE")
+Generate ONLY valid JSON without markdown blocks:
 {
-  "studentPassport": "Markdown text obsahující:\\n## Tvůj profil\\n## Jak přemýšlíš (abstraktní vs konkrétní)\\n## Jak se učíš\\n## Silné stránky\\n## Na čem můžeš zapracovat\\n## 3 konkrétní tipy",
+  "studentPassport": "Markdown text containing:\\n## Your Profile\\n## How You Think (abstract vs concrete)\\n## How You Learn\\n## Strengths\\n## Areas to Work On\\n## 3 Specific Tips",
   "researchBlock": "PROFILE_V3|name:X|interests:X|thinking:X|learning:X|strengths:X",
   "skills": [
-    {"label":"Samostatnost","value":0-100},
-    {"label":"Organizace","value":0-100},
-    {"label":"Kreativita","value":0-100},
-    {"label":"Vytrvalost","value":0-100},
-    {"label":"Spolupráce","value":0-100}
+    {"label":"Independence","value":0-100},
+    {"label":"Organization","value":0-100},
+    {"label":"Creativity","value":0-100},
+    {"label":"Perseverance","value":0-100},
+    {"label":"Collaboration","value":0-100}
   ],
-  "studentType": "např. Vizuálně-praktický | Abstraktní systematik | Vyvážený multimodální",
+  "studentType": "e.g. Visual-practical | Abstract systematic | Balanced multimodal",
   "interests": ["..."],
   "learningStyle": "..."
 }
 `;
 
 const START_PROMPT =
-  'Začni. Napiš krátké uvítání (max 1 věta) a zeptej se: "Jak ti mám říkat (jméno/přezdívka)?" Polož PŘESNĚ 1 otázku.';
+  'Start. Write a short greeting (max 1 sentence) and ask: "What should I call you (name/nickname)?" Ask EXACTLY 1 question.';
 
 const TURN_REMINDER =
-  'Připomínka: max 2–3 věty. Na konci PŘESNĚ 1 otázka. Když je to vhodné, dej A/B/C/D volby.';
+  'Reminder: max 2-3 sentences. End with EXACTLY 1 question. When appropriate, offer A/B/C/D choices.';
 
 function enforceSingleQuestion(text: string): string {
   const t = (text || '').trim();
@@ -187,7 +187,7 @@ export class NavigatorService {
   }
 
   async sendMessage(text: string): Promise<string> {
-    if (!this.messages.length) throw new Error('Chat nebyl inicializován');
+    if (!this.messages.length) throw new Error('Chat was not initialized');
 
     this.logAnswer(text);
     this.messages.push({ role: 'user', content: text });
@@ -214,11 +214,11 @@ export class NavigatorService {
   }
 
   async generateReport(): Promise<Report> {
-    if (!this.messages.length) throw new Error('Chat nebyl inicializován');
+    if (!this.messages.length) throw new Error('Chat was not initialized');
 
     this.messages.push({
       role: 'user',
-      content: 'VYHODNOTIT. Vygeneruj kompletní JSON analýzu. Odpověz POUZE validním JSON bez markdown bloků.'
+      content: 'EVALUATE. Generate complete JSON analysis. Reply with ONLY valid JSON without markdown blocks.'
     });
 
     const response = await this.openai.chat.completions.create({
@@ -244,14 +244,14 @@ export class NavigatorService {
 
       const parsed = JSON.parse(cleanedJson);
       return {
-        studentPassport: parsed.studentPassport || 'Nepodařilo se vygenerovat profil.',
+        studentPassport: parsed.studentPassport || 'Failed to generate profile.',
         researchBlock: parsed.researchBlock || 'ERROR_NO_DATA',
         skills: parsed.skills || [
-          { label: 'Samostatnost', value: 50 },
-          { label: 'Organizace', value: 50 },
-          { label: 'Kreativita', value: 50 },
-          { label: 'Vytrvalost', value: 50 },
-          { label: 'Spolupráce', value: 50 }
+          { label: 'Independence', value: 50 },
+          { label: 'Organization', value: 50 },
+          { label: 'Creativity', value: 50 },
+          { label: 'Perseverance', value: 50 },
+          { label: 'Collaboration', value: 50 }
         ]
       };
     } catch (e) {
@@ -260,11 +260,11 @@ export class NavigatorService {
         studentPassport: responseText,
         researchBlock: 'ERROR_PARSING_JSON',
         skills: [
-          { label: 'Samostatnost', value: 50 },
-          { label: 'Organizace', value: 50 },
-          { label: 'Kreativita', value: 50 },
-          { label: 'Vytrvalost', value: 50 },
-          { label: 'Spolupráce', value: 50 }
+          { label: 'Independence', value: 50 },
+          { label: 'Organization', value: 50 },
+          { label: 'Creativity', value: 50 },
+          { label: 'Perseverance', value: 50 },
+          { label: 'Collaboration', value: 50 }
         ]
       };
     }
@@ -285,53 +285,53 @@ export class NavigatorService {
     motivation?: { percent: number; label: string };
     strengths?: { areas: { label: string; score: number }[]; topStrength: string };
   }): Promise<{ synthesis: string; studyTips: string[]; youtubeVideos: { videoId: string; title: string; description: string }[] }> {
-    const prompt = `Jsi expert na vzdělávání a koučink studentů. Na základě kompletního profilu studenta vytvoř:
+    const prompt = `You are an expert in education and student coaching. Based on the complete student profile, create:
 
-1. **KOMPLEXNÍ SYNTÉZU** (3-4 odstavce): Propoj všechny výsledky do uceleného obrazu studenta. Jaký je jeho celkový studijní profil? Jak spolu souvisí jeho myšlenkový styl, učební preference a silné stránky?
+1. **COMPREHENSIVE SYNTHESIS** (3-4 paragraphs): Connect all results into a complete picture of the student. What is their overall study profile? How do their thinking style, learning preferences, and strengths relate to each other?
 
-2. **10 KONKRÉTNÍCH TIPŮ** pro akademický úspěch: Jak může využít své silné stránky pro lepší výsledky v různých předmětech (matematika, jazyky, přírodní vědy, humanitní předměty). Každý tip musí být specifický a praktický.
+2. **10 SPECIFIC TIPS** for academic success: How can they leverage their strengths for better results in various subjects (math, languages, natural sciences, humanities). Each tip must be specific and practical.
 
-3. **5-6 YOUTUBE VIDEÍ** s praktickými technikami učení, které odpovídají profilu studenta. Vyber skutečná, populární videa o studijních technikách, produktivitě, paměťových technikách, time managementu apod. Použij SKUTEČNÁ video ID z YouTube (např. "IlU-zDU6aQ0" pro Pomodoro techniku, "ukLnPbIffxE" pro active recall, "fBXnxlLR0PY" pro spaced repetition, "Z-zNHHpXoMM" pro Cornell notes, "mzCEJVtED0U" pro Feynman technique).
+3. **5-6 YOUTUBE VIDEOS** with practical learning techniques that match the student's profile. Select real, popular videos about study techniques, productivity, memory techniques, time management, etc. Use REAL video IDs from YouTube (e.g., "IlU-zDU6aQ0" for Pomodoro technique, "ukLnPbIffxE" for active recall, "fBXnxlLR0PY" for spaced repetition, "Z-zNHHpXoMM" for Cornell notes, "mzCEJVtED0U" for Feynman technique).
 
-PROFIL STUDENTA "${profileData.studentName}":
+STUDENT PROFILE "${profileData.studentName}":
 
-${profileData.typology ? `MYŠLENKOVÝ STYL:
+${profileData.typology ? `THINKING STYLE:
 ${profileData.typology.dimensions.map(d => `- ${d.leftLabel} ${d.leftScore}% / ${d.rightLabel} ${d.rightScore}%`).join('\n')}
-Celkový profil: ${profileData.typology.overallProfile}` : ''}
+Overall profile: ${profileData.typology.overallProfile}` : ''}
 
-${profileData.vak ? `UČEBNÍ STYL (VAK):
-- Vizuální: ${profileData.vak.visual}%
-- Auditivní: ${profileData.vak.auditory}%
-- Kinestetický: ${profileData.vak.kinesthetic}%
-Dominantní: ${profileData.vak.label}` : ''}
+${profileData.vak ? `LEARNING STYLE (VAK):
+- Visual: ${profileData.vak.visual}%
+- Auditory: ${profileData.vak.auditory}%
+- Kinesthetic: ${profileData.vak.kinesthetic}%
+Dominant: ${profileData.vak.label}` : ''}
 
-${profileData.habits ? `STUDIJNÍ NÁVYKY: ${profileData.habits.percent}% - ${profileData.habits.label}` : ''}
+${profileData.habits ? `STUDY HABITS: ${profileData.habits.percent}% - ${profileData.habits.label}` : ''}
 
-${profileData.motivation ? `MOTIVACE: ${profileData.motivation.percent}% - ${profileData.motivation.label}` : ''}
+${profileData.motivation ? `MOTIVATION: ${profileData.motivation.percent}% - ${profileData.motivation.label}` : ''}
 
-${profileData.strengths ? `SILNÉ STRÁNKY:
+${profileData.strengths ? `STRENGTHS:
 ${profileData.strengths.areas.map(a => `- ${a.label}: ${a.score}%`).join('\n')}
-Nejsilnější oblast: ${profileData.strengths.topStrength}` : ''}
+Top strength: ${profileData.strengths.topStrength}` : ''}
 
-Odpověz POUZE validním JSON:
+Reply with ONLY valid JSON:
 {
-  "synthesis": "Markdown text s komplexní syntézou profilu...",
+  "synthesis": "Markdown text with comprehensive profile synthesis...",
   "studyTips": [
-    "Tip 1: konkrétní rada pro předmět/situaci...",
+    "Tip 1: specific advice for subject/situation...",
     "Tip 2: ...",
-    "...celkem 10 tipů"
+    "...10 tips total"
   ],
   "youtubeVideos": [
-    {"videoId": "IlU-zDU6aQ0", "title": "Pomodoro Technique", "description": "Krátký popis proč je tohle video užitečné pro studenta"},
+    {"videoId": "IlU-zDU6aQ0", "title": "Pomodoro Technique", "description": "Short description of why this video is useful for the student"},
     {"videoId": "ukLnPbIffxE", "title": "Active Recall", "description": "..."},
-    "...celkem 5-6 videí"
+    "...5-6 videos total"
   ]
 }`;
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'Jsi expert na vzdělávání. Odpovídej pouze validním JSON bez markdown bloků.' },
+        { role: 'system', content: 'You are an education expert. Reply only with valid JSON without markdown blocks.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
@@ -354,7 +354,7 @@ Odpověz POUZE validním JSON:
 
       const parsed = JSON.parse(cleanedJson);
       return {
-        synthesis: parsed.synthesis || 'Nepodařilo se vygenerovat syntézu.',
+        synthesis: parsed.synthesis || 'Failed to generate synthesis.',
         studyTips: parsed.studyTips || [],
         youtubeVideos: parsed.youtubeVideos || []
       };
@@ -393,42 +393,42 @@ Odpověz POUZE validním JSON:
     resources: { title: string; description: string; videoId?: string }[];
   }> {
     const assessmentPrompts: Record<string, string> = {
-      growthMindset: `Growth Mindset (Carol Dweck): Měří, zda má student fixní nebo růstové myšlení. Růstové myšlení věří, že schopnosti lze rozvíjet prací a učením.`,
-      grit: `Grit Scale (Angela Duckworth): Měří vytrvalost a vášeň pro dlouhodobé cíle. Grit je kombinace vášně a vytrvalosti.`,
-      selfEfficacy: `Self-Efficacy (Albert Bandura): Měří víru ve vlastní schopnosti. Self-efficacy ovlivňuje, jak se člověk cítí, myslí a motivuje.`,
-      testAnxiety: `Testová úzkost: Měří úroveň stresu a úzkosti před zkouškami. Vysoká úzkost může negativně ovlivnit výkon.`,
-      metacognition: `Metakognice: Měří schopnost "učit se učit" - jak dobře student rozumí svému vlastnímu myšlení a učení.`,
-      riasec: `RIASEC/Holland: Měří kariérní zájmy podle 6 typů - Realistic, Investigative, Artistic, Social, Enterprising, Conventional.`,
-      eq: `Emoční inteligence (EQ): Měří schopnost rozpoznávat, chápat a řídit vlastní emoce i emoce druhých.`
+      growthMindset: `Growth Mindset (Carol Dweck): Measures whether the student has a fixed or growth mindset. Growth mindset believes that abilities can be developed through work and learning.`,
+      grit: `Grit Scale (Angela Duckworth): Measures perseverance and passion for long-term goals. Grit is a combination of passion and persistence.`,
+      selfEfficacy: `Self-Efficacy (Albert Bandura): Measures belief in one's own abilities. Self-efficacy affects how a person feels, thinks, and motivates themselves.`,
+      testAnxiety: `Test Anxiety: Measures the level of stress and anxiety before exams. High anxiety can negatively affect performance.`,
+      metacognition: `Metacognition: Measures the ability to "learn how to learn" - how well the student understands their own thinking and learning.`,
+      riasec: `RIASEC/Holland: Measures career interests according to 6 types - Realistic, Investigative, Artistic, Social, Enterprising, Conventional.`,
+      eq: `Emotional Intelligence (EQ): Measures the ability to recognize, understand, and manage one's own emotions and those of others.`
     };
 
-    const prompt = `Jsi expert na vzdělávání a psychologii. Student "${studentName || 'Student'}" právě dokončil test.
+    const prompt = `You are an expert in education and psychology. Student "${studentName || 'Student'}" just completed a test.
 
 TEST: ${assessmentPrompts[assessmentType] || assessmentType}
 
-VÝSLEDEK:
-- Skóre: ${result.percent}%
-- Hodnocení: ${result.label}
-${result.description ? `- Popis: ${result.description}` : ''}
+RESULT:
+- Score: ${result.percent}%
+- Rating: ${result.label}
+${result.description ? `- Description: ${result.description}` : ''}
 
-Vytvoř personalizovanou zpětnou vazbu:
+Create personalized feedback:
 
-1. **FEEDBACK** (2-3 odstavce): Co výsledek znamená pro studenta? Jak to ovlivňuje jeho učení? Buď povzbuzující ale upřímný.
+1. **FEEDBACK** (2-3 paragraphs): What does the result mean for the student? How does it affect their learning? Be encouraging but honest.
 
-2. **3-5 KONKRÉTNÍCH KROKŮ**: Co může student DNES začít dělat jinak? Praktické, měřitelné akce.
+2. **3-5 SPECIFIC STEPS**: What can the student start doing differently TODAY? Practical, measurable actions.
 
-3. **3 DOPORUČENÉ ZDROJE**: YouTube videa nebo techniky, které pomohou. Použij SKUTEČNÁ video ID.
+3. **3 RECOMMENDED RESOURCES**: YouTube videos or techniques that will help. Use REAL video IDs.
 
-Odpověz POUZE validním JSON:
+Reply with ONLY valid JSON:
 {
-  "feedback": "Markdown text s personalizovanou zpětnou vazbou...",
+  "feedback": "Markdown text with personalized feedback...",
   "actionSteps": [
-    "Krok 1: Konkrétní akce...",
-    "Krok 2: ...",
+    "Step 1: Specific action...",
+    "Step 2: ...",
     "..."
   ],
   "resources": [
-    {"title": "Název videa/techniky", "description": "Proč je to užitečné", "videoId": "skutečné_video_id"},
+    {"title": "Video/technique name", "description": "Why it's useful", "videoId": "real_video_id"},
     ...
   ]
 }`;
@@ -436,7 +436,7 @@ Odpověz POUZE validním JSON:
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'Jsi expert na vzdělávání. Odpovídej pouze validním JSON bez markdown bloků.' },
+        { role: 'system', content: 'You are an education expert. Reply only with valid JSON without markdown blocks.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
@@ -486,55 +486,55 @@ Odpověz POUZE validním JSON:
     habitTracker: { habit: string; why: string; howToTrack: string }[];
     motivationalMessage: string;
   }> {
-    const prompt = `Jsi zkušený studijní kouč. Na základě KOMPLETNÍHO profilu studenta vytvoř personalizovaný koučovací plán.
+    const prompt = `You are an experienced study coach. Based on the COMPLETE student profile, create a personalized coaching plan.
 
 STUDENT: ${allResults.studentName}
 
-KOMPLETNÍ PROFIL:
-${allResults.typology ? `• Myšlenkový styl: ${allResults.typology.overallProfile}` : ''}
-${allResults.vak ? `• Učební styl: ${allResults.vak.label} (V:${allResults.vak.visual}% A:${allResults.vak.auditory}% K:${allResults.vak.kinesthetic}%)` : ''}
-${allResults.habits ? `• Studijní návyky: ${allResults.habits.percent}% - ${allResults.habits.label}` : ''}
-${allResults.motivation ? `• Motivace: ${allResults.motivation.percent}% - ${allResults.motivation.label}` : ''}
-${allResults.strengths ? `• Nejsilnější oblast: ${allResults.strengths.topStrength}` : ''}
+COMPLETE PROFILE:
+${allResults.typology ? `• Thinking style: ${allResults.typology.overallProfile}` : ''}
+${allResults.vak ? `• Learning style: ${allResults.vak.label} (V:${allResults.vak.visual}% A:${allResults.vak.auditory}% K:${allResults.vak.kinesthetic}%)` : ''}
+${allResults.habits ? `• Study habits: ${allResults.habits.percent}% - ${allResults.habits.label}` : ''}
+${allResults.motivation ? `• Motivation: ${allResults.motivation.percent}% - ${allResults.motivation.label}` : ''}
+${allResults.strengths ? `• Top strength: ${allResults.strengths.topStrength}` : ''}
 ${allResults.growthMindset ? `• Growth Mindset: ${allResults.growthMindset.percent}% - ${allResults.growthMindset.label}` : ''}
-${allResults.grit ? `• Vytrvalost (Grit): ${allResults.grit.percent}% - ${allResults.grit.label}` : ''}
+${allResults.grit ? `• Perseverance (Grit): ${allResults.grit.percent}% - ${allResults.grit.label}` : ''}
 ${allResults.selfEfficacy ? `• Self-Efficacy: ${allResults.selfEfficacy.percent}% - ${allResults.selfEfficacy.label}` : ''}
-${allResults.testAnxiety ? `• Testová úzkost: ${allResults.testAnxiety.percent}% - ${allResults.testAnxiety.label}` : ''}
-${allResults.metacognition ? `• Metakognice: ${allResults.metacognition.percent}% - ${allResults.metacognition.label}` : ''}
-${allResults.riasec ? `• Kariérní typ: ${allResults.riasec.code || 'N/A'}` : ''}
-${allResults.eq ? `• Emoční inteligence: ${allResults.eq.percent}% - ${allResults.eq.label}` : ''}
+${allResults.testAnxiety ? `• Test Anxiety: ${allResults.testAnxiety.percent}% - ${allResults.testAnxiety.label}` : ''}
+${allResults.metacognition ? `• Metacognition: ${allResults.metacognition.percent}% - ${allResults.metacognition.label}` : ''}
+${allResults.riasec ? `• Career type: ${allResults.riasec.code || 'N/A'}` : ''}
+${allResults.eq ? `• Emotional Intelligence: ${allResults.eq.percent}% - ${allResults.eq.label}` : ''}
 
-Vytvoř KOUČOVACÍ PLÁN:
+Create a COACHING PLAN:
 
-1. **SHRNUTÍ** (3-4 odstavce): Celkový obraz studenta, jeho silné stránky a oblasti pro rozvoj. Co je pro něj klíčové?
+1. **SUMMARY** (3-4 paragraphs): Overall picture of the student, their strengths and areas for development. What's key for them?
 
-2. **5 KLÍČOVÝCH POZNATKŮ**: Nejdůležitější zjištění z celého profilu.
+2. **5 KEY INSIGHTS**: The most important findings from the complete profile.
 
-3. **TÝDENNÍ PLÁN**: Pro každý den (Po-Pá) urči fokus a 2-3 konkrétní aktivity.
+3. **WEEKLY PLAN**: For each day (Mon-Fri) determine focus and 2-3 specific activities.
 
-4. **HABIT TRACKER**: 4-5 návyků, které by měl student sledovat. Pro každý: proč je důležitý a jak ho měřit.
+4. **HABIT TRACKER**: 4-5 habits the student should track. For each: why it's important and how to measure it.
 
-5. **MOTIVAČNÍ ZPRÁVA**: Osobní povzbuzení pro studenta (2-3 věty).
+5. **MOTIVATIONAL MESSAGE**: Personal encouragement for the student (2-3 sentences).
 
-Odpověz POUZE validním JSON:
+Reply with ONLY valid JSON:
 {
-  "summary": "Markdown shrnutí...",
-  "keyInsights": ["Poznatek 1", "Poznatek 2", ...],
+  "summary": "Markdown summary...",
+  "keyInsights": ["Insight 1", "Insight 2", ...],
   "weeklyPlan": [
-    {"day": "Pondělí", "focus": "Oblast zaměření", "activities": ["Aktivita 1", "Aktivita 2"]},
+    {"day": "Monday", "focus": "Focus area", "activities": ["Activity 1", "Activity 2"]},
     ...
   ],
   "habitTracker": [
-    {"habit": "Název návyku", "why": "Proč je důležitý", "howToTrack": "Jak měřit (např. checkbox, číslo)"},
+    {"habit": "Habit name", "why": "Why it's important", "howToTrack": "How to measure (e.g., checkbox, number)"},
     ...
   ],
-  "motivationalMessage": "Osobní zpráva pro studenta..."
+  "motivationalMessage": "Personal message for the student..."
 }`;
 
     const response = await this.openai.chat.completions.create({
       model: 'gpt-4o-mini',
       messages: [
-        { role: 'system', content: 'Jsi profesionální studijní kouč. Odpovídej pouze validním JSON bez markdown bloků.' },
+        { role: 'system', content: 'You are a professional study coach. Reply only with valid JSON without markdown blocks.' },
         { role: 'user', content: prompt }
       ],
       temperature: 0.7,
