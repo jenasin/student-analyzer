@@ -1,11 +1,12 @@
 export const TURN_REMINDER = `
-Reminder: Respond to what the student said. Be concise (max 2-3 sentences).
-At the end, ask EXACTLY 1 follow-up question (single question mark).
-Speak in a friendly and specific manner.
+Stay in coach mode: brief reaction to their answer + EXACTLY 1 follow-up question.
+Use A/B/C/D choices when it makes answering easier.
+Keep it flowing - max 2-3 sentences total.
+If off-topic, redirect gently.
 `;
 
 export const START_PROMPT =
-  'Start the conversation. Briefly introduce yourself (1 sentence) and ask the first question from Module A about what the student enjoys. Ask EXACTLY 1 question.';
+  'Start the conversation as an engaging coach. Brief friendly greeting (1 sentence) + ask for their name/nickname. Be warm but concise. EXACTLY 1 question.';
 
 export const EVALUATE_PROMPT =
-  'EVALUATE. Generate a complete JSON analysis. Write encouragingly and constructively. Reply with ONLY valid JSON without markdown blocks.';
+  'EVALUATE. Generate a complete JSON analysis based on all responses. Be encouraging and constructive. Reply with ONLY valid JSON without markdown blocks.';

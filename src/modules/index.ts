@@ -3,7 +3,7 @@ export { SYSTEM_INSTRUCTION } from './prompts/systemPrompt';
 export { TURN_REMINDER, START_PROMPT, EVALUATE_PROMPT } from './prompts/reminders';
 
 // VAK Instruments
-export { vakQuestions } from './instruments/vakQuestions';
+export { vakQuestions, getVakQuestionText, getVakOptionText } from './instruments/vakQuestions';
 export type { VakOption, VakQuestion } from './instruments/vakQuestions';
 
 // TEX Test
@@ -24,12 +24,16 @@ export type {
 export { scoreVak, scoreTexAuto, addTransferScore } from './instruments/scoring';
 export type { VakResult, TexScore } from './instruments/scoring';
 
-// Typology (30 otázek - ILS/Kolb/VARK based)
+// Typology (30 questions - ILS/Kolb/VARK based)
 export {
   typologyQuestions,
   dimensionsMeta,
   getQuestionsByDimension,
-  getDimensionMeta
+  getDimensionMeta,
+  getTypologyQuestionText,
+  getTypologyOptionText,
+  getDimensionLabel,
+  getDimensionDescription
 } from './instruments/typologyQuestions';
 export type {
   AnswerKey,
@@ -78,7 +82,14 @@ export {
   scoreRiasec,
   // Emotional Intelligence
   eqQuestions,
-  scoreEQ
+  scoreEQ,
+  // Helper functions for i18n
+  getAssessmentQuestionText,
+  getAssessmentOptionText,
+  getResultLabel,
+  getResultDescription,
+  getResultTips,
+  getRiasecQuestionText
 } from './assessments';
 export type { AssessmentQuestion, AssessmentResult, RiasecQuestion, RiasecResult } from './assessments';
 

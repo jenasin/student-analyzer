@@ -1,11 +1,15 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Brain, Eye, MessageCircle, CalendarDays, Sparkles, Medal, ArrowRight, Check, ChevronLeft, ExternalLink, Zap, Users, Trash2, User } from 'lucide-react';
+import { Brain, Eye, MessageCircle, CalendarDays, Sparkles, Medal, ArrowRight, Check, ChevronLeft, ExternalLink, Zap, Users, Trash2, User, Mic, Smile, Calculator, Heart, Square, Play, StopCircle, Upload, Video, Pencil, Eraser, RotateCcw, Circle, TreeDeciduous, BookOpen, ChevronDown, ChevronUp, GraduationCap, Target, Link } from 'lucide-react';
 import { Message, AppStatus, Report, Skill } from './types';
 import { navigatorService } from './services/openaiService';
 import { getStudents, saveStudent, deleteStudent, getStudentByName, updateStudentResults, StudentProfile } from './services/studentStorage';
 import { Language, t, tModule } from './src/i18n/translations';
+import { voiceService, VoiceInterviewResult, InterviewExchange } from './src/services/VoiceService';
+import { interviewQuestions, getInterviewQuestionText, generateStudentPassportPrompt } from './src/modules/voiceInterview';
+import { visionAnalysisService, MathReasoningResult } from './src/services/VisionAnalysisService';
+import { emotionService, EmotionData, EmotionResult } from './src/services/EmotionService';
 import {
   typologyQuestions,
   dimensionsMeta,
@@ -63,7 +67,7 @@ import {
   MentalRotationResult
 } from './src/modules';
 
-type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation';
+type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest';
 
 interface ModuleProgress {
   chat: boolean;
@@ -82,6 +86,11 @@ interface ModuleProgress {
   eq: boolean;
   stroop: boolean;
   mentalRotation: boolean;
+  voiceInterview: boolean;
+  emotionRecognition: boolean;
+  mathReasoning: boolean;
+  garminHealth: boolean;
+  baumTest: boolean;
 }
 
 interface ModuleCard {
@@ -115,7 +124,12 @@ const modules: ModuleCard[] = [
   { id: 'riasec', title: '', description: '', time: '~4 min', icon: 'star', color: 'stone', view: 'riasec', tags: [], previewBg: 'from-stone-600 via-amber-700 to-stone-700', previewIcon: 'star' },
   { id: 'eq', title: '', description: '', time: '~3 min', icon: 'chat', color: 'rose', view: 'eq', tags: [], previewBg: 'from-rose-500 via-pink-600 to-red-600', previewIcon: 'chat' },
   { id: 'stroop', title: '', description: '', time: '~4 min', icon: 'eye', color: 'cyan', view: 'stroop', tags: [], previewBg: 'from-cyan-500 via-blue-500 to-indigo-600', previewIcon: 'eye' },
-  { id: 'mentalRotation', title: '', description: '', time: '~5 min', icon: 'shapes', color: 'violet', view: 'mentalRotation', tags: [], previewBg: 'from-violet-500 via-purple-600 to-fuchsia-600', previewIcon: 'shapes' }
+  { id: 'mentalRotation', title: '', description: '', time: '~5 min', icon: 'shapes', color: 'violet', view: 'mentalRotation', tags: [], previewBg: 'from-violet-500 via-purple-600 to-fuchsia-600', previewIcon: 'shapes' },
+  { id: 'voiceInterview', title: '', description: '', time: '~8 min', icon: 'mic', color: 'violet', view: 'voiceInterview', tags: [], previewBg: 'from-violet-500 via-purple-500 to-fuchsia-500', previewIcon: 'mic' },
+  { id: 'emotionRecognition', title: '', description: '', time: '~3 min', icon: 'smile', color: 'pink', view: 'emotionRecognition', tags: [], previewBg: 'from-pink-500 via-rose-500 to-red-500', previewIcon: 'smile' },
+  { id: 'mathReasoning', title: '', description: '', time: '~5 min', icon: 'calculator', color: 'blue', view: 'mathReasoning', tags: [], previewBg: 'from-blue-500 via-indigo-500 to-purple-500', previewIcon: 'calculator' },
+  { id: 'garminHealth', title: '', description: '', time: '~2 min', icon: 'heart', color: 'green', view: 'garminHealth', tags: [], previewBg: 'from-green-500 via-emerald-500 to-teal-500', previewIcon: 'heart' },
+  { id: 'baumTest', title: '', description: '', time: '~5 min', icon: 'tree', color: 'amber', view: 'baumTest', tags: [], previewBg: 'from-amber-500 via-orange-500 to-yellow-500', previewIcon: 'tree' }
 ];
 
 // Habits questions (8 questions)
@@ -448,7 +462,13 @@ const IconComponent: React.FC<{ name: string; className?: string }> = ({ name, c
     fire: <Sparkles className={className} />,
     star: <Medal className={className} />,
     sparkles: <Zap className={className} />,
-    external: <ExternalLink className={className} />
+    external: <ExternalLink className={className} />,
+    shapes: <Square className={className} />,
+    mic: <Mic className={className} />,
+    smile: <Smile className={className} />,
+    calculator: <Calculator className={className} />,
+    heart: <Heart className={className} />,
+    tree: <TreeDeciduous className={className} />
   };
   return icons[name] || null;
 };
@@ -540,7 +560,8 @@ const App: React.FC = () => {
   const [view, setView] = useState<View>('welcome');
   const [progress, setProgress] = useState<ModuleProgress>({
     chat: false, typology: true, vak: true, habits: false, motivation: false, strengths: false, gemini: false,
-    growthMindset: true, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false
+    growthMindset: true, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false,
+    voiceInterview: false, emotionRecognition: false, mathReasoning: false, garminHealth: false, baumTest: false
   });
   const [studentName, setStudentName] = useState<string>('');
   const [nameInput, setNameInput] = useState<string>('');
@@ -653,6 +674,71 @@ const App: React.FC = () => {
     motivationalMessage: string;
   } | null>(null);
   const [isCoachingLoading, setIsCoachingLoading] = useState(false);
+
+  // Voice Interview state
+  const [voiceInterviewPhase, setVoiceInterviewPhase] = useState<'intro' | 'interview' | 'processing' | 'done'>('intro');
+  const [currentVoiceQuestion, setCurrentVoiceQuestion] = useState(0);
+  const [voiceExchanges, setVoiceExchanges] = useState<InterviewExchange[]>([]);
+  const [voiceInterviewResult, setVoiceInterviewResult] = useState<VoiceInterviewResult | null>(null);
+  const [isListening, setIsListening] = useState(false);
+  const [currentTranscript, setCurrentTranscript] = useState('');
+  const [isSpeaking, setIsSpeaking] = useState(false);
+  const [voiceSupported, setVoiceSupported] = useState(true);
+
+  // Check voice support on mount
+  useEffect(() => {
+    setVoiceSupported(voiceService.isSupported());
+  }, []);
+
+  // Math Reasoning state
+  const [mathVideo, setMathVideo] = useState<File | null>(null);
+  const [mathVideoUrl, setMathVideoUrl] = useState<string | null>(null);
+  const [mathAnalyzing, setMathAnalyzing] = useState(false);
+  const [mathResult, setMathResult] = useState<MathReasoningResult | null>(null);
+  const [mathPhase, setMathPhase] = useState<'choose' | 'upload' | 'canvas' | 'recording' | 'preview' | 'analyzing' | 'done'>('choose');
+  const mathVideoInputRef = useRef<HTMLInputElement>(null);
+
+  // Canvas recording state
+  const mathCanvasRef = useRef<HTMLCanvasElement>(null);
+  const [isDrawing, setIsDrawing] = useState(false);
+  const [penColor, setPenColor] = useState('#000000');
+  const [penSize, setPenSize] = useState(3);
+  const [isEraser, setIsEraser] = useState(false);
+  const [canvasRecorder, setCanvasRecorder] = useState<MediaRecorder | null>(null);
+  const [recordedChunks, setRecordedChunks] = useState<Blob[]>([]);
+  const canvasContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const lastPointRef = useRef<{x: number; y: number} | null>(null);
+
+  // Emotion Recognition state
+  const [emotionPhase, setEmotionPhase] = useState<'intro' | 'calibrating' | 'recording' | 'done'>('intro');
+  const [emotionTimeline, setEmotionTimeline] = useState<EmotionData[]>([]);
+  const [currentEmotion, setCurrentEmotion] = useState<EmotionData | null>(null);
+  const [emotionResult, setEmotionResult] = useState<EmotionResult | null>(null);
+  const [emotionModelsLoaded, setEmotionModelsLoaded] = useState(false);
+  const [emotionModelsLoading, setEmotionModelsLoading] = useState(false);
+  const emotionVideoRef = useRef<HTMLVideoElement>(null);
+
+  // Baum Test (Tree Drawing) state
+  const [baumPhase, setBaumPhase] = useState<'intro' | 'drawing' | 'analyzing' | 'done'>('intro');
+  const baumCanvasRef = useRef<HTMLCanvasElement>(null);
+  const baumContextRef = useRef<CanvasRenderingContext2D | null>(null);
+  const [baumDrawing, setBaumDrawing] = useState(false);
+  const [baumPenColor, setBaumPenColor] = useState('#2d1b0e');
+  const [baumPenSize, setBaumPenSize] = useState(3);
+  const [baumLastPoint, setBaumLastPoint] = useState<{x: number; y: number} | null>(null);
+  const [baumResult, setBaumResult] = useState<{
+    creativity: number;
+    detail: number;
+    stability: number;
+    interpretation: string;
+    traits: string[];
+    recommendations: string[];
+  } | null>(null);
+  const [baumAnalyzing, setBaumAnalyzing] = useState(false);
+
+  // Researcher info panels (collapsible)
+  const [showMathInfo, setShowMathInfo] = useState(false);
+  const [showBaumInfo, setShowBaumInfo] = useState(false);
 
   const scrollToBottom = () => messagesEndRef.current?.scrollIntoView({ behavior: "smooth" });
   useEffect(() => { scrollToBottom(); }, [messages]);
@@ -2142,6 +2228,765 @@ const App: React.FC = () => {
     </div>
   );
 
+  // Voice Interview
+  const renderVoiceInterview = () => {
+    const currentQuestion = interviewQuestions[currentVoiceQuestion];
+    const questionText = currentQuestion ? getInterviewQuestionText(currentQuestion.id, lang) : '';
+
+    const handleStartInterview = async () => {
+      setVoiceInterviewPhase('interview');
+      voiceService.setLanguage(lang);
+      // Speak the first question
+      setIsSpeaking(true);
+      await voiceService.speak(questionText, lang);
+      setIsSpeaking(false);
+    };
+
+    const handleStartListening = () => {
+      setIsListening(true);
+      setCurrentTranscript('');
+      voiceService.startListening((text) => {
+        setCurrentTranscript(text);
+      });
+    };
+
+    const handleStopListening = async () => {
+      const transcript = voiceService.stopListening();
+      setIsListening(false);
+
+      // Save the exchange
+      const exchange: InterviewExchange = {
+        questionId: currentQuestion.id,
+        question: questionText,
+        transcript: transcript || currentTranscript,
+        timestamp: Date.now()
+      };
+      setVoiceExchanges(prev => [...prev, exchange]);
+      setCurrentTranscript('');
+
+      // Move to next question or finish
+      if (currentVoiceQuestion < interviewQuestions.length - 1) {
+        setCurrentVoiceQuestion(prev => prev + 1);
+        // Speak next question
+        const nextQuestion = interviewQuestions[currentVoiceQuestion + 1];
+        const nextText = getInterviewQuestionText(nextQuestion.id, lang);
+        setIsSpeaking(true);
+        await voiceService.speak(nextText, lang);
+        setIsSpeaking(false);
+      } else {
+        // Finish interview - generate passport
+        setVoiceInterviewPhase('processing');
+        try {
+          const prompt = generateStudentPassportPrompt([...voiceExchanges, exchange], lang);
+          const response = await navigatorService.sendMessage(prompt);
+
+          // Parse the JSON response
+          const jsonMatch = response.match(/\{[\s\S]*\}/);
+          if (jsonMatch) {
+            const passport = JSON.parse(jsonMatch[0]);
+            setVoiceInterviewResult({
+              sessionId: `vi-${Date.now()}`,
+              startedAt: voiceExchanges[0]?.timestamp || Date.now(),
+              completedAt: Date.now(),
+              exchanges: [...voiceExchanges, exchange],
+              studentPassport: passport,
+              rawTranscript: [...voiceExchanges, exchange].map(e => `Q: ${e.question}\nA: ${e.transcript}`).join('\n\n')
+            });
+          }
+        } catch (error) {
+          console.error('Error generating passport:', error);
+        }
+        setVoiceInterviewPhase('done');
+        setProgress(p => ({ ...p, voiceInterview: true }));
+      }
+    };
+
+    return (
+      <div className="flex-1 overflow-y-auto px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="max-w-2xl mx-auto">
+          {/* Header */}
+          <div className="text-center mb-8">
+            <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)' }}>
+              <Mic className="w-8 h-8 text-white" />
+            </div>
+            <h1 className="text-h1 font-serif mb-2" style={{ color: 'var(--color-text)' }}>
+              {lang === 'cs' ? 'Hlasový rozhovor' : 'Voice Interview'}
+            </h1>
+            <p style={{ color: 'var(--color-text-secondary)' }}>
+              {lang === 'cs' ? 'AI ti položí otázky a ty odpovídáš hlasem' : 'AI will ask you questions and you respond by voice'}
+            </p>
+          </div>
+
+          {/* Content based on phase */}
+          {voiceInterviewPhase === 'intro' && (
+            <div className="text-center space-y-6">
+              {!voiceSupported ? (
+                <div className="p-6 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                  <p className="text-red-600 font-medium">
+                    {lang === 'cs' ? 'Tvůj prohlížeč nepodporuje rozpoznávání hlasu. Zkus Chrome nebo Safari.' : 'Your browser does not support voice recognition. Try Chrome or Safari.'}
+                  </p>
+                </div>
+              ) : (
+                <>
+                  <div className="p-6 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                    <h3 className="font-semibold mb-3" style={{ color: 'var(--color-text)' }}>
+                      {lang === 'cs' ? 'Jak to funguje:' : 'How it works:'}
+                    </h3>
+                    <ul className="text-left space-y-2" style={{ color: 'var(--color-text-secondary)' }}>
+                      <li className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm">1</span>
+                        {lang === 'cs' ? 'AI ti nahlas položí otázku' : 'AI will ask you a question out loud'}
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm">2</span>
+                        {lang === 'cs' ? 'Klikni na mikrofon a odpověz' : 'Click the microphone and respond'}
+                      </li>
+                      <li className="flex items-center gap-2">
+                        <span className="w-6 h-6 rounded-full bg-violet-100 text-violet-600 flex items-center justify-center text-sm">3</span>
+                        {lang === 'cs' ? 'Po 5 otázkách dostaneš "Studentský pas"' : 'After 5 questions you get your "Student Passport"'}
+                      </li>
+                    </ul>
+                  </div>
+                  <button
+                    onClick={handleStartInterview}
+                    className="px-8 py-4 text-white font-semibold rounded-full transition-all hover:scale-105"
+                    style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)' }}
+                  >
+                    <span className="flex items-center gap-2">
+                      <Play className="w-5 h-5" />
+                      {lang === 'cs' ? 'Začít rozhovor' : 'Start Interview'}
+                    </span>
+                  </button>
+                </>
+              )}
+            </div>
+          )}
+
+          {voiceInterviewPhase === 'interview' && (
+            <div className="space-y-6">
+              {/* Progress */}
+              <div className="flex justify-center gap-2">
+                {interviewQuestions.map((_, idx) => (
+                  <div
+                    key={idx}
+                    className="w-3 h-3 rounded-full transition-all"
+                    style={{
+                      backgroundColor: idx < currentVoiceQuestion ? '#8b5cf6' : idx === currentVoiceQuestion ? '#a855f7' : 'var(--color-border)'
+                    }}
+                  />
+                ))}
+              </div>
+
+              {/* Current Question */}
+              <div className="p-6 rounded-lg text-center" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <p className="text-sm mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                  {lang === 'cs' ? `Otázka ${currentVoiceQuestion + 1} z ${interviewQuestions.length}` : `Question ${currentVoiceQuestion + 1} of ${interviewQuestions.length}`}
+                </p>
+                <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>
+                  {questionText}
+                </p>
+                {isSpeaking && (
+                  <div className="mt-4 flex items-center justify-center gap-2 text-violet-600">
+                    <div className="w-2 h-2 rounded-full bg-violet-600 animate-pulse" />
+                    <span className="text-sm">{lang === 'cs' ? 'AI mluví...' : 'AI is speaking...'}</span>
+                  </div>
+                )}
+              </div>
+
+              {/* Microphone Button */}
+              <div className="flex flex-col items-center gap-4">
+                <button
+                  onClick={isListening ? handleStopListening : handleStartListening}
+                  disabled={isSpeaking}
+                  className={`w-20 h-20 rounded-full flex items-center justify-center transition-all ${isListening ? 'animate-pulse' : ''}`}
+                  style={{
+                    background: isListening ? 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' : 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)',
+                    opacity: isSpeaking ? 0.5 : 1
+                  }}
+                >
+                  {isListening ? <StopCircle className="w-10 h-10 text-white" /> : <Mic className="w-10 h-10 text-white" />}
+                </button>
+                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                  {isListening ? (lang === 'cs' ? 'Klikni pro ukončení' : 'Click to stop') : (lang === 'cs' ? 'Klikni a mluv' : 'Click and speak')}
+                </p>
+              </div>
+
+              {/* Live Transcript */}
+              {currentTranscript && (
+                <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+                  <p className="text-sm font-medium mb-1" style={{ color: '#8b5cf6' }}>
+                    {lang === 'cs' ? 'Tvoje odpověď:' : 'Your answer:'}
+                  </p>
+                  <p style={{ color: 'var(--color-text)' }}>{currentTranscript}</p>
+                </div>
+              )}
+            </div>
+          )}
+
+          {voiceInterviewPhase === 'processing' && (
+            <div className="text-center py-12">
+              <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: '#8b5cf6', borderTopColor: 'transparent' }} />
+              <p className="text-lg font-medium" style={{ color: 'var(--color-text)' }}>
+                {lang === 'cs' ? 'Generuji tvůj Studentský pas...' : 'Generating your Student Passport...'}
+              </p>
+            </div>
+          )}
+
+          {voiceInterviewPhase === 'done' && voiceInterviewResult && (
+            <div className="space-y-6">
+              <div className="p-6 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <h3 className="text-lg font-serif font-semibold mb-4 flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+                  <Check className="w-5 h-5 text-green-500" />
+                  {lang === 'cs' ? 'Studentský pas' : 'Student Passport'}
+                </h3>
+
+                <div className="space-y-4">
+                  <div>
+                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Shrnutí' : 'Summary'}
+                    </p>
+                    <p style={{ color: 'var(--color-text)' }}>{voiceInterviewResult.studentPassport.summary}</p>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div>
+                      <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                        {lang === 'cs' ? 'Studijní návyky' : 'Study Habits'}
+                      </p>
+                      <p className="text-sm" style={{ color: 'var(--color-text)' }}>{voiceInterviewResult.studentPassport.studyHabits}</p>
+                    </div>
+                    <div>
+                      <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                        {lang === 'cs' ? 'Cíle' : 'Goals'}
+                      </p>
+                      <p className="text-sm" style={{ color: 'var(--color-text)' }}>{voiceInterviewResult.studentPassport.goals}</p>
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Silné stránky' : 'Strengths'}
+                    </p>
+                    <div className="flex flex-wrap gap-2">
+                      {voiceInterviewResult.studentPassport.strengths.map((s, i) => (
+                        <span key={i} className="px-3 py-1 rounded-full text-sm bg-green-100 text-green-700">{s}</span>
+                      ))}
+                    </div>
+                  </div>
+
+                  <div>
+                    <p className="text-sm font-medium mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Doporučení' : 'Recommendations'}
+                    </p>
+                    <ul className="space-y-1">
+                      {voiceInterviewResult.studentPassport.recommendations.map((r, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--color-text)' }}>
+                          <ArrowRight className="w-4 h-4 mt-0.5 text-violet-500 flex-shrink-0" />
+                          {r}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+                </div>
+              </div>
+
+              <button
+                onClick={() => setView('results')}
+                className="w-full py-3 text-white font-semibold rounded-lg transition-all"
+                style={{ background: 'linear-gradient(135deg, #8b5cf6 0%, #a855f7 100%)' }}
+              >
+                {lang === 'cs' ? 'Zobrazit všechny výsledky' : 'View All Results'}
+              </button>
+            </div>
+          )}
+
+          {/* Back button */}
+          <button
+            onClick={() => {
+              setView('dashboard');
+              setVoiceInterviewPhase('intro');
+              setCurrentVoiceQuestion(0);
+              setVoiceExchanges([]);
+              setCurrentTranscript('');
+              voiceService.stopListening();
+              voiceService.stopSpeaking();
+            }}
+            className="mt-6 flex items-center gap-2 text-sm"
+            style={{ color: 'var(--color-text-secondary)' }}
+          >
+            <ChevronLeft className="w-4 h-4" />
+            {lang === 'cs' ? 'Zpět na dashboard' : 'Back to dashboard'}
+          </button>
+        </div>
+      </div>
+    );
+  };
+
+  // Emotion Recognition
+  const startEmotionCamera = async () => {
+    try {
+      const stream = await navigator.mediaDevices.getUserMedia({ video: true });
+      if (emotionVideoRef.current) {
+        emotionVideoRef.current.srcObject = stream;
+      }
+    } catch (err) {
+      console.error('Camera error:', err);
+    }
+  };
+
+  const stopEmotionCamera = () => {
+    if (emotionVideoRef.current && emotionVideoRef.current.srcObject) {
+      const tracks = (emotionVideoRef.current.srcObject as MediaStream).getTracks();
+      tracks.forEach(track => track.stop());
+    }
+  };
+
+  const handleLoadEmotionModels = async () => {
+    setEmotionModelsLoading(true);
+    try {
+      await emotionService.initialize();
+      setEmotionModelsLoaded(true);
+    } catch (error) {
+      console.error('Error loading models:', error);
+      alert(lang === 'cs' ? 'Chyba při načítání modelů' : 'Error loading models');
+    } finally {
+      setEmotionModelsLoading(false);
+    }
+  };
+
+  const handleStartEmotionCalibration = async () => {
+    await startEmotionCamera();
+    setEmotionPhase('calibrating');
+    // Wait for camera to be ready
+    setTimeout(() => {
+      if (emotionVideoRef.current) {
+        emotionService.startContinuousDetection(
+          emotionVideoRef.current,
+          (data) => {
+            setCurrentEmotion(data);
+          },
+          500
+        );
+        // After 3 seconds of calibration, start recording
+        setTimeout(() => {
+          setEmotionPhase('recording');
+        }, 3000);
+      }
+    }, 1000);
+  };
+
+  const handleStopEmotionRecording = () => {
+    const timeline = emotionService.stopContinuousDetection();
+    setEmotionTimeline(timeline);
+    const result = emotionService.generateResult();
+    setEmotionResult(result);
+    stopEmotionCamera();
+    setEmotionPhase('done');
+    setProgress(p => ({ ...p, emotionRecognition: true }));
+  };
+
+  const EMOTION_COLORS: Record<string, string> = {
+    happy: '#22c55e',
+    sad: '#3b82f6',
+    angry: '#ef4444',
+    surprised: '#f59e0b',
+    neutral: '#6b7280',
+    fearful: '#8b5cf6'
+  };
+
+  const EMOTION_LABELS: Record<string, { cs: string; en: string }> = {
+    happy: { cs: 'Radost', en: 'Happy' },
+    sad: { cs: 'Smutek', en: 'Sad' },
+    angry: { cs: 'Zlost', en: 'Angry' },
+    surprised: { cs: 'Překvapení', en: 'Surprised' },
+    neutral: { cs: 'Neutrální', en: 'Neutral' },
+    fearful: { cs: 'Strach', en: 'Fearful' }
+  };
+
+  const renderEmotionRecognition = () => (
+    <div className="flex-1 flex flex-col" style={{ backgroundColor: 'var(--color-bg)' }}>
+      {/* Header */}
+      <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)' }}>
+        <button
+          onClick={() => {
+            stopEmotionCamera();
+            emotionService.reset();
+            setEmotionPhase('intro');
+            setCurrentEmotion(null);
+            setEmotionTimeline([]);
+            setView('dashboard');
+          }}
+          className="flex items-center gap-2"
+          style={{ color: 'var(--color-text-muted)' }}
+        >
+          <ChevronLeft className="w-5 h-5" /> {lang === 'cs' ? 'Zpět' : 'Back'}
+        </button>
+        <div className="text-center">
+          <h2 className="font-serif font-semibold" style={{ color: 'var(--color-text)' }}>
+            {lang === 'cs' ? 'Rozpoznávání emocí' : 'Emotion Recognition'}
+          </h2>
+          {emotionPhase === 'recording' && (
+            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+              {lang === 'cs' ? 'Nahrávám...' : 'Recording...'}
+            </p>
+          )}
+        </div>
+        <div className="w-20" />
+      </div>
+
+      <div className="flex-1 flex overflow-hidden">
+        {/* Main Content Area */}
+        <div className="flex-1 flex flex-col items-center justify-center p-8 overflow-y-auto">
+          {/* Intro Phase */}
+          {emotionPhase === 'intro' && (
+            <div className="max-w-xl text-center space-y-6">
+              <div className="w-20 h-20 mx-auto rounded-2xl flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)' }}>
+                <Smile className="w-10 h-10 text-white" />
+              </div>
+              <h2 className="text-2xl font-serif font-semibold" style={{ color: 'var(--color-text)' }}>
+                {lang === 'cs' ? 'Sledování emocí v reálném čase' : 'Real-time Emotion Tracking'}
+              </h2>
+              <div className="text-left space-y-4 p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  <strong>{lang === 'cs' ? 'Jak to funguje:' : 'How it works:'}</strong> {lang === 'cs' ? 'Kamera sleduje tvůj obličej a AI rozpoznává emoce v reálném čase pomocí face-api.js.' : 'The camera tracks your face and AI recognizes emotions in real-time using face-api.js.'}
+                </p>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  <strong>{lang === 'cs' ? 'Co zjistíš:' : 'What you\'ll learn:'}</strong> {lang === 'cs' ? 'Dominantní emoce, emoční stabilitu a jak se tvé emoce mění v čase.' : 'Dominant emotion, emotional stability, and how your emotions change over time.'}
+                </p>
+                <div className="flex flex-wrap gap-2 justify-center">
+                  {Object.entries(EMOTION_LABELS).map(([key, labels]) => (
+                    <span
+                      key={key}
+                      className="px-3 py-1 rounded-full text-sm text-white"
+                      style={{ backgroundColor: EMOTION_COLORS[key] }}
+                    >
+                      {labels[lang]}
+                    </span>
+                  ))}
+                </div>
+              </div>
+
+              {!emotionModelsLoaded ? (
+                <button
+                  onClick={handleLoadEmotionModels}
+                  disabled={emotionModelsLoading}
+                  className="px-8 py-4 text-white font-semibold text-lg transition-all hover:scale-105 disabled:opacity-50"
+                  style={{ backgroundColor: '#ec4899', borderRadius: 'var(--radius-lg)' }}
+                >
+                  {emotionModelsLoading ? (
+                    <span className="flex items-center gap-2">
+                      <div className="w-5 h-5 border-2 border-white border-t-transparent rounded-full animate-spin" />
+                      {lang === 'cs' ? 'Načítám modely...' : 'Loading models...'}
+                    </span>
+                  ) : (
+                    lang === 'cs' ? 'Načíst AI modely' : 'Load AI Models'
+                  )}
+                </button>
+              ) : (
+                <button
+                  onClick={handleStartEmotionCalibration}
+                  className="px-8 py-4 text-white font-semibold text-lg transition-all hover:scale-105"
+                  style={{ backgroundColor: '#ec4899', borderRadius: 'var(--radius-lg)' }}
+                >
+                  {lang === 'cs' ? 'Zapnout kameru a začít' : 'Enable camera and start'}
+                </button>
+              )}
+            </div>
+          )}
+
+          {/* Calibrating Phase */}
+          {emotionPhase === 'calibrating' && (
+            <div className="max-w-xl text-center space-y-6">
+              <div className="relative rounded-2xl overflow-hidden" style={{ width: '400px', height: '300px', backgroundColor: '#1f2937' }}>
+                <video
+                  ref={emotionVideoRef}
+                  autoPlay
+                  playsInline
+                  muted
+                  className="w-full h-full object-cover"
+                />
+                <div className="absolute inset-0 flex items-center justify-center">
+                  <div className="w-32 h-32 border-4 border-pink-500 rounded-full animate-pulse opacity-50" />
+                </div>
+                <div className="absolute top-4 left-4 px-3 py-1 rounded-full text-white text-sm font-medium" style={{ backgroundColor: 'rgba(236, 72, 153, 0.8)' }}>
+                  {lang === 'cs' ? 'Kalibrace...' : 'Calibrating...'}
+                </div>
+              </div>
+              <p style={{ color: 'var(--color-text-secondary)' }}>
+                {lang === 'cs' ? 'Dívej se do kamery, nastavujeme rozpoznávání...' : 'Look at the camera, setting up recognition...'}
+              </p>
+              <div className="w-48 h-2 rounded-full overflow-hidden mx-auto" style={{ backgroundColor: 'var(--color-border)' }}>
+                <div className="h-full bg-pink-500 animate-pulse" style={{ width: '60%' }} />
+              </div>
+            </div>
+          )}
+
+          {/* Recording Phase */}
+          {emotionPhase === 'recording' && (
+            <div className="w-full max-w-4xl space-y-6">
+              <div className="flex gap-6">
+                {/* Camera feed */}
+                <div className="flex-1">
+                  <div className="relative rounded-2xl overflow-hidden" style={{ aspectRatio: '4/3', backgroundColor: '#1f2937' }}>
+                    <video
+                      ref={emotionVideoRef}
+                      autoPlay
+                      playsInline
+                      muted
+                      className="w-full h-full object-cover"
+                    />
+                    <div className="absolute top-4 right-4 w-3 h-3 bg-red-500 rounded-full animate-pulse" />
+                    {currentEmotion && (
+                      <div className="absolute bottom-4 left-4 right-4 px-4 py-2 rounded-lg" style={{ backgroundColor: 'rgba(0,0,0,0.7)' }}>
+                        <p className="text-white text-sm font-medium">
+                          {lang === 'cs' ? 'Dominantní emoce: ' : 'Dominant emotion: '}
+                          <span style={{ color: EMOTION_COLORS[currentEmotion.dominantEmotion] || '#fff' }}>
+                            {EMOTION_LABELS[currentEmotion.dominantEmotion]?.[lang] || currentEmotion.dominantEmotion}
+                          </span>
+                        </p>
+                      </div>
+                    )}
+                  </div>
+                </div>
+
+                {/* Real-time emotion bars */}
+                <div className="w-64 p-4 rounded-xl space-y-4" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                  <h3 className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+                    {lang === 'cs' ? 'Emoce v reálném čase' : 'Real-time Emotions'}
+                  </h3>
+                  {Object.entries(EMOTION_LABELS).map(([emotion, labels]) => {
+                    const value = currentEmotion?.emotions?.[emotion as keyof typeof currentEmotion.emotions] || 0;
+                    return (
+                      <div key={emotion} className="space-y-1">
+                        <div className="flex justify-between text-xs">
+                          <span style={{ color: 'var(--color-text-muted)' }}>{labels[lang]}</span>
+                          <span style={{ color: EMOTION_COLORS[emotion] }}>{value}%</span>
+                        </div>
+                        <div className="h-2 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }}>
+                          <div
+                            className="h-full transition-all duration-300"
+                            style={{
+                              width: `${value}%`,
+                              backgroundColor: EMOTION_COLORS[emotion]
+                            }}
+                          />
+                        </div>
+                      </div>
+                    );
+                  })}
+
+                  <div className="pt-4 border-t" style={{ borderColor: 'var(--color-border)' }}>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Nahrávek: ' : 'Readings: '}{emotionTimeline.length}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Timeline preview */}
+              {emotionTimeline.length > 5 && (
+                <div className="p-4 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                  <h3 className="font-semibold text-sm mb-3" style={{ color: 'var(--color-text)' }}>
+                    {lang === 'cs' ? 'Časová osa emocí' : 'Emotion Timeline'}
+                  </h3>
+                  <div className="flex items-end gap-1 h-24">
+                    {emotionTimeline.slice(-50).map((data, i) => {
+                      const maxEmotion = Object.entries(data.emotions)
+                        .filter(([k]) => k !== 'disgusted')
+                        .reduce((max, [k, v]) => v > max[1] ? [k, v] : max, ['neutral', 0]);
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 min-w-1 rounded-t transition-all"
+                          style={{
+                            height: `${Math.max(10, maxEmotion[1])}%`,
+                            backgroundColor: EMOTION_COLORS[maxEmotion[0]] || '#6b7280'
+                          }}
+                        />
+                      );
+                    })}
+                  </div>
+                </div>
+              )}
+
+              {/* Stop button */}
+              <div className="text-center">
+                <button
+                  onClick={handleStopEmotionRecording}
+                  className="px-8 py-4 text-white font-semibold text-lg rounded-full transition-all hover:scale-105 flex items-center gap-2 mx-auto"
+                  style={{ backgroundColor: '#ef4444' }}
+                >
+                  <StopCircle className="w-6 h-6" />
+                  {lang === 'cs' ? 'Ukončit nahrávání' : 'Stop Recording'}
+                </button>
+                <p className="mt-2 text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  {lang === 'cs' ? 'Doporučeno: 30-60 sekund' : 'Recommended: 30-60 seconds'}
+                </p>
+              </div>
+            </div>
+          )}
+
+          {/* Done Phase - Results */}
+          {emotionPhase === 'done' && emotionResult && (
+            <div className="w-full max-w-2xl space-y-6">
+              {/* Summary Card */}
+              <div className="p-6 rounded-xl text-center" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ backgroundColor: EMOTION_COLORS[emotionResult.summary.dominantEmotion] || '#6b7280' }}>
+                  <Smile className="w-8 h-8 text-white" />
+                </div>
+                <h3 className="text-xl font-serif font-semibold mb-2" style={{ color: 'var(--color-text)' }}>
+                  {lang === 'cs' ? 'Tvá dominantní emoce' : 'Your Dominant Emotion'}
+                </h3>
+                <p className="text-3xl font-bold mb-4" style={{ color: EMOTION_COLORS[emotionResult.summary.dominantEmotion] || '#6b7280' }}>
+                  {EMOTION_LABELS[emotionResult.summary.dominantEmotion]?.[lang] || emotionResult.summary.dominantEmotion}
+                </p>
+                <div className="flex justify-center gap-8 text-center">
+                  <div>
+                    <p className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
+                      {emotionResult.summary.emotionalStability}%
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Emoční stabilita' : 'Emotional Stability'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
+                      {emotionResult.summary.totalReadings}
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Nahrávek' : 'Readings'}
+                    </p>
+                  </div>
+                  <div>
+                    <p className="text-2xl font-bold" style={{ color: 'var(--color-text)' }}>
+                      {Math.round(emotionResult.summary.durationMs / 1000)}s
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Trvání' : 'Duration'}
+                    </p>
+                  </div>
+                </div>
+              </div>
+
+              {/* Average Emotions */}
+              <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
+                  {lang === 'cs' ? 'Průměrné hodnoty emocí' : 'Average Emotion Values'}
+                </h3>
+                <div className="grid grid-cols-2 gap-4">
+                  {Object.entries(emotionResult.summary.averageEmotions).map(([emotion, value]) => (
+                    <div key={emotion} className="space-y-2">
+                      <div className="flex justify-between text-sm">
+                        <span style={{ color: 'var(--color-text-muted)' }}>
+                          {EMOTION_LABELS[emotion]?.[lang] || emotion}
+                        </span>
+                        <span style={{ color: EMOTION_COLORS[emotion] }}>{value}%</span>
+                      </div>
+                      <div className="h-3 rounded-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)' }}>
+                        <div
+                          className="h-full rounded-full"
+                          style={{
+                            width: `${value}%`,
+                            backgroundColor: EMOTION_COLORS[emotion]
+                          }}
+                        />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Emotional Journey */}
+              <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <h3 className="font-semibold mb-2" style={{ color: 'var(--color-text)' }}>
+                  {lang === 'cs' ? 'Emoční cesta' : 'Emotional Journey'}
+                </h3>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  {emotionResult.summary.emotionalJourney}
+                </p>
+              </div>
+
+              {/* Timeline Chart */}
+              {emotionResult.timeline.length > 5 && (
+                <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                  <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
+                    {lang === 'cs' ? 'Časová osa emocí' : 'Emotion Timeline'}
+                  </h3>
+                  <div className="flex items-end gap-1 h-32">
+                    {emotionResult.timeline.map((data, i) => {
+                      const maxEmotion = Object.entries(data.emotions)
+                        .filter(([k]) => k !== 'disgusted')
+                        .reduce((max, [k, v]) => v > max[1] ? [k, v] : max, ['neutral', 0]);
+                      return (
+                        <div
+                          key={i}
+                          className="flex-1 min-w-1 rounded-t"
+                          style={{
+                            height: `${Math.max(10, maxEmotion[1])}%`,
+                            backgroundColor: EMOTION_COLORS[maxEmotion[0]] || '#6b7280'
+                          }}
+                          title={`${EMOTION_LABELS[maxEmotion[0]]?.[lang] || maxEmotion[0]}: ${maxEmotion[1]}%`}
+                        />
+                      );
+                    })}
+                  </div>
+                  <div className="flex justify-between mt-2 text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                    <span>{lang === 'cs' ? 'Začátek' : 'Start'}</span>
+                    <span>{lang === 'cs' ? 'Konec' : 'End'}</span>
+                  </div>
+                </div>
+              )}
+
+              {/* Peak Emotions */}
+              {emotionResult.summary.peakEmotions.length > 0 && (
+                <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                  <h3 className="font-semibold mb-3" style={{ color: 'var(--color-text)' }}>
+                    {lang === 'cs' ? 'Vrcholy emocí' : 'Emotion Peaks'}
+                  </h3>
+                  <div className="flex flex-wrap gap-2">
+                    {emotionResult.summary.peakEmotions.map((peak, i) => (
+                      <span
+                        key={i}
+                        className="px-4 py-2 rounded-full text-white font-medium"
+                        style={{ backgroundColor: EMOTION_COLORS[peak.emotion] || '#6b7280' }}
+                      >
+                        {EMOTION_LABELS[peak.emotion]?.[lang] || peak.emotion}: {peak.value}%
+                      </span>
+                    ))}
+                  </div>
+                </div>
+              )}
+
+              {/* Action buttons */}
+              <div className="flex gap-4">
+                <button
+                  onClick={() => {
+                    setEmotionPhase('intro');
+                    setEmotionTimeline([]);
+                    setCurrentEmotion(null);
+                    setEmotionResult(null);
+                    emotionService.reset();
+                  }}
+                  className="flex-1 py-3 font-medium rounded-lg transition-all"
+                  style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                >
+                  {lang === 'cs' ? 'Zkusit znovu' : 'Try Again'}
+                </button>
+                <button
+                  onClick={() => setView('results')}
+                  className="flex-1 py-3 text-white font-semibold rounded-lg transition-all"
+                  style={{ background: 'linear-gradient(135deg, #ec4899 0%, #f43f5e 100%)' }}
+                >
+                  {lang === 'cs' ? 'Zobrazit všechny výsledky' : 'View All Results'}
+                </button>
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    </div>
+  );
+
   // Results
   const renderResults = () => (
     <div className="flex-1 overflow-y-auto px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
@@ -2979,6 +3824,1191 @@ const App: React.FC = () => {
         )}
         {view === 'stroop' && renderStroopTest()}
         {view === 'mentalRotation' && renderMentalRotationTest()}
+        {view === 'voiceInterview' && renderVoiceInterview()}
+        {view === 'emotionRecognition' && renderEmotionRecognition()}
+        {view === 'mathReasoning' && (
+          <div className="flex-1 overflow-y-auto px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+            <div className="max-w-2xl mx-auto">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}>
+                  <Calculator className="w-8 h-8 text-white" />
+                </div>
+                <h1 className="text-h1 font-serif mb-2" style={{ color: 'var(--color-text)' }}>
+                  {lang === 'cs' ? 'Matematické uvažování' : 'Math Reasoning'}
+                </h1>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  {lang === 'cs' ? 'Nahraj video jak řešíš příklad a AI analyzuje tvůj postup' : 'Upload a video of solving a problem and AI analyzes your approach'}
+                </p>
+              </div>
+
+              {/* Researcher Info Panel */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowMathInfo(!showMathInfo)}
+                  className="w-full flex items-center justify-between p-3 rounded-lg text-sm transition-all"
+                  style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)', border: '1px solid rgba(139, 92, 246, 0.3)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-purple-600" />
+                    <span className="font-medium text-purple-700">
+                      {lang === 'cs' ? 'Pro výzkumníka: O metodě' : 'For Researcher: About the Method'}
+                    </span>
+                  </div>
+                  {showMathInfo ? <ChevronUp className="w-4 h-4 text-purple-600" /> : <ChevronDown className="w-4 h-4 text-purple-600" />}
+                </button>
+
+                {showMathInfo && (
+                  <div className="mt-2 p-4 rounded-lg text-sm space-y-4" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid rgba(139, 92, 246, 0.3)' }}>
+                    {/* Method */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="w-4 h-4 text-purple-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Vědecká metoda' : 'Scientific Method'}
+                        </span>
+                      </div>
+                      <p style={{ color: 'var(--color-text-secondary)' }}>
+                        {lang === 'cs'
+                          ? 'Polyova metoda řešení problémů (1945) - čtyřkrokový heuristický přístup k řešení matematických úloh. Umožňuje identifikovat, ve které fázi má student potíže.'
+                          : "Polya's Problem-Solving Method (1945) - a four-step heuristic approach to solving mathematical problems. Allows identification of which phase causes difficulty for the student."}
+                      </p>
+                    </div>
+
+                    {/* What it measures */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="w-4 h-4 text-blue-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Co měří' : 'What It Measures'}
+                        </span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                        <li>{lang === 'cs' ? 'Schopnost porozumět zadání' : 'Ability to understand the problem'}</li>
+                        <li>{lang === 'cs' ? 'Plánování řešení a výběr strategie' : 'Solution planning and strategy selection'}</li>
+                        <li>{lang === 'cs' ? 'Provedení výpočtů a postupů' : 'Execution of calculations and procedures'}</li>
+                        <li>{lang === 'cs' ? 'Sebekontrola a verifikace' : 'Self-checking and verification'}</li>
+                        <li>{lang === 'cs' ? 'Metakognitivní procesy' : 'Metacognitive processes'}</li>
+                      </ul>
+                    </div>
+
+                    {/* Strengths */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-4 h-4 text-amber-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Síla metody' : 'Method Strengths'}
+                        </span>
+                      </div>
+                      <p style={{ color: 'var(--color-text-secondary)' }}>
+                        {lang === 'cs'
+                          ? 'AI analýza videa umožňuje objektivně identifikovat, které kroky student přeskočil, kde váhal, a jaké konceptuální mezery má. Kombinace vizuální analýzy a GPT-4 Vision poskytuje detailní zpětnou vazbu bez lidského bias.'
+                          : 'AI video analysis allows objective identification of which steps the student skipped, where they hesitated, and what conceptual gaps exist. The combination of visual analysis and GPT-4 Vision provides detailed feedback without human bias.'}
+                      </p>
+                    </div>
+
+                    {/* Links */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Link className="w-4 h-4 text-green-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Zdroje a odkazy' : 'Sources & Links'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <a href="https://en.wikipedia.org/wiki/How_to_Solve_It" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-blue-100 text-blue-700 hover:bg-blue-200">
+                          <ExternalLink className="w-3 h-3" /> Wikipedia
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=h0gbw-Ur_do" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-red-100 text-red-700 hover:bg-red-200">
+                          <ExternalLink className="w-3 h-3" /> YouTube
+                        </a>
+                        <a href="https://scholar.google.com/scholar?q=Polya+problem+solving" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 text-green-700 hover:bg-green-200">
+                          <ExternalLink className="w-3 h-3" /> Google Scholar
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Citation */}
+                    <div className="p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--color-bg)', fontFamily: 'monospace' }}>
+                      Polya, G. (1945). <em>How to Solve It: A New Aspect of Mathematical Method.</em> Princeton University Press.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Choose Mode Phase */}
+              {mathPhase === 'choose' && (
+                <div className="space-y-6">
+                  {/* Problem Statement - Polya Method (1945) */}
+                  <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '2px solid #3b82f6' }}>
+                    <div className="flex items-start gap-3 mb-4">
+                      <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#3b82f6' }}>
+                        <span className="text-white font-bold">?</span>
+                      </div>
+                      <div>
+                        <p className="font-semibold mb-1" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Úloha k řešení' : 'Problem to Solve'}
+                        </p>
+                        <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>
+                          {lang === 'cs' ? 'Polya (1945) - How to Solve It' : 'Polya (1945) - How to Solve It'}
+                        </p>
+                      </div>
+                    </div>
+                    <div className="p-4 rounded-lg mb-4" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                      <p className="text-lg" style={{ color: 'var(--color-text)' }}>
+                        {lang === 'cs'
+                          ? 'Student má k dispozici 500 Kč. Chce si koupit sešity za 35 Kč/kus a propisky za 12 Kč/kus. Potřebuje alespoň 8 sešitů a 5 propisek. Kolik maximálně sešitů si může koupit, aby mu zbyly peníze na všechny potřebné propisky?'
+                          : 'A student has 500 CZK. They want to buy notebooks for 35 CZK each and pens for 12 CZK each. They need at least 8 notebooks and 5 pens. What is the maximum number of notebooks they can buy while having enough money for all the required pens?'}
+                      </p>
+                    </div>
+                    <div className="grid grid-cols-2 gap-3 text-sm">
+                      <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                        <p className="font-medium text-blue-600 mb-1">{lang === 'cs' ? '1. Porozuměj' : '1. Understand'}</p>
+                        <p style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Co je dáno? Co hledáme?' : 'What is given? What are we looking for?'}</p>
+                      </div>
+                      <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
+                        <p className="font-medium text-green-600 mb-1">{lang === 'cs' ? '2. Naplánuj' : '2. Plan'}</p>
+                        <p style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Jakou strategii použiješ?' : 'What strategy will you use?'}</p>
+                      </div>
+                      <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
+                        <p className="font-medium text-yellow-600 mb-1">{lang === 'cs' ? '3. Vyřeš' : '3. Solve'}</p>
+                        <p style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Proveď svůj plán' : 'Execute your plan'}</p>
+                      </div>
+                      <div className="p-3 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
+                        <p className="font-medium text-purple-600 mb-1">{lang === 'cs' ? '4. Zkontroluj' : '4. Check'}</p>
+                        <p style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Ověř výsledek' : 'Verify the result'}</p>
+                      </div>
+                    </div>
+                  </div>
+
+                  <p className="text-center font-medium" style={{ color: 'var(--color-text)' }}>
+                    {lang === 'cs' ? 'Vyber způsob řešení:' : 'Choose how to solve:'}
+                  </p>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    {/* Canvas Option */}
+                    <button
+                      onClick={() => {
+                        setMathPhase('canvas');
+                        // Initialize canvas after phase change
+                        setTimeout(() => {
+                          if (mathCanvasRef.current) {
+                            const ctx = mathCanvasRef.current.getContext('2d');
+                            if (ctx) {
+                              ctx.fillStyle = '#ffffff';
+                              ctx.fillRect(0, 0, mathCanvasRef.current.width, mathCanvasRef.current.height);
+                              ctx.lineCap = 'round';
+                              ctx.lineJoin = 'round';
+                              canvasContextRef.current = ctx;
+                            }
+                          }
+                        }, 100);
+                      }}
+                      className="p-6 rounded-xl text-center transition-all hover:scale-105"
+                      style={{ backgroundColor: 'var(--color-bg-card)', border: '2px solid var(--color-border)' }}
+                    >
+                      <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}>
+                        <Pencil className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="font-semibold mb-2" style={{ color: 'var(--color-text)' }}>
+                        {lang === 'cs' ? 'Kreslit na plátno' : 'Draw on Canvas'}
+                      </p>
+                      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                        {lang === 'cs' ? 'Řeš příklad přímo zde a nahrávej' : 'Solve the problem here and record'}
+                      </p>
+                    </button>
+
+                    {/* Upload Option */}
+                    <button
+                      onClick={() => setMathPhase('upload')}
+                      className="p-6 rounded-xl text-center transition-all hover:scale-105"
+                      style={{ backgroundColor: 'var(--color-bg-card)', border: '2px solid var(--color-border)' }}
+                    >
+                      <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}>
+                        <Upload className="w-8 h-8 text-white" />
+                      </div>
+                      <p className="font-semibold mb-2" style={{ color: 'var(--color-text)' }}>
+                        {lang === 'cs' ? 'Nahrát video' : 'Upload Video'}
+                      </p>
+                      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                        {lang === 'cs' ? 'Nahraj existující video z mobilu' : 'Upload existing video from phone'}
+                      </p>
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Canvas Drawing Phase - Split View */}
+              {(mathPhase === 'canvas' || mathPhase === 'recording') && (
+                <div className="fixed inset-0 z-40" style={{ backgroundColor: 'var(--color-bg)' }}>
+                  <div className="h-full flex flex-col lg:flex-row gap-4 p-4">
+                    {/* Left Side - Problem Statement */}
+                    <div className="lg:w-80 flex-shrink-0 overflow-y-auto">
+                      <div className="p-4 rounded-xl h-full" style={{ backgroundColor: 'var(--color-bg-card)', border: '2px solid #3b82f6' }}>
+                        <div className="flex items-center gap-2 mb-3">
+                          <div className="w-8 h-8 rounded-full flex items-center justify-center flex-shrink-0" style={{ backgroundColor: '#3b82f6' }}>
+                            <span className="text-white font-bold text-sm">?</span>
+                          </div>
+                          <div>
+                            <p className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>
+                              {lang === 'cs' ? 'Úloha k řešení' : 'Problem to Solve'}
+                            </p>
+                            <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>Polya (1945)</p>
+                          </div>
+                        </div>
+                        <div className="p-3 rounded-lg mb-4 text-sm" style={{ backgroundColor: 'var(--color-bg)', border: '1px solid var(--color-border)' }}>
+                          <p style={{ color: 'var(--color-text)' }}>
+                            {lang === 'cs'
+                              ? 'Student má k dispozici 500 Kč. Chce si koupit sešity za 35 Kč/kus a propisky za 12 Kč/kus. Potřebuje alespoň 8 sešitů a 5 propisek. Kolik maximálně sešitů si může koupit?'
+                              : 'A student has 500 CZK. They want to buy notebooks for 35 CZK each and pens for 12 CZK each. They need at least 8 notebooks and 5 pens. What is the maximum number of notebooks they can buy?'}
+                          </p>
+                        </div>
+                        <div className="space-y-2 text-xs">
+                          <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)' }}>
+                            <span className="font-medium text-blue-600">1.</span> {lang === 'cs' ? 'Porozuměj' : 'Understand'}
+                          </div>
+                          <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)' }}>
+                            <span className="font-medium text-green-600">2.</span> {lang === 'cs' ? 'Naplánuj' : 'Plan'}
+                          </div>
+                          <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)' }}>
+                            <span className="font-medium text-yellow-600">3.</span> {lang === 'cs' ? 'Vyřeš' : 'Solve'}
+                          </div>
+                          <div className="p-2 rounded-lg" style={{ backgroundColor: 'rgba(139, 92, 246, 0.1)' }}>
+                            <span className="font-medium text-purple-600">4.</span> {lang === 'cs' ? 'Zkontroluj' : 'Check'}
+                          </div>
+                        </div>
+                      </div>
+                    </div>
+
+                    {/* Right Side - Canvas */}
+                    <div className="flex-1 flex flex-col min-h-0">
+                      {/* Toolbar */}
+                      <div className="flex items-center justify-between p-3 rounded-lg mb-3" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                        <div className="flex items-center gap-2 flex-wrap">
+                          <button
+                            onClick={() => setIsEraser(false)}
+                            className={`p-2 rounded-lg transition-all ${!isEraser ? 'ring-2 ring-blue-500' : ''}`}
+                            style={{ backgroundColor: !isEraser ? 'rgba(59, 130, 246, 0.2)' : 'transparent' }}
+                          >
+                            <Pencil className="w-5 h-5" style={{ color: !isEraser ? '#3b82f6' : 'var(--color-text-muted)' }} />
+                          </button>
+                          <button
+                            onClick={() => setIsEraser(true)}
+                            className={`p-2 rounded-lg transition-all ${isEraser ? 'ring-2 ring-blue-500' : ''}`}
+                            style={{ backgroundColor: isEraser ? 'rgba(59, 130, 246, 0.2)' : 'transparent' }}
+                          >
+                            <Eraser className="w-5 h-5" style={{ color: isEraser ? '#3b82f6' : 'var(--color-text-muted)' }} />
+                          </button>
+                          <div className="w-px h-6 mx-1" style={{ backgroundColor: 'var(--color-border)' }} />
+                          {['#000000', '#3b82f6', '#ef4444', '#10b981'].map(color => (
+                            <button
+                              key={color}
+                              onClick={() => { setPenColor(color); setIsEraser(false); }}
+                              className={`w-6 h-6 rounded-full transition-all ${penColor === color && !isEraser ? 'ring-2 ring-offset-1 ring-gray-400' : ''}`}
+                              style={{ backgroundColor: color }}
+                            />
+                          ))}
+                          <div className="w-px h-6 mx-1" style={{ backgroundColor: 'var(--color-border)' }} />
+                          {[2, 4, 8].map(size => (
+                            <button
+                              key={size}
+                              onClick={() => setPenSize(size)}
+                              className={`p-1 rounded ${penSize === size ? 'bg-blue-100' : ''}`}
+                            >
+                              <Circle className="text-gray-700" style={{ width: size + 6, height: size + 6 }} fill={penSize === size ? '#3b82f6' : 'currentColor'} />
+                            </button>
+                          ))}
+                          <button
+                            onClick={() => {
+                              if (mathCanvasRef.current && canvasContextRef.current) {
+                                canvasContextRef.current.fillStyle = '#ffffff';
+                                canvasContextRef.current.fillRect(0, 0, mathCanvasRef.current.width, mathCanvasRef.current.height);
+                              }
+                            }}
+                            className="p-2 rounded-lg hover:bg-gray-100 ml-1"
+                          >
+                            <RotateCcw className="w-5 h-5" style={{ color: 'var(--color-text-muted)' }} />
+                          </button>
+                        </div>
+                        {mathPhase === 'recording' && (
+                          <div className="flex items-center gap-2 px-3 py-1 rounded-full bg-red-100">
+                            <div className="w-3 h-3 rounded-full bg-red-500 animate-pulse" />
+                            <span className="text-sm font-medium text-red-600">{lang === 'cs' ? 'Nahrávám...' : 'Recording...'}</span>
+                          </div>
+                        )}
+                      </div>
+
+                      {/* Canvas */}
+                      <div className="flex-1 rounded-lg overflow-hidden min-h-0" style={{ backgroundColor: '#ffffff', border: '2px solid var(--color-border)' }}>
+                        <canvas
+                          ref={mathCanvasRef}
+                          width={1200}
+                          height={700}
+                          className="w-full h-full cursor-crosshair touch-none"
+                          onMouseDown={(e) => {
+                            setIsDrawing(true);
+                            const rect = mathCanvasRef.current!.getBoundingClientRect();
+                            const scaleX = mathCanvasRef.current!.width / rect.width;
+                            const scaleY = mathCanvasRef.current!.height / rect.height;
+                            lastPointRef.current = { x: (e.clientX - rect.left) * scaleX, y: (e.clientY - rect.top) * scaleY };
+                          }}
+                          onMouseMove={(e) => {
+                            if (!isDrawing || !canvasContextRef.current || !lastPointRef.current) return;
+                            const rect = mathCanvasRef.current!.getBoundingClientRect();
+                            const scaleX = mathCanvasRef.current!.width / rect.width;
+                            const scaleY = mathCanvasRef.current!.height / rect.height;
+                            const x = (e.clientX - rect.left) * scaleX;
+                            const y = (e.clientY - rect.top) * scaleY;
+                            canvasContextRef.current.beginPath();
+                            canvasContextRef.current.moveTo(lastPointRef.current.x, lastPointRef.current.y);
+                            canvasContextRef.current.lineTo(x, y);
+                            canvasContextRef.current.strokeStyle = isEraser ? '#ffffff' : penColor;
+                            canvasContextRef.current.lineWidth = isEraser ? penSize * 4 : penSize;
+                            canvasContextRef.current.stroke();
+                            lastPointRef.current = { x, y };
+                          }}
+                          onMouseUp={() => { setIsDrawing(false); lastPointRef.current = null; }}
+                          onMouseLeave={() => { setIsDrawing(false); lastPointRef.current = null; }}
+                          onTouchStart={(e) => {
+                            e.preventDefault();
+                            setIsDrawing(true);
+                            const touch = e.touches[0];
+                            const rect = mathCanvasRef.current!.getBoundingClientRect();
+                            const scaleX = mathCanvasRef.current!.width / rect.width;
+                            const scaleY = mathCanvasRef.current!.height / rect.height;
+                            lastPointRef.current = { x: (touch.clientX - rect.left) * scaleX, y: (touch.clientY - rect.top) * scaleY };
+                          }}
+                          onTouchMove={(e) => {
+                            e.preventDefault();
+                            if (!isDrawing || !canvasContextRef.current || !lastPointRef.current) return;
+                            const touch = e.touches[0];
+                            const rect = mathCanvasRef.current!.getBoundingClientRect();
+                            const scaleX = mathCanvasRef.current!.width / rect.width;
+                            const scaleY = mathCanvasRef.current!.height / rect.height;
+                            const x = (touch.clientX - rect.left) * scaleX;
+                            const y = (touch.clientY - rect.top) * scaleY;
+                            canvasContextRef.current.beginPath();
+                            canvasContextRef.current.moveTo(lastPointRef.current.x, lastPointRef.current.y);
+                            canvasContextRef.current.lineTo(x, y);
+                            canvasContextRef.current.strokeStyle = isEraser ? '#ffffff' : penColor;
+                            canvasContextRef.current.lineWidth = isEraser ? penSize * 4 : penSize;
+                            canvasContextRef.current.stroke();
+                            lastPointRef.current = { x, y };
+                          }}
+                          onTouchEnd={() => { setIsDrawing(false); lastPointRef.current = null; }}
+                        />
+                      </div>
+
+                      {/* Action Buttons */}
+                      <div className="flex gap-4 mt-3">
+                        <button
+                          onClick={() => {
+                            if (canvasRecorder) canvasRecorder.stop();
+                            setMathPhase('choose');
+                            setRecordedChunks([]);
+                          }}
+                          className="flex-1 py-3 font-medium rounded-lg"
+                          style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                        >
+                          {lang === 'cs' ? 'Zpět' : 'Back'}
+                        </button>
+                        {mathPhase === 'canvas' ? (
+                          <button
+                            onClick={() => {
+                              if (!mathCanvasRef.current) return;
+                              const stream = mathCanvasRef.current.captureStream(10);
+                              const recorder = new MediaRecorder(stream, { mimeType: 'video/webm' });
+                              const chunks: Blob[] = [];
+                              recorder.ondataavailable = (e) => { if (e.data.size > 0) chunks.push(e.data); };
+                              recorder.onstop = () => {
+                                const blob = new Blob(chunks, { type: 'video/webm' });
+                                const file = new File([blob], 'canvas-recording.webm', { type: 'video/webm' });
+                                setMathVideo(file);
+                                setMathVideoUrl(URL.createObjectURL(blob));
+                                setMathPhase('preview');
+                              };
+                              recorder.start(100);
+                              setCanvasRecorder(recorder);
+                              setMathPhase('recording');
+                            }}
+                            className="flex-1 py-3 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
+                            style={{ background: 'linear-gradient(135deg, #10b981 0%, #059669 100%)' }}
+                          >
+                            <Play className="w-5 h-5" />
+                            {lang === 'cs' ? 'Začít nahrávat' : 'Start Recording'}
+                          </button>
+                        ) : (
+                          <button
+                            onClick={() => {
+                              if (canvasRecorder) { canvasRecorder.stop(); setCanvasRecorder(null); }
+                            }}
+                            className="flex-1 py-3 text-white font-semibold rounded-lg flex items-center justify-center gap-2"
+                            style={{ background: 'linear-gradient(135deg, #ef4444 0%, #dc2626 100%)' }}
+                          >
+                            <StopCircle className="w-5 h-5" />
+                            {lang === 'cs' ? 'Zastavit a analyzovat' : 'Stop & Analyze'}
+                          </button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                </div>
+              )}
+
+              {/* Upload Phase */}
+              {mathPhase === 'upload' && (
+                <div className="space-y-6">
+                  <button
+                    onClick={() => setMathPhase('choose')}
+                    className="flex items-center gap-2 text-sm mb-4"
+                    style={{ color: 'var(--color-text-muted)' }}
+                  >
+                    <ChevronLeft className="w-4 h-4" />
+                    {lang === 'cs' ? 'Zpět na výběr' : 'Back to selection'}
+                  </button>
+                  <div
+                    className="border-2 border-dashed rounded-lg p-12 text-center cursor-pointer transition-all hover:border-blue-400"
+                    style={{ borderColor: 'var(--color-border)', backgroundColor: 'var(--color-bg-card)' }}
+                    onClick={() => mathVideoInputRef.current?.click()}
+                  >
+                    <Upload className="w-12 h-12 mx-auto mb-4" style={{ color: 'var(--color-text-muted)' }} />
+                    <p className="font-medium mb-2" style={{ color: 'var(--color-text)' }}>
+                      {lang === 'cs' ? 'Klikni pro nahrání videa' : 'Click to upload video'}
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                      MP4, MOV, WebM (max 100MB)
+                    </p>
+                  </div>
+                  <input
+                    ref={mathVideoInputRef}
+                    type="file"
+                    accept="video/*"
+                    className="hidden"
+                    onChange={(e) => {
+                      const file = e.target.files?.[0];
+                      if (file) {
+                        setMathVideo(file);
+                        setMathVideoUrl(URL.createObjectURL(file));
+                        setMathPhase('preview');
+                      }
+                    }}
+                  />
+                  <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                    <p className="text-sm font-medium text-blue-600 mb-2">
+                      {lang === 'cs' ? 'Tip pro nahrávání:' : 'Recording tip:'}
+                    </p>
+                    <ul className="text-sm space-y-1" style={{ color: 'var(--color-text)' }}>
+                      <li>• {lang === 'cs' ? 'Nahraj mobil jak píšeš příklad na papír' : 'Record with your phone while writing on paper'}</li>
+                      <li>• {lang === 'cs' ? 'Dobrý osvětlení a čitelné písmo' : 'Good lighting and readable handwriting'}</li>
+                      <li>• {lang === 'cs' ? 'Ukaž celý postup od začátku do konce' : 'Show the entire process from start to finish'}</li>
+                    </ul>
+                  </div>
+                </div>
+              )}
+
+              {/* Preview Phase */}
+              {mathPhase === 'preview' && mathVideoUrl && (
+                <div className="space-y-6">
+                  <div className="rounded-lg overflow-hidden" style={{ backgroundColor: '#000' }}>
+                    <video
+                      src={mathVideoUrl}
+                      controls
+                      className="w-full max-h-96 object-contain"
+                    />
+                  </div>
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => {
+                        setMathPhase('upload');
+                        setMathVideo(null);
+                        if (mathVideoUrl) URL.revokeObjectURL(mathVideoUrl);
+                        setMathVideoUrl(null);
+                      }}
+                      className="flex-1 py-3 font-medium rounded-lg transition-all"
+                      style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                    >
+                      {lang === 'cs' ? 'Nahrát jiné video' : 'Upload different video'}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!mathVideo) return;
+                        setMathPhase('analyzing');
+                        setMathAnalyzing(true);
+                        try {
+                          const frames = await visionAnalysisService.extractFramesFromVideo(mathVideo, 8);
+                          const result = await visionAnalysisService.analyzeMathReasoning(frames, lang);
+                          setMathResult(result);
+                          setMathPhase('done');
+                          setProgress(p => ({ ...p, mathReasoning: true }));
+                        } catch (error) {
+                          console.error('Analysis error:', error);
+                          alert(lang === 'cs' ? 'Chyba při analýze videa' : 'Error analyzing video');
+                          setMathPhase('preview');
+                        } finally {
+                          setMathAnalyzing(false);
+                        }
+                      }}
+                      className="flex-1 py-3 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                      style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      {lang === 'cs' ? 'Analyzovat s AI' : 'Analyze with AI'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Analyzing Phase */}
+              {mathPhase === 'analyzing' && (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: '#3b82f6', borderTopColor: 'transparent' }} />
+                  <p className="text-lg font-medium mb-2" style={{ color: 'var(--color-text)' }}>
+                    {lang === 'cs' ? 'Analyzuji video...' : 'Analyzing video...'}
+                  </p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                    {lang === 'cs' ? 'GPT-4 Vision zkoumá tvůj postup řešení' : 'GPT-4 Vision is examining your problem-solving process'}
+                  </p>
+                </div>
+              )}
+
+              {/* Results Phase */}
+              {mathPhase === 'done' && mathResult && (
+                <div className="space-y-6">
+                  {/* Score */}
+                  <div className="p-6 rounded-lg text-center" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                    <div className="text-4xl font-bold mb-2" style={{ color: mathResult.overallScore >= 70 ? '#10b981' : mathResult.overallScore >= 40 ? '#f59e0b' : '#ef4444' }}>
+                      {mathResult.overallScore}%
+                    </div>
+                    <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Celkové hodnocení' : 'Overall Score'}
+                    </p>
+                  </div>
+
+                  {/* Problem Description */}
+                  <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                    <p className="text-sm font-medium mb-1" style={{ color: 'var(--color-text-muted)' }}>
+                      {lang === 'cs' ? 'Rozpoznaný příklad:' : 'Identified problem:'}
+                    </p>
+                    <p style={{ color: 'var(--color-text)' }}>{mathResult.problemDescription}</p>
+                  </div>
+
+                  {/* Steps */}
+                  {mathResult.stepsIdentified.length > 0 && (
+                    <div className="p-4 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                      <p className="text-sm font-medium mb-3" style={{ color: 'var(--color-text-muted)' }}>
+                        {lang === 'cs' ? 'Identifikované kroky:' : 'Identified steps:'}
+                      </p>
+                      <div className="space-y-2">
+                        {mathResult.stepsIdentified.map((step, i) => (
+                          <div key={i} className="flex items-start gap-3">
+                            <span className={`w-6 h-6 rounded-full flex items-center justify-center text-sm text-white flex-shrink-0 ${step.isCorrect ? 'bg-green-500' : 'bg-red-500'}`}>
+                              {step.stepNumber}
+                            </span>
+                            <div>
+                              <p className="text-sm" style={{ color: 'var(--color-text)' }}>{step.description}</p>
+                              <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{step.conceptUsed}</p>
+                            </div>
+                          </div>
+                        ))}
+                      </div>
+                    </div>
+                  )}
+
+                  {/* Missing Steps */}
+                  {mathResult.missingSteps.length > 0 && (
+                    <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.3)' }}>
+                      <p className="text-sm font-medium mb-2 text-red-600">
+                        {lang === 'cs' ? 'Chybějící kroky:' : 'Missing steps:'}
+                      </p>
+                      <ul className="space-y-1">
+                        {mathResult.missingSteps.map((step, i) => (
+                          <li key={i} className="text-sm flex items-start gap-2" style={{ color: 'var(--color-text)' }}>
+                            <span className="text-red-500">•</span> {step}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  {/* Feedback */}
+                  <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(59, 130, 246, 0.1)', border: '1px solid rgba(59, 130, 246, 0.3)' }}>
+                    <p className="text-sm font-medium mb-2 text-blue-600">
+                      {lang === 'cs' ? 'Zpětná vazba:' : 'Feedback:'}
+                    </p>
+                    <p className="text-sm" style={{ color: 'var(--color-text)' }}>{mathResult.feedback}</p>
+                  </div>
+
+                  {/* Recommendations */}
+                  {mathResult.recommendations.length > 0 && (
+                    <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                      <p className="text-sm font-medium mb-2 text-green-600">
+                        {lang === 'cs' ? 'Doporučení:' : 'Recommendations:'}
+                      </p>
+                      <ul className="space-y-1">
+                        {mathResult.recommendations.map((rec, i) => (
+                          <li key={i} className="text-sm flex items-start gap-2" style={{ color: 'var(--color-text)' }}>
+                            <ArrowRight className="w-4 h-4 text-green-500 flex-shrink-0 mt-0.5" /> {rec}
+                          </li>
+                        ))}
+                      </ul>
+                    </div>
+                  )}
+
+                  <button
+                    onClick={() => setView('results')}
+                    className="w-full py-3 text-white font-semibold rounded-lg transition-all"
+                    style={{ background: 'linear-gradient(135deg, #3b82f6 0%, #6366f1 100%)' }}
+                  >
+                    {lang === 'cs' ? 'Zobrazit všechny výsledky' : 'View All Results'}
+                  </button>
+                </div>
+              )}
+
+              {/* Back button */}
+              <button
+                onClick={() => {
+                  setView('dashboard');
+                  setMathPhase('upload');
+                  setMathVideo(null);
+                  if (mathVideoUrl) URL.revokeObjectURL(mathVideoUrl);
+                  setMathVideoUrl(null);
+                  setMathResult(null);
+                }}
+                className="mt-6 flex items-center gap-2 text-sm"
+                style={{ color: 'var(--color-text-secondary)' }}
+              >
+                <ChevronLeft className="w-4 h-4" />
+                {lang === 'cs' ? 'Zpět na dashboard' : 'Back to dashboard'}
+              </button>
+            </div>
+          </div>
+        )}
+        {view === 'garminHealth' && (
+          <div className="flex-1 overflow-y-auto px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+            <div className="max-w-2xl mx-auto text-center">
+              <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #10b981 0%, #14b8a6 100%)' }}>
+                <Heart className="w-8 h-8 text-white" />
+              </div>
+              <h1 className="text-h1 font-serif mb-2" style={{ color: 'var(--color-text)' }}>
+                Garmin Health
+              </h1>
+              <p className="mb-8" style={{ color: 'var(--color-text-secondary)' }}>
+                {lang === 'cs' ? 'Propoj své Garmin hodinky a sleduj stres během testů.' : 'Connect your Garmin watch and track stress during tests.'}
+              </p>
+              <div className="p-6 rounded-lg mb-6" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                <p className="text-green-600 font-medium mb-2">
+                  {lang === 'cs' ? 'Vyžaduje Garmin Developer účet' : 'Requires Garmin Developer account'}
+                </p>
+                <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                  {lang === 'cs' ? 'Registruj se na developer.garmin.com' : 'Register at developer.garmin.com'}
+                </p>
+              </div>
+              <button onClick={() => setView('dashboard')} className="flex items-center gap-2 mx-auto text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                <ChevronLeft className="w-4 h-4" />{lang === 'cs' ? 'Zpět' : 'Back'}
+              </button>
+            </div>
+          </div>
+        )}
+
+        {/* Baum Test (Koch, 1952) - Tree Drawing Creativity Test */}
+        {view === 'baumTest' && (
+          <div className="flex-1 overflow-y-auto px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+            <div className="max-w-2xl mx-auto">
+              {/* Header */}
+              <div className="text-center mb-8">
+                <div className="w-16 h-16 rounded-full mx-auto mb-4 flex items-center justify-center" style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}>
+                  <TreeDeciduous className="w-8 h-8 text-white" />
+                </div>
+                <h1 className="text-h1 font-serif mb-2" style={{ color: 'var(--color-text)' }}>
+                  {lang === 'cs' ? 'Baum Test (Kresba stromu)' : 'Tree Drawing Test'}
+                </h1>
+                <p style={{ color: 'var(--color-text-secondary)' }}>
+                  {lang === 'cs' ? 'Nakresli strom a AI analyzuje tvou kreativitu a osobnost' : 'Draw a tree and AI analyzes your creativity and personality'}
+                </p>
+                <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                  Koch, K. (1952). Der Baumtest
+                </p>
+              </div>
+
+              {/* Researcher Info Panel */}
+              <div className="mb-6">
+                <button
+                  onClick={() => setShowBaumInfo(!showBaumInfo)}
+                  className="w-full flex items-center justify-between p-3 rounded-lg text-sm transition-all"
+                  style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)' }}
+                >
+                  <div className="flex items-center gap-2">
+                    <GraduationCap className="w-4 h-4 text-amber-600" />
+                    <span className="font-medium text-amber-700">
+                      {lang === 'cs' ? 'Pro výzkumníka: O metodě' : 'For Researcher: About the Method'}
+                    </span>
+                  </div>
+                  {showBaumInfo ? <ChevronUp className="w-4 h-4 text-amber-600" /> : <ChevronDown className="w-4 h-4 text-amber-600" />}
+                </button>
+
+                {showBaumInfo && (
+                  <div className="mt-2 p-4 rounded-lg text-sm space-y-4" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    {/* Method */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <BookOpen className="w-4 h-4 text-amber-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Vědecká metoda' : 'Scientific Method'}
+                        </span>
+                      </div>
+                      <p style={{ color: 'var(--color-text-secondary)' }}>
+                        {lang === 'cs'
+                          ? 'Baum test (Koch, 1952) je projektivní psychologický test, kde subjekt kreslí strom. Kresba odhaluje nevědomé aspekty osobnosti, emoční stav a kreativitu. Používá se v klinické a pedagogické psychologii.'
+                          : 'The Baum test (Koch, 1952) is a projective psychological test where the subject draws a tree. The drawing reveals unconscious aspects of personality, emotional state, and creativity. Used in clinical and educational psychology.'}
+                      </p>
+                    </div>
+
+                    {/* What it measures */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Target className="w-4 h-4 text-blue-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Co měří' : 'What It Measures'}
+                        </span>
+                      </div>
+                      <ul className="list-disc list-inside space-y-1" style={{ color: 'var(--color-text-secondary)' }}>
+                        <li>{lang === 'cs' ? 'Kreativita a originalita myšlení' : 'Creativity and originality of thinking'}</li>
+                        <li>{lang === 'cs' ? 'Emoční stabilita (velikost, pozice stromu)' : 'Emotional stability (size, position of tree)'}</li>
+                        <li>{lang === 'cs' ? 'Sebevědomí (síla kmene)' : 'Self-confidence (trunk strength)'}</li>
+                        <li>{lang === 'cs' ? 'Sociální orientace (větve, koruna)' : 'Social orientation (branches, crown)'}</li>
+                        <li>{lang === 'cs' ? 'Vztah k minulosti (kořeny)' : 'Relationship to the past (roots)'}</li>
+                        <li>{lang === 'cs' ? 'Pozornost k detailům (listy, textura)' : 'Attention to detail (leaves, texture)'}</li>
+                      </ul>
+                    </div>
+
+                    {/* Strengths */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Sparkles className="w-4 h-4 text-amber-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Síla metody' : 'Method Strengths'}
+                        </span>
+                      </div>
+                      <p style={{ color: 'var(--color-text-secondary)' }}>
+                        {lang === 'cs'
+                          ? 'Neverbální test bez jazykových bariér. Snižuje sociální desirabilitu (účastník neví, co je "správná" odpověď). AI analýza pomocí GPT-4 Vision poskytuje konzistentní hodnocení bez subjektivního bias hodnotitele. Vhodné pro mezinárodní srovnání.'
+                          : 'Non-verbal test without language barriers. Reduces social desirability (participant does not know what the "correct" answer is). AI analysis using GPT-4 Vision provides consistent evaluation without subjective rater bias. Suitable for international comparison.'}
+                      </p>
+                    </div>
+
+                    {/* Links */}
+                    <div>
+                      <div className="flex items-center gap-2 mb-2">
+                        <Link className="w-4 h-4 text-green-600" />
+                        <span className="font-semibold" style={{ color: 'var(--color-text)' }}>
+                          {lang === 'cs' ? 'Zdroje a odkazy' : 'Sources & Links'}
+                        </span>
+                      </div>
+                      <div className="flex flex-wrap gap-2">
+                        <a href="https://en.wikipedia.org/wiki/Baum_test" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-blue-100 text-blue-700 hover:bg-blue-200">
+                          <ExternalLink className="w-3 h-3" /> Wikipedia
+                        </a>
+                        <a href="https://www.youtube.com/watch?v=JDf-9yN6Kts" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-red-100 text-red-700 hover:bg-red-200">
+                          <ExternalLink className="w-3 h-3" /> YouTube
+                        </a>
+                        <a href="https://scholar.google.com/scholar?q=Koch+Baum+test+tree+drawing" target="_blank" rel="noopener noreferrer" className="inline-flex items-center gap-1 px-2 py-1 rounded text-xs bg-green-100 text-green-700 hover:bg-green-200">
+                          <ExternalLink className="w-3 h-3" /> Google Scholar
+                        </a>
+                      </div>
+                    </div>
+
+                    {/* Citation */}
+                    <div className="p-3 rounded-lg text-xs" style={{ backgroundColor: 'var(--color-bg)', fontFamily: 'monospace' }}>
+                      Koch, K. (1952). <em>Der Baumtest: Der Baumzeichenversuch als psychodiagnostisches Hilfsmittel.</em> Bern: Hans Huber.
+                    </div>
+                  </div>
+                )}
+              </div>
+
+              {/* Intro Phase */}
+              {baumPhase === 'intro' && (
+                <div className="space-y-6">
+                  <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                    <h3 className="font-semibold mb-4" style={{ color: 'var(--color-text)' }}>
+                      {lang === 'cs' ? 'Instrukce' : 'Instructions'}
+                    </h3>
+                    <div className="space-y-3 text-sm" style={{ color: 'var(--color-text)' }}>
+                      <p className="flex items-start gap-3">
+                        <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 font-medium">1</span>
+                        {lang === 'cs' ? 'Nakresli strom - jakýkoliv strom, jak si ho představuješ' : 'Draw a tree - any tree, as you imagine it'}
+                      </p>
+                      <p className="flex items-start gap-3">
+                        <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 font-medium">2</span>
+                        {lang === 'cs' ? 'Neexistuje správná nebo špatná odpověď' : 'There is no right or wrong answer'}
+                      </p>
+                      <p className="flex items-start gap-3">
+                        <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 font-medium">3</span>
+                        {lang === 'cs' ? 'Kresli podle sebe - kmen, větve, korunu, kořeny...' : 'Draw as you like - trunk, branches, crown, roots...'}
+                      </p>
+                      <p className="flex items-start gap-3">
+                        <span className="w-6 h-6 rounded-full bg-amber-100 text-amber-700 flex items-center justify-center flex-shrink-0 font-medium">4</span>
+                        {lang === 'cs' ? 'AI analyzuje kreativitu, detail a osobnostní rysy' : 'AI analyzes creativity, detail, and personality traits'}
+                      </p>
+                    </div>
+                  </div>
+
+                  <div className="p-4 rounded-lg" style={{ backgroundColor: 'rgba(245, 158, 11, 0.1)', border: '1px solid rgba(245, 158, 11, 0.3)' }}>
+                    <p className="text-sm" style={{ color: 'var(--color-text)' }}>
+                      🌳 {lang === 'cs'
+                        ? 'Baum test (Koch, 1952) je projektivní psychologický test používaný pro analýzu osobnosti a kreativity. AI interpretace je pouze orientační.'
+                        : 'The Baum test (Koch, 1952) is a projective psychological test used for personality and creativity analysis. AI interpretation is indicative only.'}
+                    </p>
+                  </div>
+
+                  <button
+                    onClick={() => {
+                      setBaumPhase('drawing');
+                      setTimeout(() => {
+                        if (baumCanvasRef.current) {
+                          const ctx = baumCanvasRef.current.getContext('2d');
+                          if (ctx) {
+                            ctx.fillStyle = '#fefce8';
+                            ctx.fillRect(0, 0, baumCanvasRef.current.width, baumCanvasRef.current.height);
+                            ctx.lineCap = 'round';
+                            ctx.lineJoin = 'round';
+                            baumContextRef.current = ctx;
+                          }
+                        }
+                      }, 100);
+                    }}
+                    className="w-full py-4 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                    style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+                  >
+                    <Pencil className="w-5 h-5" />
+                    {lang === 'cs' ? 'Začít kreslit' : 'Start Drawing'}
+                  </button>
+                </div>
+              )}
+
+              {/* Drawing Phase */}
+              {baumPhase === 'drawing' && (
+                <div className="space-y-4">
+                  {/* Toolbar */}
+                  <div className="flex items-center justify-between p-3 rounded-lg" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                    <div className="flex items-center gap-2">
+                      {/* Colors - earthy tones */}
+                      {['#2d1b0e', '#5c4033', '#228b22', '#8b4513', '#654321'].map(color => (
+                        <button
+                          key={color}
+                          onClick={() => setBaumPenColor(color)}
+                          className={`w-7 h-7 rounded-full transition-all ${baumPenColor === color ? 'ring-2 ring-offset-2 ring-amber-400' : ''}`}
+                          style={{ backgroundColor: color }}
+                        />
+                      ))}
+
+                      <div className="w-px h-6 mx-2" style={{ backgroundColor: 'var(--color-border)' }} />
+
+                      {/* Pen Size */}
+                      {[2, 4, 8].map(size => (
+                        <button
+                          key={size}
+                          onClick={() => setBaumPenSize(size)}
+                          className={`p-1 rounded transition-all ${baumPenSize === size ? 'bg-amber-100' : ''}`}
+                        >
+                          <Circle
+                            className="text-amber-700"
+                            style={{ width: size + 8, height: size + 8 }}
+                            fill={baumPenSize === size ? '#f59e0b' : 'currentColor'}
+                          />
+                        </button>
+                      ))}
+
+                      <div className="w-px h-6 mx-2" style={{ backgroundColor: 'var(--color-border)' }} />
+
+                      {/* Clear */}
+                      <button
+                        onClick={() => {
+                          if (baumCanvasRef.current && baumContextRef.current) {
+                            baumContextRef.current.fillStyle = '#fefce8';
+                            baumContextRef.current.fillRect(0, 0, baumCanvasRef.current.width, baumCanvasRef.current.height);
+                          }
+                        }}
+                        className="p-2 rounded-lg hover:bg-amber-50 transition-all"
+                        title={lang === 'cs' ? 'Vymazat' : 'Clear'}
+                      >
+                        <RotateCcw className="w-5 h-5 text-amber-600" />
+                      </button>
+                    </div>
+                  </div>
+
+                  {/* Canvas */}
+                  <div
+                    className="rounded-lg overflow-hidden"
+                    style={{ backgroundColor: '#fefce8', border: '2px solid #fbbf24' }}
+                  >
+                    <canvas
+                      ref={baumCanvasRef}
+                      width={800}
+                      height={600}
+                      className="w-full cursor-crosshair touch-none"
+                      style={{ maxHeight: '60vh' }}
+                      onMouseDown={(e) => {
+                        setBaumDrawing(true);
+                        const rect = baumCanvasRef.current!.getBoundingClientRect();
+                        const scaleX = baumCanvasRef.current!.width / rect.width;
+                        const scaleY = baumCanvasRef.current!.height / rect.height;
+                        setBaumLastPoint({
+                          x: (e.clientX - rect.left) * scaleX,
+                          y: (e.clientY - rect.top) * scaleY
+                        });
+                      }}
+                      onMouseMove={(e) => {
+                        if (!baumDrawing || !baumContextRef.current || !baumLastPoint) return;
+                        const rect = baumCanvasRef.current!.getBoundingClientRect();
+                        const scaleX = baumCanvasRef.current!.width / rect.width;
+                        const scaleY = baumCanvasRef.current!.height / rect.height;
+                        const x = (e.clientX - rect.left) * scaleX;
+                        const y = (e.clientY - rect.top) * scaleY;
+
+                        baumContextRef.current.beginPath();
+                        baumContextRef.current.moveTo(baumLastPoint.x, baumLastPoint.y);
+                        baumContextRef.current.lineTo(x, y);
+                        baumContextRef.current.strokeStyle = baumPenColor;
+                        baumContextRef.current.lineWidth = baumPenSize;
+                        baumContextRef.current.stroke();
+
+                        setBaumLastPoint({ x, y });
+                      }}
+                      onMouseUp={() => { setBaumDrawing(false); setBaumLastPoint(null); }}
+                      onMouseLeave={() => { setBaumDrawing(false); setBaumLastPoint(null); }}
+                      onTouchStart={(e) => {
+                        e.preventDefault();
+                        setBaumDrawing(true);
+                        const touch = e.touches[0];
+                        const rect = baumCanvasRef.current!.getBoundingClientRect();
+                        const scaleX = baumCanvasRef.current!.width / rect.width;
+                        const scaleY = baumCanvasRef.current!.height / rect.height;
+                        setBaumLastPoint({
+                          x: (touch.clientX - rect.left) * scaleX,
+                          y: (touch.clientY - rect.top) * scaleY
+                        });
+                      }}
+                      onTouchMove={(e) => {
+                        e.preventDefault();
+                        if (!baumDrawing || !baumContextRef.current || !baumLastPoint) return;
+                        const touch = e.touches[0];
+                        const rect = baumCanvasRef.current!.getBoundingClientRect();
+                        const scaleX = baumCanvasRef.current!.width / rect.width;
+                        const scaleY = baumCanvasRef.current!.height / rect.height;
+                        const x = (touch.clientX - rect.left) * scaleX;
+                        const y = (touch.clientY - rect.top) * scaleY;
+
+                        baumContextRef.current.beginPath();
+                        baumContextRef.current.moveTo(baumLastPoint.x, baumLastPoint.y);
+                        baumContextRef.current.lineTo(x, y);
+                        baumContextRef.current.strokeStyle = baumPenColor;
+                        baumContextRef.current.lineWidth = baumPenSize;
+                        baumContextRef.current.stroke();
+
+                        setBaumLastPoint({ x, y });
+                      }}
+                      onTouchEnd={() => { setBaumDrawing(false); setBaumLastPoint(null); }}
+                    />
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => setBaumPhase('intro')}
+                      className="flex-1 py-3 font-medium rounded-lg transition-all"
+                      style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                    >
+                      {lang === 'cs' ? 'Zpět' : 'Back'}
+                    </button>
+                    <button
+                      onClick={async () => {
+                        if (!baumCanvasRef.current) return;
+                        setBaumPhase('analyzing');
+                        setBaumAnalyzing(true);
+
+                        try {
+                          const imageData = baumCanvasRef.current.toDataURL('image/png');
+
+                          const response = await fetch('https://api.openai.com/v1/chat/completions', {
+                            method: 'POST',
+                            headers: {
+                              'Content-Type': 'application/json',
+                              'Authorization': `Bearer ${import.meta.env.VITE_OPENAI_API_KEY}`
+                            },
+                            body: JSON.stringify({
+                              model: 'gpt-4o',
+                              messages: [
+                                {
+                                  role: 'system',
+                                  content: lang === 'cs'
+                                    ? `Jsi expert na psychologickou analýzu kresby stromu (Baum test, Koch 1952). Analyzuj kresbu a vrať POUZE validní JSON:
+{
+  "creativity": 0-100,
+  "detail": 0-100,
+  "stability": 0-100,
+  "interpretation": "2-3 věty o celkovém dojmu z kresby",
+  "traits": ["rys1", "rys2", "rys3", "rys4", "rys5"],
+  "recommendations": ["doporučení1", "doporučení2", "doporučení3"]
+}
+Hodnoť: velikost stromu, pozice, kmen (síla, textura), větve (směr, počet), koruna (tvar, hustota), kořeny, detaily (listy, plody, krajina).`
+                                    : `You are an expert in psychological tree drawing analysis (Baum test, Koch 1952). Analyze the drawing and return ONLY valid JSON:
+{
+  "creativity": 0-100,
+  "detail": 0-100,
+  "stability": 0-100,
+  "interpretation": "2-3 sentences about overall impression",
+  "traits": ["trait1", "trait2", "trait3", "trait4", "trait5"],
+  "recommendations": ["recommendation1", "recommendation2", "recommendation3"]
+}
+Evaluate: tree size, position, trunk (strength, texture), branches (direction, count), crown (shape, density), roots, details (leaves, fruits, landscape).`
+                                },
+                                {
+                                  role: 'user',
+                                  content: [
+                                    { type: 'text', text: lang === 'cs' ? 'Analyzuj tuto kresbu stromu:' : 'Analyze this tree drawing:' },
+                                    { type: 'image_url', image_url: { url: imageData, detail: 'high' } }
+                                  ]
+                                }
+                              ],
+                              max_tokens: 1000
+                            })
+                          });
+
+                          const data = await response.json();
+                          const content = data.choices?.[0]?.message?.content || '';
+                          const jsonMatch = content.match(/\{[\s\S]*\}/);
+
+                          if (jsonMatch) {
+                            const result = JSON.parse(jsonMatch[0]);
+                            setBaumResult(result);
+                            setProgress(p => ({ ...p, baumTest: true }));
+                          }
+                          setBaumPhase('done');
+                        } catch (error) {
+                          console.error('Baum test analysis error:', error);
+                          alert(lang === 'cs' ? 'Chyba při analýze' : 'Analysis error');
+                          setBaumPhase('drawing');
+                        } finally {
+                          setBaumAnalyzing(false);
+                        }
+                      }}
+                      className="flex-1 py-3 text-white font-semibold rounded-lg transition-all flex items-center justify-center gap-2"
+                      style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+                    >
+                      <Sparkles className="w-5 h-5" />
+                      {lang === 'cs' ? 'Analyzovat kresbu' : 'Analyze Drawing'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Analyzing Phase */}
+              {baumPhase === 'analyzing' && (
+                <div className="text-center py-12">
+                  <div className="w-16 h-16 border-4 border-t-transparent rounded-full animate-spin mx-auto mb-4" style={{ borderColor: '#f59e0b', borderTopColor: 'transparent' }} />
+                  <p className="text-lg font-medium mb-2" style={{ color: 'var(--color-text)' }}>
+                    {lang === 'cs' ? 'Analyzuji kresbu...' : 'Analyzing drawing...'}
+                  </p>
+                  <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+                    {lang === 'cs' ? 'AI vyhodnocuje kreativitu a osobnostní rysy' : 'AI is evaluating creativity and personality traits'}
+                  </p>
+                </div>
+              )}
+
+              {/* Results Phase */}
+              {baumPhase === 'done' && baumResult && (
+                <div className="space-y-6">
+                  {/* Scores */}
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="p-4 rounded-lg text-center" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                      <div className="text-3xl font-bold text-amber-600">{baumResult.creativity}%</div>
+                      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Kreativita' : 'Creativity'}</p>
+                    </div>
+                    <div className="p-4 rounded-lg text-center" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                      <div className="text-3xl font-bold text-green-600">{baumResult.detail}%</div>
+                      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Detail' : 'Detail'}</p>
+                    </div>
+                    <div className="p-4 rounded-lg text-center" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                      <div className="text-3xl font-bold text-blue-600">{baumResult.stability}%</div>
+                      <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Stabilita' : 'Stability'}</p>
+                    </div>
+                  </div>
+
+                  {/* Interpretation */}
+                  <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                    <h3 className="font-semibold mb-3" style={{ color: 'var(--color-text)' }}>
+                      {lang === 'cs' ? 'Interpretace' : 'Interpretation'}
+                    </h3>
+                    <p style={{ color: 'var(--color-text-secondary)' }}>{baumResult.interpretation}</p>
+                  </div>
+
+                  {/* Traits */}
+                  <div className="p-6 rounded-xl" style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)' }}>
+                    <h3 className="font-semibold mb-3" style={{ color: 'var(--color-text)' }}>
+                      {lang === 'cs' ? 'Identifikované rysy' : 'Identified Traits'}
+                    </h3>
+                    <div className="flex flex-wrap gap-2">
+                      {baumResult.traits.map((trait, i) => (
+                        <span key={i} className="px-3 py-1 rounded-full text-sm" style={{ backgroundColor: 'rgba(245, 158, 11, 0.2)', color: '#b45309' }}>
+                          {trait}
+                        </span>
+                      ))}
+                    </div>
+                  </div>
+
+                  {/* Recommendations */}
+                  <div className="p-6 rounded-xl" style={{ backgroundColor: 'rgba(16, 185, 129, 0.1)', border: '1px solid rgba(16, 185, 129, 0.3)' }}>
+                    <h3 className="font-semibold mb-3 text-green-700">
+                      {lang === 'cs' ? 'Doporučení' : 'Recommendations'}
+                    </h3>
+                    <ul className="space-y-2">
+                      {baumResult.recommendations.map((rec, i) => (
+                        <li key={i} className="flex items-start gap-2 text-sm" style={{ color: 'var(--color-text)' }}>
+                          <Check className="w-4 h-4 text-green-600 mt-0.5 flex-shrink-0" />
+                          {rec}
+                        </li>
+                      ))}
+                    </ul>
+                  </div>
+
+                  {/* Action Buttons */}
+                  <div className="flex gap-4">
+                    <button
+                      onClick={() => {
+                        setBaumPhase('intro');
+                        setBaumResult(null);
+                      }}
+                      className="flex-1 py-3 font-medium rounded-lg transition-all"
+                      style={{ backgroundColor: 'var(--color-bg-card)', border: '1px solid var(--color-border)', color: 'var(--color-text)' }}
+                    >
+                      {lang === 'cs' ? 'Zkusit znovu' : 'Try Again'}
+                    </button>
+                    <button
+                      onClick={() => setView('results')}
+                      className="flex-1 py-3 text-white font-semibold rounded-lg transition-all"
+                      style={{ background: 'linear-gradient(135deg, #f59e0b 0%, #d97706 100%)' }}
+                    >
+                      {lang === 'cs' ? 'Zobrazit všechny výsledky' : 'View All Results'}
+                    </button>
+                  </div>
+                </div>
+              )}
+
+              {/* Back button for all phases except done */}
+              {baumPhase !== 'done' && (
+                <button
+                  onClick={() => setView('dashboard')}
+                  className="flex items-center gap-2 mx-auto mt-6 text-sm"
+                  style={{ color: 'var(--color-text-muted)' }}
+                >
+                  <ChevronLeft className="w-4 h-4" />
+                  {lang === 'cs' ? 'Zpět na přehled' : 'Back to Dashboard'}
+                </button>
+              )}
+            </div>
+          </div>
+        )}
+
         {view === 'results' && renderResults()}
       </main>
       {renderStudentsModal()}

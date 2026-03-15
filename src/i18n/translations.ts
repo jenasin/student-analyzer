@@ -187,6 +187,46 @@ export const translations = {
         en: 'Mental rotation test (Shepard & Metzler). Measures spatial visualization - a key skill for STEM fields.'
       },
       tags: { cs: ['16 úkolů', 'Prostorové myšlení', 'STEM'], en: ['16 tasks', 'Spatial thinking', 'STEM'] }
+    },
+    voiceInterview: {
+      title: { cs: 'Hlasový rozhovor', en: 'Voice Interview' },
+      description: {
+        cs: 'AI rozhovor o tvých studijních návycích a cílech. Mluv a AI ti odpoví.',
+        en: 'AI conversation about your study habits and goals. Speak and AI responds.'
+      },
+      tags: { cs: ['Mikrofon', 'AI', 'Rozhovor'], en: ['Microphone', 'AI', 'Interview'] }
+    },
+    emotionRecognition: {
+      title: { cs: 'Rozpoznávání emocí', en: 'Emotion Recognition' },
+      description: {
+        cs: 'Sleduj své emoce během testů pomocí kamery a AI.',
+        en: 'Track your emotions during tests using camera and AI.'
+      },
+      tags: { cs: ['Kamera', 'AI', 'Emoce'], en: ['Camera', 'AI', 'Emotions'] }
+    },
+    mathReasoning: {
+      title: { cs: 'Matematické uvažování', en: 'Math Reasoning' },
+      description: {
+        cs: 'Nahraj video řešení příkladu a AI analyzuje tvůj postup.',
+        en: 'Record video of solving a problem and AI analyzes your approach.'
+      },
+      tags: { cs: ['Video', 'GPT-4 Vision', 'Matematika'], en: ['Video', 'GPT-4 Vision', 'Math'] }
+    },
+    garminHealth: {
+      title: { cs: 'Garmin Health', en: 'Garmin Health' },
+      description: {
+        cs: 'Propoj hodinky Garmin a sleduj stres během testů.',
+        en: 'Connect your Garmin watch and track stress during tests.'
+      },
+      tags: { cs: ['Hodinky', 'HRV', 'Stres'], en: ['Watch', 'HRV', 'Stress'] }
+    },
+    baumTest: {
+      title: { cs: 'Baum Test (Kreativita)', en: 'Tree Test (Creativity)' },
+      description: {
+        cs: 'Nakresli strom a AI analyzuje tvou kreativitu a osobnost (Koch, 1952).',
+        en: 'Draw a tree and AI analyzes your creativity and personality (Koch, 1952).'
+      },
+      tags: { cs: ['Kresba', 'Kreativita', 'Psychologie'], en: ['Drawing', 'Creativity', 'Psychology'] }
     }
   },
 

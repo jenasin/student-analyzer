@@ -1,14 +1,16 @@
 /**
- * Typologický test - 30 otázek (A-D)
- * Založeno na: ILS (Felder-Silverman), Kolb, VARK
+ * Typology Test - 30 questions (A-D)
+ * Based on: ILS (Felder-Silverman), Kolb, VARK
  *
- * 5 dimenzí:
- * D1: Abstraktní vs. Konkrétní (8 otázek)
- * D2: Aktivní vs. Reflektivní (6 otázek)
- * D3: Vizuální vs. Verbální (6 otázek)
- * D4: Sekvenční vs. Globální (6 otázek)
- * D5: Struktura vs. Flexibilita (4 otázky)
+ * 5 dimensions:
+ * D1: Abstract vs. Concrete (8 questions)
+ * D2: Active vs. Reflective (6 questions)
+ * D3: Visual vs. Verbal (6 questions)
+ * D4: Sequential vs. Global (6 questions)
+ * D5: Structure vs. Flexibility (4 questions)
  */
+
+import { Language } from '../../i18n/translations';
 
 export type AnswerKey = 'A' | 'B' | 'C' | 'D';
 
@@ -18,429 +20,449 @@ export type DimensionSide = 'left' | 'right';
 
 export interface TypologyOption {
   key: AnswerKey;
-  text: string;
-  side: DimensionSide; // left nebo right pro skórování
+  text: { cs: string; en: string };
+  side: DimensionSide;
 }
 
 export interface TypologyQuestion {
   id: string;
   dimension: DimensionId;
-  text: string;
+  text: { cs: string; en: string };
   options: TypologyOption[];
 }
 
 export interface DimensionMeta {
   id: DimensionId;
-  leftLabel: string;
-  rightLabel: string;
-  leftDescription: string;
-  rightDescription: string;
+  leftLabel: { cs: string; en: string };
+  rightLabel: { cs: string; en: string };
+  leftDescription: { cs: string; en: string };
+  rightDescription: { cs: string; en: string };
   questionCount: number;
 }
 
-// Metadata dimenzí
+// Dimension metadata
 export const dimensionsMeta: DimensionMeta[] = [
   {
     id: 'D1',
-    leftLabel: 'Konkrétní',
-    rightLabel: 'Abstraktní',
-    leftDescription: 'Preferuješ příklady, fakta a praktické postupy',
-    rightDescription: 'Preferuješ principy, teorie a koncepty',
+    leftLabel: { cs: 'Konkrétní', en: 'Concrete' },
+    rightLabel: { cs: 'Abstraktní', en: 'Abstract' },
+    leftDescription: { cs: 'Preferuješ příklady, fakta a praktické postupy', en: 'You prefer examples, facts, and practical procedures' },
+    rightDescription: { cs: 'Preferuješ principy, teorie a koncepty', en: 'You prefer principles, theories, and concepts' },
     questionCount: 8
   },
   {
     id: 'D2',
-    leftLabel: 'Aktivní',
-    rightLabel: 'Reflektivní',
-    leftDescription: 'Učíš se dělením, zkoušením a experimentováním',
-    rightDescription: 'Učíš se přemýšlením, plánováním a analýzou',
+    leftLabel: { cs: 'Aktivní', en: 'Active' },
+    rightLabel: { cs: 'Reflektivní', en: 'Reflective' },
+    leftDescription: { cs: 'Učíš se dělením, zkoušením a experimentováním', en: 'You learn by doing, trying, and experimenting' },
+    rightDescription: { cs: 'Učíš se přemýšlením, plánováním a analýzou', en: 'You learn by thinking, planning, and analyzing' },
     questionCount: 6
   },
   {
     id: 'D3',
-    leftLabel: 'Vizuální',
-    rightLabel: 'Verbální',
-    leftDescription: 'Preferuješ obrázky, schémata a grafy',
-    rightDescription: 'Preferuješ text, slova a vysvětlení',
+    leftLabel: { cs: 'Vizuální', en: 'Visual' },
+    rightLabel: { cs: 'Verbální', en: 'Verbal' },
+    leftDescription: { cs: 'Preferuješ obrázky, schémata a grafy', en: 'You prefer images, diagrams, and graphs' },
+    rightDescription: { cs: 'Preferuješ text, slova a vysvětlení', en: 'You prefer text, words, and explanations' },
     questionCount: 6
   },
   {
     id: 'D4',
-    leftLabel: 'Sekvenční',
-    rightLabel: 'Globální',
-    leftDescription: 'Postupuješ krok za krokem, systematicky',
-    rightDescription: 'Preferuješ velký obrázek a souvislosti',
+    leftLabel: { cs: 'Sekvenční', en: 'Sequential' },
+    rightLabel: { cs: 'Globální', en: 'Global' },
+    leftDescription: { cs: 'Postupuješ krok za krokem, systematicky', en: 'You proceed step by step, systematically' },
+    rightDescription: { cs: 'Preferuješ velký obrázek a souvislosti', en: 'You prefer the big picture and connections' },
     questionCount: 6
   },
   {
     id: 'D5',
-    leftLabel: 'Strukturovaný',
-    rightLabel: 'Flexibilní',
-    leftDescription: 'Máš rád plány, rutiny a organizaci',
-    rightDescription: 'Preferuješ volnost a adaptaci',
+    leftLabel: { cs: 'Strukturovaný', en: 'Structured' },
+    rightLabel: { cs: 'Flexibilní', en: 'Flexible' },
+    leftDescription: { cs: 'Máš rád plány, rutiny a organizaci', en: 'You like plans, routines, and organization' },
+    rightDescription: { cs: 'Preferuješ volnost a adaptaci', en: 'You prefer freedom and adaptation' },
     questionCount: 4
   }
 ];
 
-// 30 otázek
+// 30 questions
 export const typologyQuestions: TypologyQuestion[] = [
   // =====================
-  // D1: Abstraktní vs. Konkrétní (8 otázek)
+  // D1: Abstract vs. Concrete (8 questions)
   // =====================
   {
     id: 'Q1',
     dimension: 'D1',
-    text: 'Když se učíš nový pojem, nejvíc ti pomůže:',
+    text: { cs: 'Když se učíš nový pojem, nejvíc ti pomůže:', en: 'When learning a new concept, what helps you most:' },
     options: [
-      { key: 'A', text: 'konkrétní příklad z praxe', side: 'left' },
-      { key: 'B', text: 'definice + jasná pravidla', side: 'left' },
-      { key: 'C', text: 'proč to funguje, princip v pozadí', side: 'right' },
-      { key: 'D', text: 'propojení s jinými koncepty', side: 'right' }
+      { key: 'A', text: { cs: 'konkrétní příklad z praxe', en: 'a concrete example from practice' }, side: 'left' },
+      { key: 'B', text: { cs: 'definice + jasná pravidla', en: 'definition + clear rules' }, side: 'left' },
+      { key: 'C', text: { cs: 'proč to funguje, princip v pozadí', en: 'why it works, the underlying principle' }, side: 'right' },
+      { key: 'D', text: { cs: 'propojení s jinými koncepty', en: 'connection with other concepts' }, side: 'right' }
     ]
   },
   {
     id: 'Q2',
     dimension: 'D1',
-    text: 'Když narazíš na nový problém, jdeš spíš:',
+    text: { cs: 'Když narazíš na nový problém, jdeš spíš:', en: 'When you encounter a new problem, you tend to:' },
     options: [
-      { key: 'A', text: 'najdu podobný příklad a napodobím postup', side: 'left' },
-      { key: 'B', text: 'sepíšu si fakta a známé hodnoty', side: 'left' },
-      { key: 'C', text: 'odvodím si obecný model', side: 'right' },
-      { key: 'D', text: 'zformuluju hypotézu a ověřím', side: 'right' }
+      { key: 'A', text: { cs: 'najdu podobný příklad a napodobím postup', en: 'find a similar example and imitate the approach' }, side: 'left' },
+      { key: 'B', text: { cs: 'sepíšu si fakta a známé hodnoty', en: 'write down facts and known values' }, side: 'left' },
+      { key: 'C', text: { cs: 'odvodím si obecný model', en: 'derive a general model' }, side: 'right' },
+      { key: 'D', text: { cs: 'zformuluju hypotézu a ověřím', en: 'formulate a hypothesis and verify' }, side: 'right' }
     ]
   },
   {
     id: 'Q3',
     dimension: 'D1',
-    text: 'V matematice nebo analýze dat ti sedí víc:',
+    text: { cs: 'V matematice nebo analýze dat ti sedí víc:', en: 'In math or data analysis, you prefer:' },
     options: [
-      { key: 'A', text: 'počítání podle vzoru', side: 'left' },
-      { key: 'B', text: 'tabulky, postupy, checklisty', side: 'left' },
-      { key: 'C', text: 'důkazy, abstraktní struktury', side: 'right' },
-      { key: 'D', text: 'generalizace a "co kdyby"', side: 'right' }
+      { key: 'A', text: { cs: 'počítání podle vzoru', en: 'calculating by pattern' }, side: 'left' },
+      { key: 'B', text: { cs: 'tabulky, postupy, checklisty', en: 'tables, procedures, checklists' }, side: 'left' },
+      { key: 'C', text: { cs: 'důkazy, abstraktní struktury', en: 'proofs, abstract structures' }, side: 'right' },
+      { key: 'D', text: { cs: 'generalizace a "co kdyby"', en: 'generalizations and "what if"' }, side: 'right' }
     ]
   },
   {
     id: 'Q4',
     dimension: 'D1',
-    text: 'Nejvíc tě baví úlohy, které:',
+    text: { cs: 'Nejvíc tě baví úlohy, které:', en: 'You enjoy tasks that:' },
     options: [
-      { key: 'A', text: 'mají jasný postup a 1 správný výsledek', side: 'left' },
-      { key: 'B', text: 'jsou "práce s daty krok za krokem"', side: 'left' },
-      { key: 'C', text: 'mají víc cest a jde o nápad', side: 'right' },
-      { key: 'D', text: 'nutí přemýšlet o principu, ne o číslech', side: 'right' }
+      { key: 'A', text: { cs: 'mají jasný postup a 1 správný výsledek', en: 'have a clear procedure and 1 correct answer' }, side: 'left' },
+      { key: 'B', text: { cs: 'jsou "práce s daty krok za krokem"', en: 'are "step-by-step data work"' }, side: 'left' },
+      { key: 'C', text: { cs: 'mají víc cest a jde o nápad', en: 'have multiple paths and require creativity' }, side: 'right' },
+      { key: 'D', text: { cs: 'nutí přemýšlet o principu, ne o číslech', en: 'make you think about principles, not numbers' }, side: 'right' }
     ]
   },
   {
     id: 'Q5',
     dimension: 'D1',
-    text: 'Když čteš výukový text, nejvíc hledáš:',
+    text: { cs: 'Když čteš výukový text, nejvíc hledáš:', en: 'When reading educational text, you look for:' },
     options: [
-      { key: 'A', text: 'příklady použití', side: 'left' },
-      { key: 'B', text: 'definice a pravidla', side: 'left' },
-      { key: 'C', text: 'intuici a vysvětlení "proč"', side: 'right' },
-      { key: 'D', text: 'souvislosti a konceptuální mapu', side: 'right' }
+      { key: 'A', text: { cs: 'příklady použití', en: 'examples of use' }, side: 'left' },
+      { key: 'B', text: { cs: 'definice a pravidla', en: 'definitions and rules' }, side: 'left' },
+      { key: 'C', text: { cs: 'intuici a vysvětlení "proč"', en: 'intuition and "why" explanations' }, side: 'right' },
+      { key: 'D', text: { cs: 'souvislosti a konceptuální mapu', en: 'connections and conceptual map' }, side: 'right' }
     ]
   },
   {
     id: 'Q6',
     dimension: 'D1',
-    text: 'Pokud ti někdo vysvětluje něco složitého, chceš:',
+    text: { cs: 'Pokud ti někdo vysvětluje něco složitého, chceš:', en: 'When someone explains something complex, you want:' },
     options: [
-      { key: 'A', text: 'ukázat 1 konkrétní řešený příklad', side: 'left' },
-      { key: 'B', text: 'rozpis kroků', side: 'left' },
-      { key: 'C', text: 'analogii nebo metaforu', side: 'right' },
-      { key: 'D', text: 'zobecnění a hranice platnosti', side: 'right' }
+      { key: 'A', text: { cs: 'ukázat 1 konkrétní řešený příklad', en: 'to see 1 concrete solved example' }, side: 'left' },
+      { key: 'B', text: { cs: 'rozpis kroků', en: 'a breakdown of steps' }, side: 'left' },
+      { key: 'C', text: { cs: 'analogii nebo metaforu', en: 'an analogy or metaphor' }, side: 'right' },
+      { key: 'D', text: { cs: 'zobecnění a hranice platnosti', en: 'generalization and scope of validity' }, side: 'right' }
     ]
   },
   {
     id: 'Q7',
     dimension: 'D1',
-    text: 'Při učení si víc užíváš:',
+    text: { cs: 'Při učení si víc užíváš:', en: 'When learning, you enjoy more:' },
     options: [
-      { key: 'A', text: '"umět to udělat"', side: 'left' },
-      { key: 'B', text: '"mít to srovnané a zapamatované"', side: 'left' },
-      { key: 'C', text: '"pochopit princip"', side: 'right' },
-      { key: 'D', text: '"vidět to v širším systému"', side: 'right' }
+      { key: 'A', text: { cs: '"umět to udělat"', en: '"being able to do it"' }, side: 'left' },
+      { key: 'B', text: { cs: '"mít to srovnané a zapamatované"', en: '"having it organized and memorized"' }, side: 'left' },
+      { key: 'C', text: { cs: '"pochopit princip"', en: '"understanding the principle"' }, side: 'right' },
+      { key: 'D', text: { cs: '"vidět to v širším systému"', en: '"seeing it in a broader system"' }, side: 'right' }
     ]
   },
   {
     id: 'Q8',
     dimension: 'D1',
-    text: 'Když je něco nejasné, nejvíc ti pomůže:',
+    text: { cs: 'Když je něco nejasné, nejvíc ti pomůže:', en: 'When something is unclear, what helps most:' },
     options: [
-      { key: 'A', text: 'další příklad', side: 'left' },
-      { key: 'B', text: 'přesnější definice', side: 'left' },
-      { key: 'C', text: 'vysvětlení intuitivně', side: 'right' },
-      { key: 'D', text: 'propojení na známé koncepty', side: 'right' }
+      { key: 'A', text: { cs: 'další příklad', en: 'another example' }, side: 'left' },
+      { key: 'B', text: { cs: 'přesnější definice', en: 'a more precise definition' }, side: 'left' },
+      { key: 'C', text: { cs: 'vysvětlení intuitivně', en: 'intuitive explanation' }, side: 'right' },
+      { key: 'D', text: { cs: 'propojení na známé koncepty', en: 'connection to known concepts' }, side: 'right' }
     ]
   },
 
   // =====================
-  // D2: Aktivní vs. Reflektivní (6 otázek)
+  // D2: Active vs. Reflective (6 questions)
   // =====================
   {
     id: 'Q9',
     dimension: 'D2',
-    text: 'Když se učíš, obvykle:',
+    text: { cs: 'Když se učíš, obvykle:', en: 'When learning, you usually:' },
     options: [
-      { key: 'A', text: 'hned řeším úlohy', side: 'left' },
-      { key: 'B', text: 'něco zkouším a ladím', side: 'left' },
-      { key: 'C', text: 'nejdřív přemýšlím a teprve pak dělám', side: 'right' },
-      { key: 'D', text: 'dělám si poznámky a shrnutí', side: 'right' }
+      { key: 'A', text: { cs: 'hned řeším úlohy', en: 'immediately solve problems' }, side: 'left' },
+      { key: 'B', text: { cs: 'něco zkouším a ladím', en: 'try things and adjust' }, side: 'left' },
+      { key: 'C', text: { cs: 'nejdřív přemýšlím a teprve pak dělám', en: 'think first and then do' }, side: 'right' },
+      { key: 'D', text: { cs: 'dělám si poznámky a shrnutí', en: 'take notes and summaries' }, side: 'right' }
     ]
   },
   {
     id: 'Q10',
     dimension: 'D2',
-    text: 'Nejvíc si pamatuješ, když:',
+    text: { cs: 'Nejvíc si pamatuješ, když:', en: 'You remember best when:' },
     options: [
-      { key: 'A', text: 'to použiješ v praxi', side: 'left' },
-      { key: 'B', text: 'to vysvětlíš někomu jinému', side: 'left' },
-      { key: 'C', text: 'si to v klidu projdeš', side: 'right' },
-      { key: 'D', text: 'si to sepíšeš do vlastních slov', side: 'right' }
+      { key: 'A', text: { cs: 'to použiješ v praxi', en: 'you use it in practice' }, side: 'left' },
+      { key: 'B', text: { cs: 'to vysvětlíš někomu jinému', en: 'you explain it to someone else' }, side: 'left' },
+      { key: 'C', text: { cs: 'si to v klidu projdeš', en: 'you go through it calmly' }, side: 'right' },
+      { key: 'D', text: { cs: 'si to sepíšeš do vlastních slov', en: 'you write it in your own words' }, side: 'right' }
     ]
   },
   {
     id: 'Q11',
     dimension: 'D2',
-    text: 'Když se zasekneš:',
+    text: { cs: 'Když se zasekneš:', en: 'When you get stuck:' },
     options: [
-      { key: 'A', text: 'zkouším varianty', side: 'left' },
-      { key: 'B', text: 'hledám podobné řešení a upravuju', side: 'left' },
-      { key: 'C', text: 'zastavím se a promyslím strukturu', side: 'right' },
-      { key: 'D', text: 'vrátím se k teorii a poznámkám', side: 'right' }
+      { key: 'A', text: { cs: 'zkouším varianty', en: 'I try variations' }, side: 'left' },
+      { key: 'B', text: { cs: 'hledám podobné řešení a upravuju', en: 'I look for similar solutions and adapt' }, side: 'left' },
+      { key: 'C', text: { cs: 'zastavím se a promyslím strukturu', en: 'I stop and think through the structure' }, side: 'right' },
+      { key: 'D', text: { cs: 'vrátím se k teorii a poznámkám', en: 'I go back to theory and notes' }, side: 'right' }
     ]
   },
   {
     id: 'Q12',
     dimension: 'D2',
-    text: 'Skupinová práce:',
+    text: { cs: 'Skupinová práce:', en: 'Group work:' },
     options: [
-      { key: 'A', text: 'mě nakopne a rozhýbe', side: 'left' },
-      { key: 'B', text: 'nejlíp mi sedí spolupracovat na úloze', side: 'left' },
-      { key: 'C', text: 'raději si to promyslím sám a pak sdílím', side: 'right' },
-      { key: 'D', text: 'raději pracuju sám v klidu', side: 'right' }
+      { key: 'A', text: { cs: 'mě nakopne a rozhýbe', en: 'energizes and motivates me' }, side: 'left' },
+      { key: 'B', text: { cs: 'nejlíp mi sedí spolupracovat na úloze', en: 'I prefer collaborating on tasks' }, side: 'left' },
+      { key: 'C', text: { cs: 'raději si to promyslím sám a pak sdílím', en: 'I prefer thinking alone first then sharing' }, side: 'right' },
+      { key: 'D', text: { cs: 'raději pracuju sám v klidu', en: 'I prefer working alone quietly' }, side: 'right' }
     ]
   },
   {
     id: 'Q13',
     dimension: 'D2',
-    text: 'Nové téma:',
+    text: { cs: 'Nové téma:', en: 'New topic:' },
     options: [
-      { key: 'A', text: '"dej mi úkol a jedu"', side: 'left' },
-      { key: 'B', text: '"dej mi nástroj a zkouším"', side: 'left' },
-      { key: 'C', text: '"nejdřív chci pochopit"', side: 'right' },
-      { key: 'D', text: '"nejdřív si udělám plán"', side: 'right' }
+      { key: 'A', text: { cs: '"dej mi úkol a jedu"', en: '"give me a task and I\'ll go"' }, side: 'left' },
+      { key: 'B', text: { cs: '"dej mi nástroj a zkouším"', en: '"give me a tool and I\'ll try"' }, side: 'left' },
+      { key: 'C', text: { cs: '"nejdřív chci pochopit"', en: '"first I want to understand"' }, side: 'right' },
+      { key: 'D', text: { cs: '"nejdřív si udělám plán"', en: '"first I\'ll make a plan"' }, side: 'right' }
     ]
   },
   {
     id: 'Q14',
     dimension: 'D2',
-    text: 'Při učení preferuješ:',
+    text: { cs: 'Při učení preferuješ:', en: 'When learning, you prefer:' },
     options: [
-      { key: 'A', text: 'krátké cykly pokus–omyl', side: 'left' },
-      { key: 'B', text: 'projekty a experimenty', side: 'left' },
-      { key: 'C', text: 'čtení + přemýšlení', side: 'right' },
-      { key: 'D', text: 'shrnutí + struktura', side: 'right' }
+      { key: 'A', text: { cs: 'krátké cykly pokus–omyl', en: 'short trial-and-error cycles' }, side: 'left' },
+      { key: 'B', text: { cs: 'projekty a experimenty', en: 'projects and experiments' }, side: 'left' },
+      { key: 'C', text: { cs: 'čtení + přemýšlení', en: 'reading + thinking' }, side: 'right' },
+      { key: 'D', text: { cs: 'shrnutí + struktura', en: 'summaries + structure' }, side: 'right' }
     ]
   },
 
   // =====================
-  // D3: Vizuální vs. Verbální (6 otázek)
+  // D3: Visual vs. Verbal (6 questions)
   // =====================
   {
     id: 'Q15',
     dimension: 'D3',
-    text: 'Když se něco učíš, pomůže ti nejvíc:',
+    text: { cs: 'Když se něco učíš, pomůže ti nejvíc:', en: 'When learning something, what helps you most:' },
     options: [
-      { key: 'A', text: 'obrázek, schéma, graf', side: 'left' },
-      { key: 'B', text: 'barevné zvýraznění, layout', side: 'left' },
-      { key: 'C', text: 'vysvětlení slovně', side: 'right' },
-      { key: 'D', text: 'textový krokový popis', side: 'right' }
+      { key: 'A', text: { cs: 'obrázek, schéma, graf', en: 'picture, diagram, graph' }, side: 'left' },
+      { key: 'B', text: { cs: 'barevné zvýraznění, layout', en: 'color highlighting, layout' }, side: 'left' },
+      { key: 'C', text: { cs: 'vysvětlení slovně', en: 'verbal explanation' }, side: 'right' },
+      { key: 'D', text: { cs: 'textový krokový popis', en: 'written step-by-step description' }, side: 'right' }
     ]
   },
   {
     id: 'Q16',
     dimension: 'D3',
-    text: 'Když si něco vybavuješ:',
+    text: { cs: 'Když si něco vybavuješ:', en: 'When recalling something:' },
     options: [
-      { key: 'A', text: '"vidím to před očima"', side: 'left' },
-      { key: 'B', text: 'pamatuju si slidy / grafy', side: 'left' },
-      { key: 'C', text: '"slyším si to v hlavě"', side: 'right' },
-      { key: 'D', text: 'pamatuju si formulace', side: 'right' }
+      { key: 'A', text: { cs: '"vidím to před očima"', en: '"I see it in my mind\'s eye"' }, side: 'left' },
+      { key: 'B', text: { cs: 'pamatuju si slidy / grafy', en: 'I remember slides/graphs' }, side: 'left' },
+      { key: 'C', text: { cs: '"slyším si to v hlavě"', en: '"I hear it in my head"' }, side: 'right' },
+      { key: 'D', text: { cs: 'pamatuju si formulace', en: 'I remember phrases' }, side: 'right' }
     ]
   },
   {
     id: 'Q17',
     dimension: 'D3',
-    text: 'V materiálech chceš víc:',
+    text: { cs: 'V materiálech chceš víc:', en: 'In materials, you want more:' },
     options: [
-      { key: 'A', text: 'diagramy a mapy', side: 'left' },
-      { key: 'B', text: 'ukázky a vizualizace', side: 'left' },
-      { key: 'C', text: 'textové vysvětlení', side: 'right' },
-      { key: 'D', text: 'komentované kroky', side: 'right' }
+      { key: 'A', text: { cs: 'diagramy a mapy', en: 'diagrams and maps' }, side: 'left' },
+      { key: 'B', text: { cs: 'ukázky a vizualizace', en: 'examples and visualizations' }, side: 'left' },
+      { key: 'C', text: { cs: 'textové vysvětlení', en: 'written explanations' }, side: 'right' },
+      { key: 'D', text: { cs: 'komentované kroky', en: 'commented steps' }, side: 'right' }
     ]
   },
   {
     id: 'Q18',
     dimension: 'D3',
-    text: 'Když je látka těžká:',
+    text: { cs: 'Když je látka těžká:', en: 'When material is difficult:' },
     options: [
-      { key: 'A', text: 'nakreslím si to', side: 'left' },
-      { key: 'B', text: 'dělám si schémata', side: 'left' },
-      { key: 'C', text: 'vysvětlím si to slovy', side: 'right' },
-      { key: 'D', text: 'píšu si poznámky', side: 'right' }
+      { key: 'A', text: { cs: 'nakreslím si to', en: 'I draw it' }, side: 'left' },
+      { key: 'B', text: { cs: 'dělám si schémata', en: 'I make diagrams' }, side: 'left' },
+      { key: 'C', text: { cs: 'vysvětlím si to slovy', en: 'I explain it to myself in words' }, side: 'right' },
+      { key: 'D', text: { cs: 'píšu si poznámky', en: 'I write notes' }, side: 'right' }
     ]
   },
   {
     id: 'Q19',
     dimension: 'D3',
-    text: 'U videí preferuješ:',
+    text: { cs: 'U videí preferuješ:', en: 'In videos, you prefer:' },
     options: [
-      { key: 'A', text: 'vizuálně bohaté', side: 'left' },
-      { key: 'B', text: 'ukázky na obrazovce', side: 'left' },
-      { key: 'C', text: 'dobrý výklad', side: 'right' },
-      { key: 'D', text: 'rozhovor / komentář', side: 'right' }
+      { key: 'A', text: { cs: 'vizuálně bohaté', en: 'visually rich' }, side: 'left' },
+      { key: 'B', text: { cs: 'ukázky na obrazovce', en: 'on-screen demonstrations' }, side: 'left' },
+      { key: 'C', text: { cs: 'dobrý výklad', en: 'good narration' }, side: 'right' },
+      { key: 'D', text: { cs: 'rozhovor / komentář', en: 'discussion/commentary' }, side: 'right' }
     ]
   },
   {
     id: 'Q20',
     dimension: 'D3',
-    text: 'Když máš vysvětlit téma:',
+    text: { cs: 'Když máš vysvětlit téma:', en: 'When explaining a topic:' },
     options: [
-      { key: 'A', text: 'kreslím a ukazuju', side: 'left' },
-      { key: 'B', text: 'používám grafy', side: 'left' },
-      { key: 'C', text: 'mluvím a strukturuju argument', side: 'right' },
-      { key: 'D', text: 'píšu stručné body', side: 'right' }
+      { key: 'A', text: { cs: 'kreslím a ukazuju', en: 'I draw and show' }, side: 'left' },
+      { key: 'B', text: { cs: 'používám grafy', en: 'I use graphs' }, side: 'left' },
+      { key: 'C', text: { cs: 'mluvím a strukturuju argument', en: 'I speak and structure arguments' }, side: 'right' },
+      { key: 'D', text: { cs: 'píšu stručné body', en: 'I write concise points' }, side: 'right' }
     ]
   },
 
   // =====================
-  // D4: Sekvenční vs. Globální (6 otázek)
+  // D4: Sequential vs. Global (6 questions)
   // =====================
   {
     id: 'Q21',
     dimension: 'D4',
-    text: 'Při učení jdeš spíš:',
+    text: { cs: 'Při učení jdeš spíš:', en: 'When learning, you tend to go:' },
     options: [
-      { key: 'A', text: 'krok za krokem', side: 'left' },
-      { key: 'B', text: 'od základů nahoru', side: 'left' },
-      { key: 'C', text: 'nejdřív chci velký obrázek', side: 'right' },
-      { key: 'D', text: 'nejdřív chci vědět "kam to směřuje"', side: 'right' }
+      { key: 'A', text: { cs: 'krok za krokem', en: 'step by step' }, side: 'left' },
+      { key: 'B', text: { cs: 'od základů nahoru', en: 'from basics upward' }, side: 'left' },
+      { key: 'C', text: { cs: 'nejdřív chci velký obrázek', en: 'first I want the big picture' }, side: 'right' },
+      { key: 'D', text: { cs: 'nejdřív chci vědět "kam to směřuje"', en: 'first I want to know "where it\'s heading"' }, side: 'right' }
     ]
   },
   {
     id: 'Q22',
     dimension: 'D4',
-    text: 'Když dostaneš složitou kapitolu:',
+    text: { cs: 'Když dostaneš složitou kapitolu:', en: 'When given a complex chapter:' },
     options: [
-      { key: 'A', text: 'rozdělím ji na malé části', side: 'left' },
-      { key: 'B', text: 'jedu od začátku a nepřeskakuju', side: 'left' },
-      { key: 'C', text: 'prolétnu to a pak se vrátím', side: 'right' },
-      { key: 'D', text: 'najdu souvislosti a mapu tématu', side: 'right' }
+      { key: 'A', text: { cs: 'rozdělím ji na malé části', en: 'I break it into small parts' }, side: 'left' },
+      { key: 'B', text: { cs: 'jedu od začátku a nepřeskakuju', en: 'I go from the start without skipping' }, side: 'left' },
+      { key: 'C', text: { cs: 'prolétnu to a pak se vrátím', en: 'I skim through then come back' }, side: 'right' },
+      { key: 'D', text: { cs: 'najdu souvislosti a mapu tématu', en: 'I find connections and topic map' }, side: 'right' }
     ]
   },
   {
     id: 'Q23',
     dimension: 'D4',
-    text: 'V úlohách ti vyhovuje:',
+    text: { cs: 'V úlohách ti vyhovuje:', en: 'In tasks, you prefer:' },
     options: [
-      { key: 'A', text: 'přesný postup', side: 'left' },
-      { key: 'B', text: 'checklist kroků', side: 'left' },
-      { key: 'C', text: 'možnost skákat mezi částmi', side: 'right' },
-      { key: 'D', text: 'hledat zkratky přes koncept', side: 'right' }
+      { key: 'A', text: { cs: 'přesný postup', en: 'exact procedure' }, side: 'left' },
+      { key: 'B', text: { cs: 'checklist kroků', en: 'checklist of steps' }, side: 'left' },
+      { key: 'C', text: { cs: 'možnost skákat mezi částmi', en: 'ability to jump between parts' }, side: 'right' },
+      { key: 'D', text: { cs: 'hledat zkratky přes koncept', en: 'finding shortcuts through concepts' }, side: 'right' }
     ]
   },
   {
     id: 'Q24',
     dimension: 'D4',
-    text: 'Když se ztratíš:',
+    text: { cs: 'Když se ztratíš:', en: 'When you get lost:' },
     options: [
-      { key: 'A', text: 'vrátím se o krok zpět', side: 'left' },
-      { key: 'B', text: 'projdu postup znovu', side: 'left' },
-      { key: 'C', text: 'podívám se na shrnutí', side: 'right' },
-      { key: 'D', text: 'najdu "hlavní myšlenku"', side: 'right' }
+      { key: 'A', text: { cs: 'vrátím se o krok zpět', en: 'I go back one step' }, side: 'left' },
+      { key: 'B', text: { cs: 'projdu postup znovu', en: 'I go through the procedure again' }, side: 'left' },
+      { key: 'C', text: { cs: 'podívám se na shrnutí', en: 'I look at the summary' }, side: 'right' },
+      { key: 'D', text: { cs: 'najdu "hlavní myšlenku"', en: 'I find the "main idea"' }, side: 'right' }
     ]
   },
   {
     id: 'Q25',
     dimension: 'D4',
-    text: 'Při plánování učení:',
+    text: { cs: 'Při plánování učení:', en: 'When planning your learning:' },
     options: [
-      { key: 'A', text: 'rozpis úkolů po dnech', side: 'left' },
-      { key: 'B', text: 'jasný harmonogram', side: 'left' },
-      { key: 'C', text: 'cíle + volnost jak k nim', side: 'right' },
-      { key: 'D', text: 'rámcový plán a improvizace', side: 'right' }
+      { key: 'A', text: { cs: 'rozpis úkolů po dnech', en: 'daily task breakdown' }, side: 'left' },
+      { key: 'B', text: { cs: 'jasný harmonogram', en: 'clear schedule' }, side: 'left' },
+      { key: 'C', text: { cs: 'cíle + volnost jak k nim', en: 'goals + freedom how to reach them' }, side: 'right' },
+      { key: 'D', text: { cs: 'rámcový plán a improvizace', en: 'framework plan and improvisation' }, side: 'right' }
     ]
   },
   {
     id: 'Q26',
     dimension: 'D4',
-    text: 'Vysvětlení ti sedí víc:',
+    text: { cs: 'Vysvětlení ti sedí víc:', en: 'Explanations suit you better:' },
     options: [
-      { key: 'A', text: 'nejdřív základ, pak detaily', side: 'left' },
-      { key: 'B', text: 'kroková ukázka', side: 'left' },
-      { key: 'C', text: 'nejdřív kontext, pak detaily', side: 'right' },
-      { key: 'D', text: 'nejdřív příběh/koncept, pak formalizace', side: 'right' }
+      { key: 'A', text: { cs: 'nejdřív základ, pak detaily', en: 'basics first, then details' }, side: 'left' },
+      { key: 'B', text: { cs: 'kroková ukázka', en: 'step-by-step demonstration' }, side: 'left' },
+      { key: 'C', text: { cs: 'nejdřív kontext, pak detaily', en: 'context first, then details' }, side: 'right' },
+      { key: 'D', text: { cs: 'nejdřív příběh/koncept, pak formalizace', en: 'story/concept first, then formalization' }, side: 'right' }
     ]
   },
 
   // =====================
-  // D5: Struktura vs. Flexibilita (4 otázky)
+  // D5: Structure vs. Flexibility (4 questions)
   // =====================
   {
     id: 'Q27',
     dimension: 'D5',
-    text: 'Když máš volný čas na učení:',
+    text: { cs: 'Když máš volný čas na učení:', en: 'When you have free time for learning:' },
     options: [
-      { key: 'A', text: 'mám pevný plán', side: 'left' },
-      { key: 'B', text: 'jedu podle seznamu', side: 'left' },
-      { key: 'C', text: 'podle nálady/energie', side: 'right' },
-      { key: 'D', text: 'podle toho, co hoří', side: 'right' }
+      { key: 'A', text: { cs: 'mám pevný plán', en: 'I have a fixed plan' }, side: 'left' },
+      { key: 'B', text: { cs: 'jedu podle seznamu', en: 'I follow a list' }, side: 'left' },
+      { key: 'C', text: { cs: 'podle nálady/energie', en: 'based on mood/energy' }, side: 'right' },
+      { key: 'D', text: { cs: 'podle toho, co hoří', en: 'based on what\'s urgent' }, side: 'right' }
     ]
   },
   {
     id: 'Q28',
     dimension: 'D5',
-    text: 'Deadliny:',
+    text: { cs: 'Deadliny:', en: 'Deadlines:' },
     options: [
-      { key: 'A', text: 'motivují mě plánovat dopředu', side: 'left' },
-      { key: 'B', text: 'držím si rezervu', side: 'left' },
-      { key: 'C', text: 'funguje mi sprint na konci', side: 'right' },
-      { key: 'D', text: 'jedu v nepravidelných vlnách', side: 'right' }
+      { key: 'A', text: { cs: 'motivují mě plánovat dopředu', en: 'motivate me to plan ahead' }, side: 'left' },
+      { key: 'B', text: { cs: 'držím si rezervu', en: 'I keep a buffer' }, side: 'left' },
+      { key: 'C', text: { cs: 'funguje mi sprint na konci', en: 'final sprint works for me' }, side: 'right' },
+      { key: 'D', text: { cs: 'jedu v nepravidelných vlnách', en: 'I work in irregular waves' }, side: 'right' }
     ]
   },
   {
     id: 'Q29',
     dimension: 'D5',
-    text: 'Poznámky:',
+    text: { cs: 'Poznámky:', en: 'Notes:' },
     options: [
-      { key: 'A', text: 'strukturované, čisté', side: 'left' },
-      { key: 'B', text: 'systém složek/tagů', side: 'left' },
-      { key: 'C', text: 'spíš chaotické, ale vím kde co je', side: 'right' },
-      { key: 'D', text: 'skoro žádné, radši praxe', side: 'right' }
+      { key: 'A', text: { cs: 'strukturované, čisté', en: 'structured, clean' }, side: 'left' },
+      { key: 'B', text: { cs: 'systém složek/tagů', en: 'folder/tag system' }, side: 'left' },
+      { key: 'C', text: { cs: 'spíš chaotické, ale vím kde co je', en: 'somewhat chaotic, but I know where things are' }, side: 'right' },
+      { key: 'D', text: { cs: 'skoro žádné, radši praxe', en: 'almost none, prefer practice' }, side: 'right' }
     ]
   },
   {
     id: 'Q30',
     dimension: 'D5',
-    text: 'Když se ti nechce:',
+    text: { cs: 'Když se ti nechce:', en: 'When you don\'t feel like it:' },
     options: [
-      { key: 'A', text: 'držím rutinu', side: 'left' },
-      { key: 'B', text: 'udělám aspoň malý krok', side: 'left' },
-      { key: 'C', text: 'počkám na "správný moment"', side: 'right' },
-      { key: 'D', text: 'přepnu na něco jiného', side: 'right' }
+      { key: 'A', text: { cs: 'držím rutinu', en: 'I stick to routine' }, side: 'left' },
+      { key: 'B', text: { cs: 'udělám aspoň malý krok', en: 'I do at least a small step' }, side: 'left' },
+      { key: 'C', text: { cs: 'počkám na "správný moment"', en: 'I wait for the "right moment"' }, side: 'right' },
+      { key: 'D', text: { cs: 'přepnu na něco jiného', en: 'I switch to something else' }, side: 'right' }
     ]
   }
 ];
 
-// Helper: získej otázky pro konkrétní dimenzi
+// Helper: get questions by dimension
 export function getQuestionsByDimension(dimension: DimensionId): TypologyQuestion[] {
   return typologyQuestions.filter(q => q.dimension === dimension);
 }
 
-// Helper: získej metadata dimenze
+// Helper: get dimension metadata
 export function getDimensionMeta(dimension: DimensionId): DimensionMeta | undefined {
   return dimensionsMeta.find(d => d.id === dimension);
+}
+
+// Helper: get question text by language
+export function getTypologyQuestionText(question: TypologyQuestion, lang: Language): string {
+  return question.text[lang];
+}
+
+// Helper: get option text by language
+export function getTypologyOptionText(option: TypologyOption, lang: Language): string {
+  return option.text[lang];
+}
+
+// Helper: get dimension label by language
+export function getDimensionLabel(meta: DimensionMeta, side: 'left' | 'right', lang: Language): string {
+  return side === 'left' ? meta.leftLabel[lang] : meta.rightLabel[lang];
+}
+
+// Helper: get dimension description by language
+export function getDimensionDescription(meta: DimensionMeta, side: 'left' | 'right', lang: Language): string {
+  return side === 'left' ? meta.leftDescription[lang] : meta.rightDescription[lang];
 }
