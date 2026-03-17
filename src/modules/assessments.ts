@@ -1611,3 +1611,186 @@ export function scoreKolb(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): KolbR
     tips
   };
 }
+
+// ============================================
+// 16. STUDY STRESS (inspired by HuggingFace: 0xmarvel/student-stress-survey)
+// ============================================
+export const studyStressQuestions: AssessmentQuestion[] = [
+  { id: 'SS1', text: { cs: 'Jak moc tě stresuje akademická zátěž během semestru?', en: 'How much does academic workload stress you during the semester?' }, options: [
+    { key: 'A', text: { cs: 'Minimálně', en: 'Minimally' }, score: 4 },
+    { key: 'B', text: { cs: 'Mírně', en: 'Mildly' }, score: 3 },
+    { key: 'C', text: { cs: 'Značně', en: 'Significantly' }, score: 2 },
+    { key: 'D', text: { cs: 'Extrémně', en: 'Extremely' }, score: 1 }
+  ]},
+  { id: 'SS2', text: { cs: 'Jak dobře spíš během zkouškového období?', en: 'How well do you sleep during exam periods?' }, options: [
+    { key: 'A', text: { cs: 'Výborně, spím 7-8 hodin', en: 'Excellently, I sleep 7-8 hours' }, score: 4 },
+    { key: 'B', text: { cs: 'Dobře, občas méně', en: 'Well, sometimes less' }, score: 3 },
+    { key: 'C', text: { cs: 'Špatně, často pod 6 hodin', en: 'Poorly, often under 6 hours' }, score: 2 },
+    { key: 'D', text: { cs: 'Velmi špatně, nespím', en: 'Very poorly, I don\'t sleep' }, score: 1 }
+  ]},
+  { id: 'SS3', text: { cs: 'Cítíš tlak, že musíš mít výborné výsledky u zkoušek?', en: 'Do you feel pressure to perform excellently in exams?' }, options: [
+    { key: 'A', text: { cs: 'Téměř ne', en: 'Almost no' }, score: 4 },
+    { key: 'B', text: { cs: 'Trochu', en: 'A little' }, score: 3 },
+    { key: 'C', text: { cs: 'Hodně', en: 'A lot' }, score: 2 },
+    { key: 'D', text: { cs: 'Enormně', en: 'Enormously' }, score: 1 }
+  ]},
+  { id: 'SS4', text: { cs: 'Mění se tvé stravovací návyky během zkoušek?', en: 'Do your eating habits change during exams?' }, options: [
+    { key: 'A', text: { cs: 'Ne, jím normálně', en: 'No, I eat normally' }, score: 4 },
+    { key: 'B', text: { cs: 'Trochu, občas vynechám jídlo', en: 'A little, I sometimes skip meals' }, score: 3 },
+    { key: 'C', text: { cs: 'Ano, jím nepravidelně', en: 'Yes, I eat irregularly' }, score: 2 },
+    { key: 'D', text: { cs: 'Hodně, zapomínám jíst nebo přejídám', en: 'A lot, I forget to eat or overeat' }, score: 1 }
+  ]},
+  { id: 'SS5', text: { cs: 'Máš během semestru fyzické potíže spojené se stresem (bolesti hlavy, žaludku)?', en: 'Do you have stress-related physical issues during the semester (headaches, stomach problems)?' }, options: [
+    { key: 'A', text: { cs: 'Nikdy', en: 'Never' }, score: 4 },
+    { key: 'B', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'C', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'D', text: { cs: 'Velmi často', en: 'Very often' }, score: 1 }
+  ]},
+  { id: 'SS6', text: { cs: 'Stíháš termíny a deadliny bez extrémního stresu?', en: 'Do you meet deadlines without extreme stress?' }, options: [
+    { key: 'A', text: { cs: 'Ano, v pohodě', en: 'Yes, comfortably' }, score: 4 },
+    { key: 'B', text: { cs: 'Většinou ano', en: 'Usually yes' }, score: 3 },
+    { key: 'C', text: { cs: 'Často na poslední chvíli', en: 'Often at the last moment' }, score: 2 },
+    { key: 'D', text: { cs: 'Nestíhám a stresuju se', en: 'I don\'t manage and stress out' }, score: 1 }
+  ]},
+  { id: 'SS7', text: { cs: 'Dokážeš si najít čas na odpočinek a koníčky během semestru?', en: 'Can you find time for rest and hobbies during the semester?' }, options: [
+    { key: 'A', text: { cs: 'Ano, pravidelně', en: 'Yes, regularly' }, score: 4 },
+    { key: 'B', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'C', text: { cs: 'Zřídka', en: 'Rarely' }, score: 2 },
+    { key: 'D', text: { cs: 'Vůbec ne', en: 'Not at all' }, score: 1 }
+  ]},
+  { id: 'SS8', text: { cs: 'Jak zvládáš stres ze studia?', en: 'How do you cope with study stress?' }, options: [
+    { key: 'A', text: { cs: 'Mám osvědčené strategie (sport, meditace)', en: 'I have proven strategies (sports, meditation)' }, score: 4 },
+    { key: 'B', text: { cs: 'Zvládám, ale nemám systém', en: 'I manage but don\'t have a system' }, score: 3 },
+    { key: 'C', text: { cs: 'Těžko, často se cítím přetížený/á', en: 'With difficulty, I often feel overwhelmed' }, score: 2 },
+    { key: 'D', text: { cs: 'Nezvládám, stres mě paralyzuje', en: 'I can\'t cope, stress paralyzes me' }, score: 1 }
+  ]}
+];
+
+export function scoreStudyStress(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): AssessmentResult {
+  let total = 0;
+  for (const q of studyStressQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = studyStressQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+
+  // Higher = less stress (better)
+  if (percent >= 75) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Nízký studijní stres', en: 'Low Study Stress' },
+      description: { cs: 'Studium tě příliš nestresuje a máš dobré copingové strategie.', en: 'Studies don\'t stress you much and you have good coping strategies.' },
+      tips: { cs: ['Udržuj své zdravé návyky', 'Pomáhej spolužákům se zvládáním stresu', 'Využij svůj klid pro náročnější výzvy'], en: ['Maintain your healthy habits', 'Help classmates manage stress', 'Use your calm for bigger challenges'] }
+    };
+  } else if (percent >= 50) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Mírný studijní stres', en: 'Moderate Study Stress' },
+      description: { cs: 'Občas cítíš stres, ale většinou ho zvládáš.', en: 'You sometimes feel stressed but usually manage it.' },
+      tips: { cs: ['Zaveď pravidelný pohyb (i 20 min denně pomůže)', 'Plánuj studium s přestávkami', 'Nauč se říkat ne nepodstatným aktivitám'], en: ['Start regular exercise (even 20 min daily helps)', 'Plan study sessions with breaks', 'Learn to say no to non-essential activities'] }
+    };
+  } else if (percent >= 25) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Vyšší studijní stres', en: 'High Study Stress' },
+      description: { cs: 'Studium ti působí značný stres, který ovlivňuje tvé zdraví.', en: 'Studies cause you significant stress affecting your health.' },
+      tips: { cs: ['Vyhledej podporu (studijní poradce, psycholog)', 'Zkus techniku 4-7-8 dýchání před spaním', 'Rozděl zkoušky do menších bloků přípravy'], en: ['Seek support (study advisor, psychologist)', 'Try 4-7-8 breathing technique before sleep', 'Break exam prep into smaller blocks'] }
+    };
+  } else {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Kritický studijní stres', en: 'Critical Study Stress' },
+      description: { cs: 'Stres ze studia výrazně ovlivňuje tvé zdraví a výkon.', en: 'Study stress significantly affects your health and performance.' },
+      tips: { cs: ['Okamžitě vyhledej pomoc (psychologická poradna na VŠ)', 'Zvažuj úpravu studijního plánu (méně předmětů)', 'Prioritizuj spánek a jídlo – bez nich se neučíš'], en: ['Seek help immediately (university counseling center)', 'Consider adjusting study plan (fewer courses)', 'Prioritize sleep and food – you can\'t study without them'] }
+    };
+  }
+}
+
+// ============================================
+// 17. STUDY STRATEGIES (inspired by HuggingFace: 0xmarvel/student-stress-survey)
+// ============================================
+export const studyStrategiesQuestions: AssessmentQuestion[] = [
+  { id: 'ST1', text: { cs: 'Jak si děláš poznámky při učení?', en: 'How do you take notes when studying?' }, options: [
+    { key: 'A', text: { cs: 'Strukturované poznámky vlastními slovy', en: 'Structured notes in my own words' }, score: 4 },
+    { key: 'B', text: { cs: 'Zvýrazňuji v textu klíčové body', en: 'I highlight key points in text' }, score: 3 },
+    { key: 'C', text: { cs: 'Opisuji z přednášek', en: 'I copy from lectures' }, score: 2 },
+    { key: 'D', text: { cs: 'Nedělám si poznámky', en: 'I don\'t take notes' }, score: 1 }
+  ]},
+  { id: 'ST2', text: { cs: 'Jakou techniku používáš k zapamatování látky?', en: 'What technique do you use to memorize material?' }, options: [
+    { key: 'A', text: { cs: 'Active recall – testuju se sám/a', en: 'Active recall – I test myself' }, score: 4 },
+    { key: 'B', text: { cs: 'Shrnování a přeformulovávání', en: 'Summarizing and paraphrasing' }, score: 3 },
+    { key: 'C', text: { cs: 'Opakované čtení', en: 'Repeated reading' }, score: 2 },
+    { key: 'D', text: { cs: 'Nemám žádnou techniku', en: 'I don\'t have any technique' }, score: 1 }
+  ]},
+  { id: 'ST3', text: { cs: 'Kde se nejčastěji učíš?', en: 'Where do you most often study?' }, options: [
+    { key: 'A', text: { cs: 'Tiché místo bez rozptýlení (knihovna, pracovna)', en: 'Quiet place without distractions (library, study room)' }, score: 4 },
+    { key: 'B', text: { cs: 'Doma u stolu', en: 'At home at a desk' }, score: 3 },
+    { key: 'C', text: { cs: 'V kavárně nebo s lidmi kolem', en: 'In a café or with people around' }, score: 2 },
+    { key: 'D', text: { cs: 'V posteli nebo na gauči', en: 'In bed or on the couch' }, score: 1 }
+  ]},
+  { id: 'ST4', text: { cs: 'Jak často si děláš přestávky při učení?', en: 'How often do you take breaks while studying?' }, options: [
+    { key: 'A', text: { cs: 'Pravidelně (každých 25-50 min)', en: 'Regularly (every 25-50 min)' }, score: 4 },
+    { key: 'B', text: { cs: 'Občas, když cítím únavu', en: 'Sometimes, when I feel tired' }, score: 3 },
+    { key: 'C', text: { cs: 'Zřídka, snažím se vydržet', en: 'Rarely, I try to push through' }, score: 2 },
+    { key: 'D', text: { cs: 'Buď žádné, nebo příliš dlouhé', en: 'Either none or too long' }, score: 1 }
+  ]},
+  { id: 'ST5', text: { cs: 'Jak ověřuješ, že látce rozumíš?', en: 'How do you verify that you understand the material?' }, options: [
+    { key: 'A', text: { cs: 'Zkouším vysvětlit někomu jinému (Feynmanova technika)', en: 'I try to explain to someone else (Feynman technique)' }, score: 4 },
+    { key: 'B', text: { cs: 'Dělám si testové otázky', en: 'I create test questions' }, score: 3 },
+    { key: 'C', text: { cs: 'Přečtu si to znovu a doufám', en: 'I re-read and hope' }, score: 2 },
+    { key: 'D', text: { cs: 'Neověřuji, jdu na zkoušku', en: 'I don\'t verify, I go to the exam' }, score: 1 }
+  ]},
+  { id: 'ST6', text: { cs: 'Používáš digitální nástroje pro učení (Anki, Notion, Quizlet)?', en: 'Do you use digital tools for studying (Anki, Notion, Quizlet)?' }, options: [
+    { key: 'A', text: { cs: 'Ano, pravidelně a systematicky', en: 'Yes, regularly and systematically' }, score: 4 },
+    { key: 'B', text: { cs: 'Občas, když se to hodí', en: 'Sometimes, when it\'s useful' }, score: 3 },
+    { key: 'C', text: { cs: 'Zřídka', en: 'Rarely' }, score: 2 },
+    { key: 'D', text: { cs: 'Ne, nepoužívám', en: 'No, I don\'t use any' }, score: 1 }
+  ]},
+  { id: 'ST7', text: { cs: 'Učíš se raději sám/a nebo ve skupině?', en: 'Do you prefer studying alone or in a group?' }, options: [
+    { key: 'A', text: { cs: 'Kombinuji obojí podle potřeby', en: 'I combine both as needed' }, score: 4 },
+    { key: 'B', text: { cs: 'Převážně sám/a, ale diskutuji s ostatními', en: 'Mostly alone but discuss with others' }, score: 3 },
+    { key: 'C', text: { cs: 'Vždy sám/a', en: 'Always alone' }, score: 2 },
+    { key: 'D', text: { cs: 'Ve skupině, ale spíš se bavíme', en: 'In a group, but we mostly chat' }, score: 1 }
+  ]},
+  { id: 'ST8', text: { cs: 'Používáš spaced repetition (rozložené opakování v čase)?', en: 'Do you use spaced repetition (distributed practice over time)?' }, options: [
+    { key: 'A', text: { cs: 'Ano, systematicky', en: 'Yes, systematically' }, score: 4 },
+    { key: 'B', text: { cs: 'Občas, když mám čas', en: 'Sometimes, when I have time' }, score: 3 },
+    { key: 'C', text: { cs: 'Ne, učím se najednou před zkouškou', en: 'No, I cram before the exam' }, score: 2 },
+    { key: 'D', text: { cs: 'Nevím, co to je', en: 'I don\'t know what that is' }, score: 1 }
+  ]}
+];
+
+export function scoreStudyStrategies(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): AssessmentResult {
+  let total = 0;
+  for (const q of studyStrategiesQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = studyStrategiesQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+
+  if (percent >= 75) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Pokročilé studijní strategie', en: 'Advanced Study Strategies' },
+      description: { cs: 'Používáš evidence-based techniky učení. Tvůj přístup je vědecky efektivní.', en: 'You use evidence-based learning techniques. Your approach is scientifically effective.' },
+      tips: { cs: ['Zkus interleaving – střídej témata při učení', 'Sdílej strategie se spolužáky', 'Experimentuj s elaborative interrogation'], en: ['Try interleaving – alternate topics while studying', 'Share strategies with classmates', 'Experiment with elaborative interrogation'] }
+    };
+  } else if (percent >= 50) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Dobré studijní strategie', en: 'Good Study Strategies' },
+      description: { cs: 'Máš solidní základ, ale je prostor pro zlepšení.', en: 'You have a solid foundation but room for improvement.' },
+      tips: { cs: ['Přidej active recall – testuj se místo opakovaného čtení', 'Zkus Pomodoro techniku (25 min práce, 5 min pauza)', 'Používej Anki nebo Quizlet pro spaced repetition'], en: ['Add active recall – test yourself instead of re-reading', 'Try Pomodoro technique (25 min work, 5 min break)', 'Use Anki or Quizlet for spaced repetition'] }
+    };
+  } else if (percent >= 25) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Základní studijní strategie', en: 'Basic Study Strategies' },
+      description: { cs: 'Tvé učební strategie nejsou moc efektivní. Malé změny mohou přinést velký rozdíl.', en: 'Your learning strategies aren\'t very effective. Small changes can make a big difference.' },
+      tips: { cs: ['Přestaň jen číst – začni se testovat (active recall)', 'Najdi si tiché místo na učení', 'Dělej si poznámky vlastními slovy, ne opisuj'], en: ['Stop just reading – start testing yourself (active recall)', 'Find a quiet study place', 'Take notes in your own words, don\'t just copy'] }
+    };
+  } else {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Neefektivní studijní strategie', en: 'Ineffective Study Strategies' },
+      description: { cs: 'Nemáš funkční systém učení. To je ale příležitost – správné techniky mohou zásadně změnit tvé výsledky.', en: 'You don\'t have a functional study system. But that\'s an opportunity – the right techniques can fundamentally change your results.' },
+      tips: { cs: ['Začni s jednou technikou: po učení zavři knihu a řekni nahlas, co si pamatuješ', 'Stáhni si Anki a vytvoř si kartičky z přednášek', 'Sleduj „Learning How to Learn" kurz na Coursera (zdarma)'], en: ['Start with one technique: close the book and say aloud what you remember', 'Download Anki and create flashcards from lectures', 'Watch "Learning How to Learn" course on Coursera (free)'] }
+    };
+  }
+}

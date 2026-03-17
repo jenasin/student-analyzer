@@ -107,6 +107,12 @@ export {
   // Kolb's Learning Style
   kolbQuestions,
   scoreKolb,
+  // Study Stress (HuggingFace inspired)
+  studyStressQuestions,
+  scoreStudyStress,
+  // Study Strategies (HuggingFace inspired)
+  studyStrategiesQuestions,
+  scoreStudyStrategies,
   // Helper functions for i18n
   getAssessmentQuestionText,
   getAssessmentOptionText,

@@ -67,6 +67,11 @@ import {
   kolbQuestions,
   scoreKolb,
   KolbResult,
+  // Study Stress & Strategies (HuggingFace inspired)
+  studyStressQuestions,
+  scoreStudyStress,
+  studyStrategiesQuestions,
+  scoreStudyStrategies,
   // Cross-Synthesis
   generateCrossSynthesis,
   SynthesisInsight,
@@ -93,7 +98,7 @@ import {
   MentalRotationResult
 } from './src/modules';
 
-type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest' | 'procrastination' | 'academicMotivation' | 'timeManagement' | 'bigFive' | 'locusOfControl' | 'resilience' | 'gardner' | 'kolb';
+type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest' | 'procrastination' | 'academicMotivation' | 'timeManagement' | 'bigFive' | 'locusOfControl' | 'resilience' | 'gardner' | 'kolb' | 'studyStress' | 'studyStrategies';
 
 interface ModuleProgress {
   chat: boolean;
@@ -125,6 +130,8 @@ interface ModuleProgress {
   resilience: boolean;
   gardner: boolean;
   kolb: boolean;
+  studyStress: boolean;
+  studyStrategies: boolean;
 }
 
 interface ModuleCard {
@@ -140,6 +147,7 @@ interface ModuleCard {
   previewIcon?: string;
   external?: boolean;
   externalUrl?: string;
+  hfInspired?: boolean;
 }
 
 const modules: ModuleCard[] = [
@@ -171,7 +179,9 @@ const modules: ModuleCard[] = [
   { id: 'locusOfControl', title: '', description: '', time: '~3 min', icon: 'star', color: 'teal', view: 'locusOfControl', tags: [], previewBg: 'from-teal-500 via-emerald-500 to-green-600', previewIcon: 'star' },
   { id: 'resilience', title: '', description: '', time: '~3 min', icon: 'heart', color: 'rose', view: 'resilience', tags: [], previewBg: 'from-rose-500 via-pink-500 to-fuchsia-500', previewIcon: 'heart' },
   { id: 'gardner', title: '', description: '', time: '~5 min', icon: 'brain', color: 'indigo', view: 'gardner', tags: [], previewBg: 'from-indigo-500 via-purple-500 to-violet-600', previewIcon: 'brain' },
-  { id: 'kolb', title: '', description: '', time: '~4 min', icon: 'eye', color: 'cyan', view: 'kolb', tags: [], previewBg: 'from-cyan-500 via-blue-500 to-indigo-500', previewIcon: 'eye' }
+  { id: 'kolb', title: '', description: '', time: '~4 min', icon: 'eye', color: 'cyan', view: 'kolb', tags: [], previewBg: 'from-cyan-500 via-blue-500 to-indigo-500', previewIcon: 'eye' },
+  { id: 'studyStress', title: '', description: '', time: '~3 min', icon: 'heart', color: 'red', view: 'studyStress', tags: [], previewBg: 'from-red-500 via-orange-500 to-amber-500', previewIcon: 'heart', hfInspired: true },
+  { id: 'studyStrategies', title: '', description: '', time: '~3 min', icon: 'brain', color: 'emerald', view: 'studyStrategies', tags: [], previewBg: 'from-emerald-500 via-teal-500 to-cyan-500', previewIcon: 'brain', hfInspired: true }
 ];
 
 // Habits questions (8 questions)
@@ -605,7 +615,8 @@ const App: React.FC = () => {
     growthMindset: true, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false,
     voiceInterview: false, emotionRecognition: false, mathReasoning: false, garminHealth: false, baumTest: false,
     procrastination: false, academicMotivation: false, timeManagement: false, bigFive: false, locusOfControl: false, resilience: false,
-    gardner: false, kolb: false
+    gardner: false, kolb: false,
+    studyStress: false, studyStrategies: false
   });
   const [studentName, setStudentName] = useState<string>('');
   const [nameInput, setNameInput] = useState<string>('');
@@ -706,6 +717,14 @@ const App: React.FC = () => {
   const [currentKLQuestion, setCurrentKLQuestion] = useState(0);
   const [klAnswers, setKlAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   const [klResult, setKlResult] = useState<KolbResult | null>(null);
+
+  const [currentSSQuestion, setCurrentSSQuestion] = useState(0);
+  const [ssAnswers, setSsAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [ssResult, setSsResult] = useState<AssessmentResult | null>(null);
+
+  const [currentSTQuestion, setCurrentSTQuestion] = useState(0);
+  const [stAnswers, setStAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [stResult, setStResult] = useState<AssessmentResult | null>(null);
 
   // Stroop Test state
   const [stroopPhase, setStroopPhase] = useState<'intro' | 'practice' | 'test' | 'done'>('intro');
@@ -1367,6 +1386,12 @@ const App: React.FC = () => {
                       {t('done', lang)}
                     </div>
                   )}
+
+                  {mod.hfInspired && (
+                    <div className="absolute top-3 right-3 bg-yellow-400 px-2 py-1 rounded-full flex items-center gap-1 text-xs font-bold text-yellow-900">
+                      ★ HF
+                    </div>
+                  )}
                 </div>
 
                 {/* Content */}
@@ -1488,6 +1513,10 @@ const App: React.FC = () => {
     } else if (mod.id === 'gardner' && progress.gardner) {
       setView('results');
     } else if (mod.id === 'kolb' && progress.kolb) {
+      setView('results');
+    } else if (mod.id === 'studyStress' && progress.studyStress) {
+      setView('results');
+    } else if (mod.id === 'studyStrategies' && progress.studyStrategies) {
       setView('results');
     } else if (mod.id === 'stroop' && progress.stroop) {
       setView('results');
@@ -3943,6 +3972,64 @@ const App: React.FC = () => {
             </div>
           )}
 
+          {/* Study Stress */}
+          {ssResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="heart" className="w-4 h-4" /> {lang === 'cs' ? 'Studijní stres' : 'Study Stress'}
+                <span className="ml-1 bg-yellow-400 px-1.5 py-0.5 rounded-full text-yellow-900 text-[10px] font-bold">★ HF</span>
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Zvládání stresu' : 'Stress Management'}</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{ssResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${ssResult.percent}%`, backgroundColor: '#ef4444', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(ssResult, lang)}</p>
+                <ul className="space-y-1">
+                  {getResultTips(ssResult, lang).slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Study Strategies */}
+          {stResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="brain" className="w-4 h-4" /> {lang === 'cs' ? 'Studijní strategie' : 'Study Strategies'}
+                <span className="ml-1 bg-yellow-400 px-1.5 py-0.5 rounded-full text-yellow-900 text-[10px] font-bold">★ HF</span>
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Efektivita strategií' : 'Strategy Effectiveness'}</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{stResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${stResult.percent}%`, backgroundColor: '#10b981', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(stResult, lang)}</p>
+                <ul className="space-y-1">
+                  {getResultTips(stResult, lang).slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* Cross-Assessment Synthesis */}
           {(() => {
             const scores: AssessmentScores = {
@@ -4322,6 +4409,34 @@ const App: React.FC = () => {
             const result = scoreKolb(klAnswers);
             setKlResult(result);
             setProgress(p => ({ ...p, kolb: true }));
+            setView('results');
+          }
+        )}
+        {view === 'studyStress' && renderAssessment(
+          'Study Stress (HuggingFace: 0xmarvel/student-stress-survey)',
+          studyStressQuestions,
+          currentSSQuestion,
+          setCurrentSSQuestion,
+          ssAnswers,
+          setSsAnswers,
+          () => {
+            const result = scoreStudyStress(ssAnswers);
+            setSsResult(result);
+            setProgress(p => ({ ...p, studyStress: true }));
+            setView('results');
+          }
+        )}
+        {view === 'studyStrategies' && renderAssessment(
+          'Study Strategies (HuggingFace: 0xmarvel/student-stress-survey)',
+          studyStrategiesQuestions,
+          currentSTQuestion,
+          setCurrentSTQuestion,
+          stAnswers,
+          setStAnswers,
+          () => {
+            const result = scoreStudyStrategies(stAnswers);
+            setStResult(result);
+            setProgress(p => ({ ...p, studyStrategies: true }));
             setView('results');
           }
         )}

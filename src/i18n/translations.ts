@@ -285,6 +285,16 @@ export const translations = {
       title: { cs: 'Kolbův učební styl', en: 'Kolb Learning Style' },
       description: { cs: 'Jak se učíš? Zkušeností, pozorováním, teorií nebo experimentováním? Kolbův cyklus učení (1984).', en: 'How do you learn? By experience, observation, theory, or experimentation? Kolb\'s learning cycle (1984).' },
       tags: { cs: ['12 otázek', 'Kolb', 'Učební cyklus'], en: ['12 questions', 'Kolb', 'Learning cycle'] }
+    },
+    studyStress: {
+      title: { cs: 'Studijní stres', en: 'Study Stress' },
+      description: { cs: 'Jak moc tě stresuje studium? Zkoušky, spánek, zdraví a coping strategie.', en: 'How much does studying stress you? Exams, sleep, health, and coping strategies.' },
+      tags: { cs: ['8 otázek', 'HF Dataset', 'Stres'], en: ['8 questions', 'HF Dataset', 'Stress'] }
+    },
+    studyStrategies: {
+      title: { cs: 'Studijní strategie', en: 'Study Strategies' },
+      description: { cs: 'Jak efektivně se učíš? Poznámky, techniky zapamatování, prostředí a nástroje.', en: 'How effectively do you study? Notes, memorization techniques, environment, and tools.' },
+      tags: { cs: ['8 otázek', 'HF Dataset', 'Evidence-based'], en: ['8 questions', 'HF Dataset', 'Evidence-based'] }
     }
   },
 
