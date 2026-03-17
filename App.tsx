@@ -46,8 +46,22 @@ import {
   scoreRiasec,
   eqQuestions,
   scoreEQ,
+  // New assessments (batch 2)
+  procrastinationQuestions,
+  scoreProcrastination,
+  academicMotivationQuestions,
+  scoreAcademicMotivation,
+  timeManagementQuestions,
+  scoreTimeManagement,
+  bigFiveQuestions,
+  scoreBigFive,
+  locusOfControlQuestions,
+  scoreLocusOfControl,
+  resilienceQuestions,
+  scoreResilience,
   AssessmentResult,
   RiasecResult,
+  BigFiveResult,
   // Stroop Test
   generateStroopTrials,
   generatePracticeTrials,
@@ -67,7 +81,7 @@ import {
   MentalRotationResult
 } from './src/modules';
 
-type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest';
+type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest' | 'procrastination' | 'academicMotivation' | 'timeManagement' | 'bigFive' | 'locusOfControl' | 'resilience';
 
 interface ModuleProgress {
   chat: boolean;
@@ -91,6 +105,12 @@ interface ModuleProgress {
   mathReasoning: boolean;
   garminHealth: boolean;
   baumTest: boolean;
+  procrastination: boolean;
+  academicMotivation: boolean;
+  timeManagement: boolean;
+  bigFive: boolean;
+  locusOfControl: boolean;
+  resilience: boolean;
 }
 
 interface ModuleCard {
@@ -129,7 +149,13 @@ const modules: ModuleCard[] = [
   { id: 'emotionRecognition', title: '', description: '', time: '~3 min', icon: 'smile', color: 'pink', view: 'emotionRecognition', tags: [], previewBg: 'from-pink-500 via-rose-500 to-red-500', previewIcon: 'smile' },
   { id: 'mathReasoning', title: '', description: '', time: '~5 min', icon: 'calculator', color: 'blue', view: 'mathReasoning', tags: [], previewBg: 'from-blue-500 via-indigo-500 to-purple-500', previewIcon: 'calculator' },
   { id: 'garminHealth', title: '', description: '', time: '~2 min', icon: 'heart', color: 'green', view: 'garminHealth', tags: [], previewBg: 'from-green-500 via-emerald-500 to-teal-500', previewIcon: 'heart' },
-  { id: 'baumTest', title: '', description: '', time: '~5 min', icon: 'tree', color: 'amber', view: 'baumTest', tags: [], previewBg: 'from-amber-500 via-orange-500 to-yellow-500', previewIcon: 'tree' }
+  { id: 'baumTest', title: '', description: '', time: '~5 min', icon: 'tree', color: 'amber', view: 'baumTest', tags: [], previewBg: 'from-amber-500 via-orange-500 to-yellow-500', previewIcon: 'tree' },
+  { id: 'procrastination', title: '', description: '', time: '~3 min', icon: 'clock', color: 'red', view: 'procrastination', tags: [], previewBg: 'from-red-500 via-rose-600 to-pink-700', previewIcon: 'clock' },
+  { id: 'academicMotivation', title: '', description: '', time: '~3 min', icon: 'fire', color: 'amber', view: 'academicMotivation', tags: [], previewBg: 'from-amber-500 via-orange-500 to-red-500', previewIcon: 'fire' },
+  { id: 'timeManagement', title: '', description: '', time: '~3 min', icon: 'clock', color: 'blue', view: 'timeManagement', tags: [], previewBg: 'from-blue-500 via-cyan-500 to-teal-500', previewIcon: 'clock' },
+  { id: 'bigFive', title: '', description: '', time: '~4 min', icon: 'brain', color: 'violet', view: 'bigFive', tags: [], previewBg: 'from-violet-500 via-indigo-500 to-blue-600', previewIcon: 'brain' },
+  { id: 'locusOfControl', title: '', description: '', time: '~3 min', icon: 'star', color: 'teal', view: 'locusOfControl', tags: [], previewBg: 'from-teal-500 via-emerald-500 to-green-600', previewIcon: 'star' },
+  { id: 'resilience', title: '', description: '', time: '~3 min', icon: 'heart', color: 'rose', view: 'resilience', tags: [], previewBg: 'from-rose-500 via-pink-500 to-fuchsia-500', previewIcon: 'heart' }
 ];
 
 // Habits questions (8 questions)
@@ -561,7 +587,8 @@ const App: React.FC = () => {
   const [progress, setProgress] = useState<ModuleProgress>({
     chat: false, typology: true, vak: true, habits: false, motivation: false, strengths: false, gemini: false,
     growthMindset: true, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false,
-    voiceInterview: false, emotionRecognition: false, mathReasoning: false, garminHealth: false, baumTest: false
+    voiceInterview: false, emotionRecognition: false, mathReasoning: false, garminHealth: false, baumTest: false,
+    procrastination: false, academicMotivation: false, timeManagement: false, bigFive: false, locusOfControl: false, resilience: false
   });
   const [studentName, setStudentName] = useState<string>('');
   const [nameInput, setNameInput] = useState<string>('');
@@ -630,6 +657,30 @@ const App: React.FC = () => {
   const [currentEQQuestion, setCurrentEQQuestion] = useState(0);
   const [eqAnswers, setEqAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   const [eqResult, setEqResult] = useState<AssessmentResult | null>(null);
+
+  const [currentPRQuestion, setCurrentPRQuestion] = useState(0);
+  const [prAnswers, setPrAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [prResult, setPrResult] = useState<AssessmentResult | null>(null);
+
+  const [currentAMQuestion, setCurrentAMQuestion] = useState(0);
+  const [amAnswers, setAmAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [amResult, setAmResult] = useState<AssessmentResult | null>(null);
+
+  const [currentTMQuestion, setCurrentTMQuestion] = useState(0);
+  const [tmAnswers, setTmAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [tmResult, setTmResult] = useState<AssessmentResult | null>(null);
+
+  const [currentBFQuestion, setCurrentBFQuestion] = useState(0);
+  const [bfAnswers, setBfAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [bfResult, setBfResult] = useState<BigFiveResult | null>(null);
+
+  const [currentLCQuestion, setCurrentLCQuestion] = useState(0);
+  const [lcAnswers, setLcAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [lcResult, setLcResult] = useState<AssessmentResult | null>(null);
+
+  const [currentRSQuestion, setCurrentRSQuestion] = useState(0);
+  const [rsAnswers, setRsAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [rsResult, setRsResult] = useState<AssessmentResult | null>(null);
 
   // Stroop Test state
   const [stroopPhase, setStroopPhase] = useState<'intro' | 'practice' | 'test' | 'done'>('intro');
@@ -1221,7 +1272,7 @@ const App: React.FC = () => {
 
   // Dashboard
   const renderDashboard = () => (
-    <div className="flex-1 px-6 py-10" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="flex-1 px-6 py-10 pb-20" style={{ backgroundColor: 'var(--color-bg)' }}>
       <div className="max-w-6xl mx-auto space-y-8">
         {/* Header */}
         <div className="text-center">
@@ -1392,6 +1443,18 @@ const App: React.FC = () => {
     } else if (mod.id === 'riasec' && progress.riasec) {
       setView('results');
     } else if (mod.id === 'eq' && progress.eq) {
+      setView('results');
+    } else if (mod.id === 'procrastination' && progress.procrastination) {
+      setView('results');
+    } else if (mod.id === 'academicMotivation' && progress.academicMotivation) {
+      setView('results');
+    } else if (mod.id === 'timeManagement' && progress.timeManagement) {
+      setView('results');
+    } else if (mod.id === 'bigFive' && progress.bigFive) {
+      setView('results');
+    } else if (mod.id === 'locusOfControl' && progress.locusOfControl) {
+      setView('results');
+    } else if (mod.id === 'resilience' && progress.resilience) {
       setView('results');
     } else if (mod.id === 'stroop' && progress.stroop) {
       setView('results');
@@ -2989,7 +3052,7 @@ const App: React.FC = () => {
 
   // Results
   const renderResults = () => (
-    <div className="flex-1 overflow-y-auto px-4 py-8" style={{ backgroundColor: 'var(--color-bg)' }}>
+    <div className="flex-1 overflow-y-auto px-4 py-8 pb-20" style={{ backgroundColor: 'var(--color-bg)' }}>
       <div className="max-w-5xl mx-auto space-y-8">
         <div className="text-center">
           <h1 className="text-h1 font-serif mb-2" style={{ color: 'var(--color-text)' }}>
@@ -3619,6 +3682,171 @@ const App: React.FC = () => {
             </div>
           )}
 
+          {/* Procrastination */}
+          {prResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="clock" className="w-4 h-4" /> {lang === 'cs' ? 'Akademická prokrastinace' : 'Academic Procrastination'}
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Prokrastinace' : 'Procrastination'}</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{prResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${prResult.percent}%`, backgroundColor: '#f43f5e', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(prResult, lang)}</p>
+                <ul className="space-y-1">
+                  {getResultTips(prResult, lang).slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Academic Motivation */}
+          {amResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="fire" className="w-4 h-4" /> {lang === 'cs' ? 'Akademická motivace' : 'Academic Motivation'}
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Motivace' : 'Motivation'}</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{amResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${amResult.percent}%`, backgroundColor: '#f59e0b', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(amResult, lang)}</p>
+                <ul className="space-y-1">
+                  {getResultTips(amResult, lang).slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Time Management */}
+          {tmResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="clock" className="w-4 h-4" /> Time Management
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Organizace času' : 'Time Organization'}</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{tmResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${tmResult.percent}%`, backgroundColor: '#3b82f6', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(tmResult, lang)}</p>
+                <ul className="space-y-1">
+                  {getResultTips(tmResult, lang).slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Big Five */}
+          {bfResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="brain" className="w-4 h-4" /> Big Five (TIPI)
+              </h3>
+              <div className="space-y-3 mb-4">
+                {bfResult.dimensions.map((dim, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span style={{ color: 'var(--color-text-secondary)' }}>{dim.name[lang]}</span>
+                      <span style={{ color: 'var(--color-primary)' }}>{dim.percent}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${dim.percent}%`, backgroundColor: ['#8b5cf6', '#f59e0b', '#3b82f6', '#10b981', '#ec4899'][i], borderRadius: 'var(--radius-full)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text)' }}>{bfResult.summary[lang]}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Locus of Control */}
+          {lcResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="star" className="w-4 h-4" /> Locus of Control
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Interní kontrola' : 'Internal Control'}</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{lcResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${lcResult.percent}%`, backgroundColor: '#14b8a6', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(lcResult, lang)}</p>
+                <ul className="space-y-1">
+                  {getResultTips(lcResult, lang).slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Resilience */}
+          {rsResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="heart" className="w-4 h-4" /> {lang === 'cs' ? 'Resilience (Odolnost)' : 'Resilience'}
+              </h3>
+              <div className="space-y-4 mb-4">
+                <div className="space-y-2">
+                  <div className="flex justify-between items-center text-sm font-semibold">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{lang === 'cs' ? 'Odolnost' : 'Resilience'}</span>
+                    <span style={{ color: 'var(--color-primary)' }}>{rsResult.percent}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${rsResult.percent}%`, backgroundColor: '#f472b6', borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{getResultLabel(rsResult, lang)}</p>
+                <ul className="space-y-1">
+                  {getResultTips(rsResult, lang).slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
           {/* Stroop Test */}
           {stroopResult && (
             <div className="card p-6">
@@ -3819,6 +4047,96 @@ const App: React.FC = () => {
             setEqResult(result);
             setProgress(p => ({ ...p, eq: true }));
             handleGenerateFeedback('eq', 'Emoční inteligence', result);
+            setView('results');
+          }
+        )}
+        {view === 'procrastination' && renderAssessment(
+          'Akademická prokrastinace (Solomon & Rothblum)',
+          procrastinationQuestions,
+          currentPRQuestion,
+          setCurrentPRQuestion,
+          prAnswers,
+          setPrAnswers,
+          () => {
+            const result = scoreProcrastination(prAnswers);
+            setPrResult(result);
+            setProgress(p => ({ ...p, procrastination: true }));
+            handleGenerateFeedback('procrastination', 'Akademická prokrastinace', result);
+            setView('results');
+          }
+        )}
+        {view === 'academicMotivation' && renderAssessment(
+          'Akademická motivace (Vallerand)',
+          academicMotivationQuestions,
+          currentAMQuestion,
+          setCurrentAMQuestion,
+          amAnswers,
+          setAmAnswers,
+          () => {
+            const result = scoreAcademicMotivation(amAnswers);
+            setAmResult(result);
+            setProgress(p => ({ ...p, academicMotivation: true }));
+            handleGenerateFeedback('academicMotivation', 'Akademická motivace', result);
+            setView('results');
+          }
+        )}
+        {view === 'timeManagement' && renderAssessment(
+          'Time Management (Macan)',
+          timeManagementQuestions,
+          currentTMQuestion,
+          setCurrentTMQuestion,
+          tmAnswers,
+          setTmAnswers,
+          () => {
+            const result = scoreTimeManagement(tmAnswers);
+            setTmResult(result);
+            setProgress(p => ({ ...p, timeManagement: true }));
+            handleGenerateFeedback('timeManagement', 'Time Management', result);
+            setView('results');
+          }
+        )}
+        {view === 'bigFive' && renderAssessment(
+          'Big Five - TIPI (Gosling)',
+          bigFiveQuestions,
+          currentBFQuestion,
+          setCurrentBFQuestion,
+          bfAnswers,
+          setBfAnswers,
+          () => {
+            const result = scoreBigFive(bfAnswers);
+            setBfResult(result);
+            setProgress(p => ({ ...p, bigFive: true }));
+            handleGenerateFeedback('bigFive', 'Big Five osobnost', { score: 0, percent: Math.round(result.dimensions.reduce((s, d) => s + d.percent, 0) / result.dimensions.length), label: result.summary.cs });
+            setView('results');
+          }
+        )}
+        {view === 'locusOfControl' && renderAssessment(
+          'Locus of Control (Rotter)',
+          locusOfControlQuestions,
+          currentLCQuestion,
+          setCurrentLCQuestion,
+          lcAnswers,
+          setLcAnswers,
+          () => {
+            const result = scoreLocusOfControl(lcAnswers);
+            setLcResult(result);
+            setProgress(p => ({ ...p, locusOfControl: true }));
+            handleGenerateFeedback('locusOfControl', 'Locus of Control', result);
+            setView('results');
+          }
+        )}
+        {view === 'resilience' && renderAssessment(
+          'Resilience (Smith et al.)',
+          resilienceQuestions,
+          currentRSQuestion,
+          setCurrentRSQuestion,
+          rsAnswers,
+          setRsAnswers,
+          () => {
+            const result = scoreResilience(rsAnswers);
+            setRsResult(result);
+            setProgress(p => ({ ...p, resilience: true }));
+            handleGenerateFeedback('resilience', 'Resilience', result);
             setView('results');
           }
         )}

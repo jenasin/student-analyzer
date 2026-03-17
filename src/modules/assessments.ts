@@ -672,3 +672,583 @@ export function scoreEQ(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): Assessm
     };
   }
 }
+
+// ============================================
+// 8. ACADEMIC PROCRASTINATION (Solomon & Rothblum, 1984)
+// ============================================
+export const procrastinationQuestions: AssessmentQuestion[] = [
+  { id: 'PR1', text: { cs: 'Odkládám zahájení studijních úkolů, i když vím, že jsou důležité.', en: 'I delay starting study tasks even when I know they are important.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]},
+  { id: 'PR2', text: { cs: 'Začínám se připravovat na zkoušky na poslední chvíli.', en: 'I start preparing for exams at the last minute.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]},
+  { id: 'PR3', text: { cs: 'Místo učení se věnuji sociálním sítím nebo jiným rozptýlením.', en: 'Instead of studying, I spend time on social media or other distractions.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]},
+  { id: 'PR4', text: { cs: 'Odevzdávám seminární práce a úkoly těsně před termínem.', en: 'I submit assignments and papers right before the deadline.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]},
+  { id: 'PR5', text: { cs: 'Cítím úzkost kvůli odloženým povinnostem.', en: 'I feel anxious because of postponed responsibilities.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]},
+  { id: 'PR6', text: { cs: 'Přestože si říkám, že začnu, nakonec to znovu odložím.', en: 'Even though I tell myself I\'ll start, I end up postponing again.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]},
+  { id: 'PR7', text: { cs: 'Odkládání negativně ovlivňuje mé studijní výsledky.', en: 'Procrastination negatively affects my academic performance.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]},
+  { id: 'PR8', text: { cs: 'Raději dělám příjemnější činnosti, než abych se učil/a.', en: 'I prefer doing more pleasant activities rather than studying.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 1 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 2 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 4 }
+  ]}
+];
+
+export function scoreProcrastination(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): AssessmentResult {
+  let total = 0;
+  for (const q of procrastinationQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = procrastinationQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+
+  // Higher score = LESS procrastination (better)
+  if (percent >= 75) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Nízká prokrastinace', en: 'Low Procrastination' },
+      description: { cs: 'Máš dobrou schopnost začít včas a plnit úkoly.', en: 'You have a good ability to start on time and complete tasks.' },
+      tips: { cs: ['Sdílej své strategie se spolužáky', 'Udržuj osvědčené rutiny', 'Pomáhej ostatním s time managementem'], en: ['Share your strategies with classmates', 'Maintain proven routines', 'Help others with time management'] }
+    };
+  } else if (percent >= 50) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Mírná prokrastinace', en: 'Mild Procrastination' },
+      description: { cs: 'Občas odkládáš, ale většinou zvládneš termíny.', en: 'You sometimes procrastinate but usually meet deadlines.' },
+      tips: { cs: ['Použij techniku Pomodoro (25 min práce, 5 min pauza)', 'Začni s nejmenším krokem – „2minutové pravidlo"', 'Odstraň rozptýlení z pracovního prostředí'], en: ['Use the Pomodoro technique (25 min work, 5 min break)', 'Start with the smallest step – "2-minute rule"', 'Remove distractions from your workspace'] }
+    };
+  } else if (percent >= 25) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Vyšší prokrastinace', en: 'Moderate Procrastination' },
+      description: { cs: 'Odkládání ti způsobuje problémy ve studiu.', en: 'Procrastination causes problems in your studies.' },
+      tips: { cs: ['Rozděl velké úkoly na malé kroky (max 15 min)', 'Najdi si studijního partnera pro vzájemnou motivaci', 'Nastav si umělé deadline dříve než skutečné'], en: ['Break big tasks into small steps (max 15 min)', 'Find a study partner for mutual motivation', 'Set artificial deadlines earlier than real ones'] }
+    };
+  } else {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Vysoká prokrastinace', en: 'High Procrastination' },
+      description: { cs: 'Odkládání je pro tebe významný problém.', en: 'Procrastination is a significant problem for you.' },
+      tips: { cs: ['Vyhledej pomoc studijního poradce', 'Začni s implementačními záměry: „Když..., pak..."', 'Zkoumej příčiny – strach z neúspěchu, perfekcionismus?'], en: ['Seek help from a study advisor', 'Start with implementation intentions: "When..., then..."', 'Explore root causes – fear of failure, perfectionism?'] }
+    };
+  }
+}
+
+// ============================================
+// 9. ACADEMIC MOTIVATION (Vallerand et al., 1992 – SDT-based)
+// ============================================
+export const academicMotivationQuestions: AssessmentQuestion[] = [
+  { id: 'AM1', text: { cs: 'Studuji, protože mě baví objevovat nové poznatky.', en: 'I study because I enjoy discovering new knowledge.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'AM2', text: { cs: 'Cítím uspokojení, když překonám obtížný studijní úkol.', en: 'I feel satisfaction when I overcome a difficult academic task.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'AM3', text: { cs: 'Studuji hlavně kvůli budoucí kariéře a lepšímu platu.', en: 'I study mainly for future career and better salary.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 2 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'AM4', text: { cs: 'Mám radost z hloubkového porozumění studované látce.', en: 'I enjoy deeply understanding the material I study.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'AM5', text: { cs: 'Studuji, protože to ode mě očekává rodina nebo okolí.', en: 'I study because my family or others expect it of me.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'AM6', text: { cs: 'Nedokážu si představit, proč bych měl/a studovat – nemá to smysl.', en: 'I can\'t imagine why I should study – it doesn\'t make sense.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'AM7', text: { cs: 'Rád/a se ponořím do studia tématu, které mě fascinuje.', en: 'I like to immerse myself in studying a topic that fascinates me.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'AM8', text: { cs: 'Studium vnímám jako cestu k osobnímu růstu a seberealizaci.', en: 'I see studying as a path to personal growth and self-fulfillment.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]}
+];
+
+export function scoreAcademicMotivation(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): AssessmentResult {
+  let total = 0;
+  for (const q of academicMotivationQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = academicMotivationQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+
+  if (percent >= 75) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Silná vnitřní motivace', en: 'Strong Intrinsic Motivation' },
+      description: { cs: 'Studuješ převážně z vlastního zájmu a radosti z učení.', en: 'You study mainly from personal interest and joy of learning.' },
+      tips: { cs: ['Hledej výzkumné příležitosti v oboru, který tě baví', 'Propojuj studium s reálnými projekty', 'Zvažuj akademickou kariéru nebo doktorské studium'], en: ['Seek research opportunities in fields you enjoy', 'Connect studies with real projects', 'Consider academic career or doctoral studies'] }
+    };
+  } else if (percent >= 50) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Smíšená motivace', en: 'Mixed Motivation' },
+      description: { cs: 'Kombinuješ vnitřní zájem s vnějšími důvody ke studiu.', en: 'You combine internal interest with external reasons to study.' },
+      tips: { cs: ['Hledej propojení mezi tím, co tě baví, a studijním plánem', 'Vybírej si volitelné předměty podle zájmu', 'Najdi mentora v oboru, který tě přitahuje'], en: ['Find connections between what you enjoy and your study plan', 'Choose electives based on interest', 'Find a mentor in a field that attracts you'] }
+    };
+  } else if (percent >= 25) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Převážně vnější motivace', en: 'Mostly External Motivation' },
+      description: { cs: 'Studuješ hlavně kvůli vnějším faktorům.', en: 'You study mainly due to external factors.' },
+      tips: { cs: ['Zkus najít alespoň jeden aspekt studia, který tě zajímá', 'Propojuj studium se svými životními cíli', 'Diskutuj o smyslu studia se studijním poradcem'], en: ['Try to find at least one aspect of studies that interests you', 'Connect studies with your life goals', 'Discuss the meaning of studies with an advisor'] }
+    };
+  } else {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Nízká motivace (amotivace)', en: 'Low Motivation (Amotivation)' },
+      description: { cs: 'Nevidíš ve studiu příliš smysl.', en: 'You don\'t see much meaning in studying.' },
+      tips: { cs: ['Zvaž, zda je tvůj obor ten správný', 'Vyhledej kariérní poradenství', 'Promluv si s někým o svých pochybnostech'], en: ['Consider whether your field is the right one', 'Seek career counseling', 'Talk to someone about your doubts'] }
+    };
+  }
+}
+
+// ============================================
+// 10. TIME MANAGEMENT (Macan, 1994 – TMBS inspired)
+// ============================================
+export const timeManagementQuestions: AssessmentQuestion[] = [
+  { id: 'TM1', text: { cs: 'Na začátku týdne si plánuji, co potřebuji udělat.', en: 'At the beginning of the week, I plan what I need to do.' }, options: [
+    { key: 'A', text: { cs: 'Vždy', en: 'Always' }, score: 4 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 3 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 2 },
+    { key: 'D', text: { cs: 'Nikdy', en: 'Never' }, score: 1 }
+  ]},
+  { id: 'TM2', text: { cs: 'Stanovuji si priority – vím, co je nejdůležitější.', en: 'I set priorities – I know what is most important.' }, options: [
+    { key: 'A', text: { cs: 'Vždy', en: 'Always' }, score: 4 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 3 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 2 },
+    { key: 'D', text: { cs: 'Nikdy', en: 'Never' }, score: 1 }
+  ]},
+  { id: 'TM3', text: { cs: 'Používám kalendář, plánovač nebo aplikaci na organizaci času.', en: 'I use a calendar, planner, or app to organize my time.' }, options: [
+    { key: 'A', text: { cs: 'Pravidelně', en: 'Regularly' }, score: 4 },
+    { key: 'B', text: { cs: 'Občas', en: 'Sometimes' }, score: 3 },
+    { key: 'C', text: { cs: 'Zřídka', en: 'Rarely' }, score: 2 },
+    { key: 'D', text: { cs: 'Nikdy', en: 'Never' }, score: 1 }
+  ]},
+  { id: 'TM4', text: { cs: 'Mám přehled o všech svých termínech a deadlinech.', en: 'I keep track of all my deadlines and due dates.' }, options: [
+    { key: 'A', text: { cs: 'Vždy', en: 'Always' }, score: 4 },
+    { key: 'B', text: { cs: 'Většinou', en: 'Usually' }, score: 3 },
+    { key: 'C', text: { cs: 'Někdy zapomenu', en: 'Sometimes I forget' }, score: 2 },
+    { key: 'D', text: { cs: 'Často zapomínám', en: 'I often forget' }, score: 1 }
+  ]},
+  { id: 'TM5', text: { cs: 'Dokážu odhadnout, kolik času mi úkol zabere.', en: 'I can estimate how long a task will take me.' }, options: [
+    { key: 'A', text: { cs: 'Velmi přesně', en: 'Very accurately' }, score: 4 },
+    { key: 'B', text: { cs: 'Celkem přesně', en: 'Fairly accurately' }, score: 3 },
+    { key: 'C', text: { cs: 'Nepřesně', en: 'Inaccurately' }, score: 2 },
+    { key: 'D', text: { cs: 'Vůbec ne', en: 'Not at all' }, score: 1 }
+  ]},
+  { id: 'TM6', text: { cs: 'Mám rovnováhu mezi studiem, prací a volným časem.', en: 'I have a balance between studies, work, and free time.' }, options: [
+    { key: 'A', text: { cs: 'Rozhodně ano', en: 'Definitely yes' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše ano', en: 'Mostly yes' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše ne', en: 'Mostly no' }, score: 2 },
+    { key: 'D', text: { cs: 'Rozhodně ne', en: 'Definitely no' }, score: 1 }
+  ]},
+  { id: 'TM7', text: { cs: 'Umím říct „ne" aktivitám, které mi berou čas od studia.', en: 'I can say "no" to activities that take time away from studying.' }, options: [
+    { key: 'A', text: { cs: 'Vždy', en: 'Always' }, score: 4 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 3 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 2 },
+    { key: 'D', text: { cs: 'Nikdy', en: 'Never' }, score: 1 }
+  ]},
+  { id: 'TM8', text: { cs: 'Na konci dne mám pocit, že jsem čas využil/a efektivně.', en: 'At the end of the day, I feel I used my time effectively.' }, options: [
+    { key: 'A', text: { cs: 'Skoro vždy', en: 'Almost always' }, score: 4 },
+    { key: 'B', text: { cs: 'Často', en: 'Often' }, score: 3 },
+    { key: 'C', text: { cs: 'Občas', en: 'Sometimes' }, score: 2 },
+    { key: 'D', text: { cs: 'Téměř nikdy', en: 'Almost never' }, score: 1 }
+  ]}
+];
+
+export function scoreTimeManagement(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): AssessmentResult {
+  let total = 0;
+  for (const q of timeManagementQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = timeManagementQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+
+  if (percent >= 75) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Výborný time management', en: 'Excellent Time Management' },
+      description: { cs: 'Umíš efektivně plánovat a využívat svůj čas.', en: 'You can effectively plan and use your time.' },
+      tips: { cs: ['Sdílej své plánovací metody s ostatními', 'Optimalizuj systém – hledej úzká místa', 'Učí se pokročilé produktivní techniky (GTD, time blocking)'], en: ['Share your planning methods with others', 'Optimize your system – find bottlenecks', 'Learn advanced productivity techniques (GTD, time blocking)'] }
+    };
+  } else if (percent >= 50) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Dobrý time management', en: 'Good Time Management' },
+      description: { cs: 'Většinou si čas organizuješ, ale je prostor pro zlepšení.', en: 'You usually organize your time but there\'s room for improvement.' },
+      tips: { cs: ['Vyzkoušej time blocking – blokuj si čas na konkrétní úkoly', 'Používej Eisenhowerovu matici (důležité vs. urgentní)', 'Zaváděj večerní review dne'], en: ['Try time blocking – block time for specific tasks', 'Use Eisenhower matrix (important vs. urgent)', 'Implement an evening daily review'] }
+    };
+  } else if (percent >= 25) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Slabší time management', en: 'Weak Time Management' },
+      description: { cs: 'Organizace času ti dělá problémy.', en: 'Time organization causes you problems.' },
+      tips: { cs: ['Začni s jednoduchým to-do listem na každý den', 'Nastav si připomínky v telefonu na důležité termíny', 'Vyhraď si každý den 1 hodinu na nejdůležitější úkol'], en: ['Start with a simple daily to-do list', 'Set phone reminders for important deadlines', 'Dedicate 1 hour daily to the most important task'] }
+    };
+  } else {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Kritický time management', en: 'Critical Time Management' },
+      description: { cs: 'Nemáš systém pro organizaci času.', en: 'You don\'t have a system for organizing time.' },
+      tips: { cs: ['Začni tím, že si každé ráno napíšeš 3 úkoly na den', 'Poříď si plánovač (fyzický nebo digitální)', 'Vyhledej workshop time managementu na univerzitě'], en: ['Start by writing down 3 tasks each morning', 'Get a planner (physical or digital)', 'Attend a time management workshop at university'] }
+    };
+  }
+}
+
+// ============================================
+// 11. BIG FIVE – TIPI (Gosling et al., 2003)
+// ============================================
+export interface BigFiveResult {
+  dimensions: { name: { cs: string; en: string }; score: number; percent: number; description: { cs: string; en: string } }[];
+  summary: { cs: string; en: string };
+}
+
+export const bigFiveQuestions: AssessmentQuestion[] = [
+  // Extraversion
+  { id: 'BF1', text: { cs: 'Jsem společenský/á a rád/a se bavím s lidmi.', en: 'I am sociable and enjoy talking to people.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'BF2', text: { cs: 'Jsem spíše tichý/á a uzavřený/á.', en: 'I am rather quiet and reserved.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  // Agreeableness
+  { id: 'BF3', text: { cs: 'Jsem vstřícný/á a ohleduplný/á k ostatním.', en: 'I am warm and considerate towards others.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'BF4', text: { cs: 'Mám tendenci být kritický/á vůči ostatním.', en: 'I tend to be critical of others.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  // Conscientiousness
+  { id: 'BF5', text: { cs: 'Jsem spolehlivý/á a disciplinovaný/á.', en: 'I am dependable and self-disciplined.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'BF6', text: { cs: 'Mám tendenci být neorganizovaný/á a nepořádný/á.', en: 'I tend to be disorganized and messy.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  // Neuroticism
+  { id: 'BF7', text: { cs: 'Jsem emocionálně stabilní a nevyvádí mě z míry maličkosti.', en: 'I am emotionally stable and not easily upset.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'BF8', text: { cs: 'Snadno se rozčílím nebo znervózním.', en: 'I get upset or nervous easily.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  // Openness to Experience
+  { id: 'BF9', text: { cs: 'Jsem otevřený/á novým zkušenostem a mám bohatou představivost.', en: 'I am open to new experiences and have a vivid imagination.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'BF10', text: { cs: 'Dávám přednost rutině a nemám rád/a změny.', en: 'I prefer routine and don\'t like changes.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]}
+];
+
+export function scoreBigFive(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): BigFiveResult {
+  const getScore = (id: string) => {
+    const q = bigFiveQuestions.find(q => q.id === id)!;
+    const opt = q.options.find(o => o.key === answers[id]);
+    return opt ? opt.score : 0;
+  };
+
+  const dims = [
+    { ids: ['BF1', 'BF2'], name: { cs: 'Extraverze', en: 'Extraversion' },
+      high: { cs: 'Jsi společenský/á a energický/á v sociálních situacích.', en: 'You are sociable and energetic in social situations.' },
+      low: { cs: 'Preferuješ klid a samostatnou práci.', en: 'You prefer quiet and independent work.' } },
+    { ids: ['BF3', 'BF4'], name: { cs: 'Přívětivost', en: 'Agreeableness' },
+      high: { cs: 'Jsi vstřícný/á, empatický/á a kooperativní.', en: 'You are warm, empathetic, and cooperative.' },
+      low: { cs: 'Jsi analytický/á a zaměřený/á na fakta více než na pocity.', en: 'You are analytical and focused on facts rather than feelings.' } },
+    { ids: ['BF5', 'BF6'], name: { cs: 'Svědomitost', en: 'Conscientiousness' },
+      high: { cs: 'Jsi organizovaný/á, spolehlivý/á a cílevědomý/á.', en: 'You are organized, reliable, and goal-oriented.' },
+      low: { cs: 'Jsi flexibilní a spontánní, ale možná méně organizovaný/á.', en: 'You are flexible and spontaneous, but perhaps less organized.' } },
+    { ids: ['BF7', 'BF8'], name: { cs: 'Emoční stabilita', en: 'Emotional Stability' },
+      high: { cs: 'Jsi klidný/á a odolný/á vůči stresu.', en: 'You are calm and resilient to stress.' },
+      low: { cs: 'Jsi citlivý/á a emoce prožíváš intenzivně.', en: 'You are sensitive and experience emotions intensely.' } },
+    { ids: ['BF9', 'BF10'], name: { cs: 'Otevřenost zkušenosti', en: 'Openness to Experience' },
+      high: { cs: 'Jsi kreativní, zvídavý/á a otevřený/á novinkám.', en: 'You are creative, curious, and open to new things.' },
+      low: { cs: 'Jsi praktický/á a preferuješ osvědčené postupy.', en: 'You are practical and prefer proven approaches.' } }
+  ];
+
+  const dimensions = dims.map(d => {
+    const score = d.ids.reduce((sum, id) => sum + getScore(id), 0);
+    const maxDim = d.ids.length * 4;
+    const percent = Math.round((score / maxDim) * 100);
+    return {
+      name: d.name,
+      score,
+      percent,
+      description: percent >= 50 ? d.high : d.low
+    };
+  });
+
+  const topDim = dimensions.reduce((a, b) => a.percent > b.percent ? a : b);
+
+  return {
+    dimensions,
+    summary: {
+      cs: `Tvůj nejvýraznější rys je ${topDim.name.cs}. ${topDim.description.cs}`,
+      en: `Your most prominent trait is ${topDim.name.en}. ${topDim.description.en}`
+    }
+  };
+}
+
+// ============================================
+// 12. ACADEMIC LOCUS OF CONTROL (Rotter, 1966 – academic adaptation)
+// ============================================
+export const locusOfControlQuestions: AssessmentQuestion[] = [
+  { id: 'LC1', text: { cs: 'Mé studijní výsledky závisí hlavně na mém úsilí.', en: 'My academic results depend mainly on my effort.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'LC2', text: { cs: 'Známky závisí hlavně na náhodě nebo náladě učitele.', en: 'Grades depend mainly on chance or the teacher\'s mood.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'LC3', text: { cs: 'Když se hodně naučím, vím, že dostanu dobrou známku.', en: 'When I study a lot, I know I\'ll get a good grade.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'LC4', text: { cs: 'Úspěch ve studiu je hlavně o štěstí.', en: 'Success in studies is mainly about luck.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'LC5', text: { cs: 'Mohu ovlivnit, jak dobře se mi ve studiu daří.', en: 'I can influence how well I do in my studies.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'LC6', text: { cs: 'Někteří učitelé prostě nespravedlivě hodnotí, nedá se s tím nic dělat.', en: 'Some teachers just grade unfairly, there\'s nothing you can do.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'LC7', text: { cs: 'Když neuspěji u zkoušky, analyzuji proč a příště se lépe připravím.', en: 'When I fail an exam, I analyze why and prepare better next time.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'LC8', text: { cs: 'To, co se mi ve studiu děje, je převážně v mých rukou.', en: 'What happens in my studies is mostly in my hands.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]}
+];
+
+export function scoreLocusOfControl(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): AssessmentResult {
+  let total = 0;
+  for (const q of locusOfControlQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = locusOfControlQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+
+  if (percent >= 75) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Silný interní locus of control', en: 'Strong Internal Locus of Control' },
+      description: { cs: 'Věříš, že tvé výsledky závisí na tvém úsilí a strategiích.', en: 'You believe your results depend on your effort and strategies.' },
+      tips: { cs: ['Využij svou proaktivitu pro dlouhodobé studijní plány', 'Sdílej své přístupy s ostatními', 'Nastav si ambiciózní, ale realistické cíle'], en: ['Use your proactivity for long-term study plans', 'Share your approaches with others', 'Set ambitious but realistic goals'] }
+    };
+  } else if (percent >= 50) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Převážně interní locus', en: 'Mostly Internal Locus' },
+      description: { cs: 'Většinou věříš ve vlastní vliv, ale někdy to přisuzuješ okolnostem.', en: 'You mostly believe in your own influence, but sometimes attribute it to circumstances.' },
+      tips: { cs: ['Při neúspěchu hledej, co můžeš příště změnit TY', 'Veď si deník úspěchů, které jsi sám/sama ovlivnil/a', 'Zaměř se na to, co můžeš kontrolovat'], en: ['When you fail, look for what YOU can change next time', 'Keep a journal of successes you influenced', 'Focus on what you can control'] }
+    };
+  } else if (percent >= 25) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Smíšený locus of control', en: 'Mixed Locus of Control' },
+      description: { cs: 'Často přičítáš výsledky vnějším okolnostem.', en: 'You often attribute results to external circumstances.' },
+      tips: { cs: ['Zkus si před zkouškou říct: „Výsledek závisí na mé přípravě"', 'Analyzuj minulé úspěchy – co jsi pro ně udělal/a?', 'Vytvářej si kontrolované studijní plány'], en: ['Before an exam, tell yourself: "The result depends on my preparation"', 'Analyze past successes – what did you do for them?', 'Create controlled study plans'] }
+    };
+  } else {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Převážně externí locus', en: 'Mostly External Locus' },
+      description: { cs: 'Věříš, že tvé výsledky závisí hlavně na vnějších faktorech.', en: 'You believe your results depend mainly on external factors.' },
+      tips: { cs: ['Začni s malými cíli, které můžeš splnit na 100 %', 'Najdi spojení mezi svým úsilím a výsledky', 'Vyhledej studijního poradce nebo kouče'], en: ['Start with small goals you can achieve 100%', 'Find connections between your effort and results', 'Seek a study advisor or coach'] }
+    };
+  }
+}
+
+// ============================================
+// 13. RESILIENCE (Smith et al., 2008 – Brief Resilience Scale)
+// ============================================
+export const resilienceQuestions: AssessmentQuestion[] = [
+  { id: 'RS1', text: { cs: 'Po těžkém období se dokážu rychle vzpamatovat.', en: 'I tend to bounce back quickly after hard times.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'RS2', text: { cs: 'Je pro mě těžké překonat stresující události.', en: 'I have a hard time making it through stressful events.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'RS3', text: { cs: 'Ze zklamání se vzpamatovávám poměrně snadno.', en: 'It does not take me long to recover from disappointment.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'RS4', text: { cs: 'Když se něco pokazí, trvá mi dlouho, než se z toho dostanu.', en: 'When things go wrong, it takes me a long time to get over it.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'RS5', text: { cs: 'Zvládám náročná období bez toho, abych se zhroutil/a.', en: 'I can get through difficult periods without falling apart.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'RS6', text: { cs: 'Stresové situace mě vykolejí na dlouhou dobu.', en: 'Stressful situations throw me off for a long time.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 1 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 2 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 3 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 4 }
+  ]},
+  { id: 'RS7', text: { cs: 'I po neúspěchu u zkoušky najdu motivaci pokračovat.', en: 'Even after failing an exam, I find motivation to continue.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'RS8', text: { cs: 'Věřím, že obtíže mě v konečném důsledku posilují.', en: 'I believe that difficulties ultimately make me stronger.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]}
+];
+
+export function scoreResilience(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): AssessmentResult {
+  let total = 0;
+  for (const q of resilienceQuestions) {
+    const answer = answers[q.id];
+    const opt = q.options.find(o => o.key === answer);
+    if (opt) total += opt.score;
+  }
+  const maxScore = resilienceQuestions.length * 4;
+  const percent = Math.round((total / maxScore) * 100);
+
+  if (percent >= 75) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Vysoká resilience', en: 'High Resilience' },
+      description: { cs: 'Dokážeš se rychle zotavit z obtíží a stresu.', en: 'You can quickly recover from difficulties and stress.' },
+      tips: { cs: ['Využij svou odolnost pro náročné studijní výzvy', 'Buď oporou pro spolužáky v těžkých chvílích', 'Posiluj své strategie zvládání i preventivně'], en: ['Use your resilience for challenging academic tasks', 'Be a support for classmates in tough times', 'Strengthen your coping strategies preventively'] }
+    };
+  } else if (percent >= 50) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Dobrá resilience', en: 'Good Resilience' },
+      description: { cs: 'Většinou se z obtíží dokážeš vzpamatovat.', en: 'You can usually recover from difficulties.' },
+      tips: { cs: ['Buduj podpůrnou síť – přátelé, rodina, mentoři', 'Praktikuj pravidelný pohyb a spánek pro lepší zvládání stresu', 'Nauč se techniku kognitivního přerámování'], en: ['Build a support network – friends, family, mentors', 'Practice regular exercise and sleep for better stress management', 'Learn cognitive reframing technique'] }
+    };
+  } else if (percent >= 25) {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Nižší resilience', en: 'Lower Resilience' },
+      description: { cs: 'Stresové situace tě zasáhnou a déle trvá zotavení.', en: 'Stressful situations hit you hard and recovery takes longer.' },
+      tips: { cs: ['Praktikuj mindfulness nebo meditaci denně 10 minut', 'Hledej sociální oporu – nemůžeš vše zvládnout sám/sama', 'Nastavuj si realistická očekávání'], en: ['Practice mindfulness or meditation 10 minutes daily', 'Seek social support – you can\'t handle everything alone', 'Set realistic expectations'] }
+    };
+  } else {
+    return { score: total, maxScore, percent,
+      label: { cs: 'Nízká resilience', en: 'Low Resilience' },
+      description: { cs: 'Obtíže a neúspěchy tě výrazně zasahují.', en: 'Difficulties and failures significantly affect you.' },
+      tips: { cs: ['Vyhledej psychologickou podporu na univerzitě', 'Začni s malými kroky ke zlepšení – dechová cvičení, spánek', 'Mluv o svých pocitech s někým, komu důvěřuješ'], en: ['Seek psychological support at the university', 'Start with small improvement steps – breathing exercises, sleep', 'Talk about your feelings with someone you trust'] }
+    };
+  }
+}

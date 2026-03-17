@@ -83,6 +83,24 @@ export {
   // Emotional Intelligence
   eqQuestions,
   scoreEQ,
+  // Procrastination
+  procrastinationQuestions,
+  scoreProcrastination,
+  // Academic Motivation
+  academicMotivationQuestions,
+  scoreAcademicMotivation,
+  // Time Management
+  timeManagementQuestions,
+  scoreTimeManagement,
+  // Big Five
+  bigFiveQuestions,
+  scoreBigFive,
+  // Locus of Control
+  locusOfControlQuestions,
+  scoreLocusOfControl,
+  // Resilience
+  resilienceQuestions,
+  scoreResilience,
   // Helper functions for i18n
   getAssessmentQuestionText,
   getAssessmentOptionText,
@@ -91,7 +109,7 @@ export {
   getResultTips,
   getRiasecQuestionText
 } from './assessments';
-export type { AssessmentQuestion, AssessmentResult, RiasecQuestion, RiasecResult } from './assessments';
+export type { AssessmentQuestion, AssessmentResult, RiasecQuestion, RiasecResult, BigFiveResult } from './assessments';
 
 // Stroop Test (cognitive attention test with camera)
 export {

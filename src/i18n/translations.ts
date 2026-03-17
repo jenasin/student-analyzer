@@ -227,6 +227,54 @@ export const translations = {
         en: 'Draw a tree and AI analyzes your creativity and personality (Koch, 1952).'
       },
       tags: { cs: ['Kresba', 'Kreativita', 'Psychologie'], en: ['Drawing', 'Creativity', 'Psychology'] }
+    },
+    procrastination: {
+      title: { cs: 'Akademická prokrastinace', en: 'Academic Procrastination' },
+      description: {
+        cs: 'Odkládáš studium? Zjisti míru prokrastinace a strategie na její překonání (Solomon & Rothblum).',
+        en: 'Do you delay studying? Measure your procrastination level and find strategies to overcome it (Solomon & Rothblum).'
+      },
+      tags: { cs: ['8 otázek', 'Prokrastinace', 'Návyky'], en: ['8 questions', 'Procrastination', 'Habits'] }
+    },
+    academicMotivation: {
+      title: { cs: 'Akademická motivace', en: 'Academic Motivation' },
+      description: {
+        cs: 'Studuješ z vlastního zájmu nebo kvůli vnějším tlakům? Test dle Self-Determination Theory (Vallerand).',
+        en: 'Do you study from personal interest or external pressure? Based on Self-Determination Theory (Vallerand).'
+      },
+      tags: { cs: ['8 otázek', 'SDT', 'Motivace'], en: ['8 questions', 'SDT', 'Motivation'] }
+    },
+    timeManagement: {
+      title: { cs: 'Time Management', en: 'Time Management' },
+      description: {
+        cs: 'Jak efektivně si organizuješ čas? Plánování, priority a rovnováha studia a volna (Macan).',
+        en: 'How effectively do you organize your time? Planning, priorities, and study-life balance (Macan).'
+      },
+      tags: { cs: ['8 otázek', 'Plánování', 'Produktivita'], en: ['8 questions', 'Planning', 'Productivity'] }
+    },
+    bigFive: {
+      title: { cs: 'Big Five (Osobnost)', en: 'Big Five (Personality)' },
+      description: {
+        cs: 'Krátký osobnostní profil: extraverze, přívětivost, svědomitost, stabilita, otevřenost (Gosling TIPI).',
+        en: 'Brief personality profile: extraversion, agreeableness, conscientiousness, stability, openness (Gosling TIPI).'
+      },
+      tags: { cs: ['10 otázek', 'TIPI', 'Osobnost'], en: ['10 questions', 'TIPI', 'Personality'] }
+    },
+    locusOfControl: {
+      title: { cs: 'Locus of Control', en: 'Locus of Control' },
+      description: {
+        cs: 'Věříš, že tvé výsledky závisí na tobě, nebo na okolnostech? Akademický locus of control (Rotter).',
+        en: 'Do you believe your results depend on you or on circumstances? Academic locus of control (Rotter).'
+      },
+      tags: { cs: ['8 otázek', 'Rotter', 'Kontrola'], en: ['8 questions', 'Rotter', 'Control'] }
+    },
+    resilience: {
+      title: { cs: 'Resilience (Odolnost)', en: 'Resilience' },
+      description: {
+        cs: 'Jak rychle se vzpamatováváš z neúspěchů a stresu? Brief Resilience Scale (Smith et al.).',
+        en: 'How quickly do you bounce back from setbacks and stress? Brief Resilience Scale (Smith et al.).'
+      },
+      tags: { cs: ['8 otázek', 'BRS', 'Odolnost'], en: ['8 questions', 'BRS', 'Resilience'] }
     }
   },
 
