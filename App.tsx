@@ -10,6 +10,7 @@ import { voiceService, VoiceInterviewResult, InterviewExchange } from './src/ser
 import { interviewQuestions, getInterviewQuestionText, generateStudentPassportPrompt } from './src/modules/voiceInterview';
 import { visionAnalysisService, MathReasoningResult } from './src/services/VisionAnalysisService';
 import { emotionService, EmotionData, EmotionResult } from './src/services/EmotionService';
+import { demoStudents, DemoStudent } from './src/modules/demoStudents';
 import {
   typologyQuestions,
   dimensionsMeta,
@@ -98,7 +99,7 @@ import {
   MentalRotationResult
 } from './src/modules';
 
-type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest' | 'procrastination' | 'academicMotivation' | 'timeManagement' | 'bigFive' | 'locusOfControl' | 'resilience' | 'gardner' | 'kolb' | 'studyStress' | 'studyStrategies';
+type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest' | 'procrastination' | 'academicMotivation' | 'timeManagement' | 'bigFive' | 'locusOfControl' | 'resilience' | 'gardner' | 'kolb' | 'studyStress' | 'studyStrategies' | 'demoProfile';
 
 interface ModuleProgress {
   chat: boolean;
@@ -610,6 +611,7 @@ With a **strong growth mindset** (81%), you believe in the power of effort and p
 const App: React.FC = () => {
   const [lang, setLang] = useState<Language>('en');
   const [view, setView] = useState<View>('welcome');
+  const [selectedDemo, setSelectedDemo] = useState<DemoStudent | null>(null);
   const [progress, setProgress] = useState<ModuleProgress>({
     chat: false, typology: true, vak: true, habits: false, motivation: false, strengths: false, gemini: false,
     growthMindset: true, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false,
@@ -1138,9 +1140,325 @@ const App: React.FC = () => {
             <p className="text-sm mt-1">{lang === 'cs' ? 'Vytvoř nového studenta výše a začni s testy.' : 'Create a new student above and start testing.'}</p>
           </div>
         )}
+
+        {/* Demo Students */}
+        <div className="space-y-4">
+          <h2 className="font-serif text-lg font-semibold flex items-center gap-2" style={{ color: 'var(--color-text)' }}>
+            <GraduationCap className="w-5 h-5" style={{ color: 'var(--color-primary)' }} />
+            {lang === 'cs' ? 'Demo studenti (10 profilů)' : 'Demo Students (10 profiles)'}
+          </h2>
+          <p className="text-sm" style={{ color: 'var(--color-text-muted)' }}>
+            {lang === 'cs' ? 'Prohlédni si ukázkové profily studentů s kompletními výsledky a statistikami.' : 'Browse sample student profiles with complete results and statistics.'}
+          </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4">
+            {demoStudents.map(demo => (
+              <button
+                key={demo.name}
+                onClick={() => { setSelectedDemo(demo); setView('demoProfile'); }}
+                className="card p-4 text-left flex items-start gap-4 transition-all hover:-translate-y-1 hover:shadow-lg group"
+              >
+                <div className="w-12 h-12 flex-shrink-0 flex items-center justify-center text-xl font-bold bg-gradient-to-br from-indigo-500 to-purple-600 text-white" style={{ borderRadius: 'var(--radius-full)' }}>
+                  {demo.name.charAt(0)}
+                </div>
+                <div className="flex-1 min-w-0">
+                  <p className="font-medium truncate group-hover:text-[var(--color-primary)] transition-colors" style={{ color: 'var(--color-text)' }}>
+                    {demo.name}
+                  </p>
+                  <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                    {demo.description[lang]}
+                  </p>
+                  <div className="flex items-center gap-1 mt-2">
+                    <span className="text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Demo</span>
+                    <span className="text-xs px-2 py-0.5 rounded-full" style={{ backgroundColor: 'var(--color-bg)', color: 'var(--color-text-secondary)' }}>
+                      15 {lang === 'cs' ? 'testů' : 'tests'}
+                    </span>
+                  </div>
+                </div>
+              </button>
+            ))}
+          </div>
+        </div>
       </div>
     </div>
   );
+
+  const renderDemoProfile = () => {
+    if (!selectedDemo) return null;
+    const r = selectedDemo.results;
+
+    // All scores for radar chart
+    const radarData = [
+      { label: { cs: 'Growth M.', en: 'Growth M.' }, value: r.growthMindset.percent },
+      { label: { cs: 'Grit', en: 'Grit' }, value: r.grit.percent },
+      { label: { cs: 'Self-Eff.', en: 'Self-Eff.' }, value: r.selfEfficacy.percent },
+      { label: { cs: 'Úzkost ↓', en: 'Anxiety ↓' }, value: r.testAnxiety.percent },
+      { label: { cs: 'Metakog.', en: 'Metacog.' }, value: r.metacognition.percent },
+      { label: { cs: 'EQ', en: 'EQ' }, value: r.eq.percent },
+      { label: { cs: 'Prokrast. ↓', en: 'Procrast. ↓' }, value: r.procrastination.percent },
+      { label: { cs: 'Motivace', en: 'Motivation' }, value: r.academicMotivation.percent },
+      { label: { cs: 'Time Mgmt', en: 'Time Mgmt' }, value: r.timeManagement.percent },
+      { label: { cs: 'Locus', en: 'Locus' }, value: r.locusOfControl.percent },
+      { label: { cs: 'Resilience', en: 'Resilience' }, value: r.resilience.percent },
+      { label: { cs: 'Stres ↓', en: 'Stress ↓' }, value: r.studyStress.percent },
+    ];
+
+    // Radar chart SVG helpers
+    const cx = 160, cy = 160, maxR = 120;
+    const n = radarData.length;
+    const angleStep = (2 * Math.PI) / n;
+
+    const getPoint = (i: number, val: number) => {
+      const angle = i * angleStep - Math.PI / 2;
+      const radius = (val / 100) * maxR;
+      return { x: cx + radius * Math.cos(angle), y: cy + radius * Math.sin(angle) };
+    };
+
+    const radarPoints = radarData.map((d, i) => getPoint(i, d.value));
+    const radarPath = radarPoints.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+
+    // Grid circles
+    const gridLevels = [25, 50, 75, 100];
+
+    // All scores for bar chart
+    const allScores = [
+      { label: { cs: 'Growth Mindset', en: 'Growth Mindset' }, value: r.growthMindset.percent, color: '#10b981' },
+      { label: { cs: 'Vytrvalost (Grit)', en: 'Grit' }, value: r.grit.percent, color: '#f97316' },
+      { label: { cs: 'Self-Efficacy', en: 'Self-Efficacy' }, value: r.selfEfficacy.percent, color: '#eab308' },
+      { label: { cs: 'Testová úzkost', en: 'Test Anxiety' }, value: r.testAnxiety.percent, color: '#ef4444' },
+      { label: { cs: 'Metakognice', en: 'Metacognition' }, value: r.metacognition.percent, color: '#8b5cf6' },
+      { label: { cs: 'Emoční inteligence', en: 'Emotional Intelligence' }, value: r.eq.percent, color: '#ec4899' },
+      { label: { cs: 'Prokrastinace', en: 'Procrastination' }, value: r.procrastination.percent, color: '#f43f5e' },
+      { label: { cs: 'Akademická motivace', en: 'Academic Motivation' }, value: r.academicMotivation.percent, color: '#f59e0b' },
+      { label: { cs: 'Time Management', en: 'Time Management' }, value: r.timeManagement.percent, color: '#3b82f6' },
+      { label: { cs: 'Locus of Control', en: 'Locus of Control' }, value: r.locusOfControl.percent, color: '#14b8a6' },
+      { label: { cs: 'Resilience', en: 'Resilience' }, value: r.resilience.percent, color: '#f472b6' },
+      { label: { cs: 'Studijní stres', en: 'Study Stress' }, value: r.studyStress.percent, color: '#ef4444' },
+      { label: { cs: 'Studijní strategie', en: 'Study Strategies' }, value: r.studyStrategies.percent, color: '#10b981' },
+    ];
+
+    const avgScore = Math.round(allScores.reduce((s, d) => s + d.value, 0) / allScores.length);
+    const maxItem = allScores.reduce((a, b) => a.value > b.value ? a : b);
+    const minItem = allScores.reduce((a, b) => a.value < b.value ? a : b);
+
+    // Cross synthesis
+    const scores: any = {
+      growthMindset: r.growthMindset.percent,
+      grit: r.grit.percent,
+      selfEfficacy: r.selfEfficacy.percent,
+      testAnxiety: r.testAnxiety.percent,
+      metacognition: r.metacognition.percent,
+      eq: r.eq.percent,
+      procrastination: r.procrastination.percent,
+      academicMotivation: r.academicMotivation.percent,
+      timeManagement: r.timeManagement.percent,
+      locusOfControl: r.locusOfControl.percent,
+      resilience: r.resilience.percent,
+      extraversion: r.bigFive.dimensions[0]?.percent,
+      agreeableness: r.bigFive.dimensions[1]?.percent,
+      conscientiousness: r.bigFive.dimensions[2]?.percent,
+      emotionalStability: r.bigFive.dimensions[3]?.percent,
+      openness: r.bigFive.dimensions[4]?.percent,
+    };
+    const insights = generateCrossSynthesis(scores);
+
+    return (
+      <div className="flex-1 px-6 py-8 pb-20" style={{ backgroundColor: 'var(--color-bg)' }}>
+        <div className="max-w-5xl mx-auto space-y-8">
+          {/* Back + Header */}
+          <div>
+            <button onClick={() => setView('welcome')} className="flex items-center gap-2 text-sm mb-4" style={{ color: 'var(--color-text-muted)' }}>
+              <ChevronLeft className="w-4 h-4" /> {lang === 'cs' ? 'Zpět na přehled' : 'Back to overview'}
+            </button>
+            <div className="flex items-center gap-4">
+              <div className="w-16 h-16 flex items-center justify-center text-2xl font-bold bg-gradient-to-br from-indigo-500 to-purple-600 text-white" style={{ borderRadius: 'var(--radius-full)' }}>
+                {selectedDemo.name.charAt(0)}
+              </div>
+              <div>
+                <h1 className="text-h1 font-serif" style={{ color: 'var(--color-text)' }}>{selectedDemo.name}</h1>
+                <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>{selectedDemo.description[lang]}</p>
+                <span className="inline-block mt-1 text-xs px-2 py-0.5 rounded-full bg-indigo-50 text-indigo-700">Demo profil</span>
+              </div>
+            </div>
+          </div>
+
+          {/* Stats Summary */}
+          <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
+            <div className="card p-4 text-center">
+              <p className="text-3xl font-bold" style={{ color: 'var(--color-primary)' }}>{avgScore}%</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Průměrné skóre' : 'Average Score'}</p>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-3xl font-bold text-emerald-500">{maxItem.value}%</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{maxItem.label[lang]}</p>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-3xl font-bold text-red-500">{minItem.value}%</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{minItem.label[lang]}</p>
+            </div>
+            <div className="card p-4 text-center">
+              <p className="text-3xl font-bold text-indigo-500">{insights.length}</p>
+              <p className="text-xs mt-1" style={{ color: 'var(--color-text-muted)' }}>{lang === 'cs' ? 'Syntézy' : 'Insights'}</p>
+            </div>
+          </div>
+
+          {/* Radar Chart + VAK + Big Five */}
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {/* Radar Chart */}
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-primary)' }}>
+                {lang === 'cs' ? 'Celkový profil (Radar)' : 'Overall Profile (Radar)'}
+              </h3>
+              <svg viewBox="0 0 320 320" className="w-full max-w-xs mx-auto">
+                {/* Grid */}
+                {gridLevels.map(level => {
+                  const points = Array.from({ length: n }, (_, i) => getPoint(i, level));
+                  const path = points.map((p, i) => `${i === 0 ? 'M' : 'L'} ${p.x} ${p.y}`).join(' ') + ' Z';
+                  return <path key={level} d={path} fill="none" stroke="#e5e7eb" strokeWidth="1" />;
+                })}
+                {/* Axis lines */}
+                {radarData.map((_, i) => {
+                  const p = getPoint(i, 100);
+                  return <line key={i} x1={cx} y1={cy} x2={p.x} y2={p.y} stroke="#e5e7eb" strokeWidth="1" />;
+                })}
+                {/* Data polygon */}
+                <path d={radarPath} fill="rgba(99, 102, 241, 0.2)" stroke="#6366f1" strokeWidth="2" />
+                {/* Data points */}
+                {radarPoints.map((p, i) => (
+                  <circle key={i} cx={p.x} cy={p.y} r="4" fill="#6366f1" />
+                ))}
+                {/* Labels */}
+                {radarData.map((d, i) => {
+                  const p = getPoint(i, 115);
+                  return (
+                    <text key={i} x={p.x} y={p.y} textAnchor="middle" dominantBaseline="middle" fontSize="8" fill="#6b7280">
+                      {d.label[lang]}
+                    </text>
+                  );
+                })}
+              </svg>
+            </div>
+
+            {/* VAK + Big Five */}
+            <div className="space-y-6">
+              {/* VAK */}
+              <div className="card p-6">
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-primary)' }}>
+                  VAK {lang === 'cs' ? 'Učební styl' : 'Learning Style'}
+                </h3>
+                <div className="space-y-2">
+                  {[
+                    { label: { cs: 'Vizuální', en: 'Visual' }, value: r.vak.visual, color: '#3b82f6' },
+                    { label: { cs: 'Auditivní', en: 'Auditory' }, value: r.vak.auditory, color: '#f59e0b' },
+                    { label: { cs: 'Kinestetický', en: 'Kinesthetic' }, value: r.vak.kinesthetic, color: '#10b981' },
+                  ].map((v, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between text-xs font-medium mb-1">
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{v.label[lang]}</span>
+                        <span style={{ color: v.color }}>{v.value}%</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                        <div className="h-full" style={{ width: `${v.value}%`, backgroundColor: v.color, borderRadius: 'var(--radius-full)' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+
+              {/* Big Five */}
+              <div className="card p-6">
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-3" style={{ color: 'var(--color-primary)' }}>
+                  Big Five
+                </h3>
+                <div className="space-y-2">
+                  {r.bigFive.dimensions.map((dim, i) => (
+                    <div key={i}>
+                      <div className="flex justify-between text-xs font-medium mb-1">
+                        <span style={{ color: 'var(--color-text-secondary)' }}>{dim.name[lang]}</span>
+                        <span style={{ color: ['#8b5cf6', '#f59e0b', '#3b82f6', '#10b981', '#ec4899'][i] }}>{dim.percent}%</span>
+                      </div>
+                      <div className="h-2 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                        <div className="h-full" style={{ width: `${dim.percent}%`, backgroundColor: ['#8b5cf6', '#f59e0b', '#3b82f6', '#10b981', '#ec4899'][i], borderRadius: 'var(--radius-full)' }} />
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            </div>
+          </div>
+
+          {/* All Assessment Bars */}
+          <div className="card p-6">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-primary)' }}>
+              {lang === 'cs' ? 'Všechny výsledky' : 'All Results'}
+            </h3>
+            <div className="space-y-3">
+              {allScores.map((item, i) => (
+                <div key={i}>
+                  <div className="flex justify-between text-xs font-medium mb-1">
+                    <span style={{ color: 'var(--color-text-secondary)' }}>{item.label[lang]}</span>
+                    <span style={{ color: item.value >= 60 ? '#10b981' : item.value >= 40 ? '#f59e0b' : '#ef4444' }}>{item.value}%</span>
+                  </div>
+                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="h-full transition-all duration-1000" style={{ width: `${item.value}%`, backgroundColor: item.color, borderRadius: 'var(--radius-full)' }} />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Abstract vs Concrete Scale */}
+          <div className="card p-6">
+            <h3 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-primary)' }}>
+              {lang === 'cs' ? 'Škály myšlení' : 'Thinking Scales'}
+            </h3>
+            <div className="space-y-4">
+              {[
+                { left: { cs: 'Konkrétní myšlení', en: 'Concrete Thinking' }, right: { cs: 'Abstraktní myšlení', en: 'Abstract Thinking' }, value: r.metacognition.percent },
+                { left: { cs: 'Vnější motivace', en: 'External Motivation' }, right: { cs: 'Vnitřní motivace', en: 'Intrinsic Motivation' }, value: r.academicMotivation.percent },
+                { left: { cs: 'Fixní myšlení', en: 'Fixed Mindset' }, right: { cs: 'Růstové myšlení', en: 'Growth Mindset' }, value: r.growthMindset.percent },
+                { left: { cs: 'Externí locus', en: 'External Locus' }, right: { cs: 'Interní locus', en: 'Internal Locus' }, value: r.locusOfControl.percent },
+                { left: { cs: 'Nízká resilience', en: 'Low Resilience' }, right: { cs: 'Vysoká resilience', en: 'High Resilience' }, value: r.resilience.percent },
+              ].map((scale, i) => (
+                <div key={i}>
+                  <div className="flex justify-between text-xs mb-1">
+                    <span style={{ color: 'var(--color-text-muted)' }}>{scale.left[lang]}</span>
+                    <span style={{ color: 'var(--color-text-muted)' }}>{scale.right[lang]}</span>
+                  </div>
+                  <div className="relative h-4 w-full" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    <div className="absolute h-4 w-4 top-0 bg-indigo-600 shadow-md" style={{ left: `calc(${scale.value}% - 8px)`, borderRadius: 'var(--radius-full)', transition: 'left 1s ease-out' }} />
+                    <div className="absolute top-0 left-1/2 w-px h-4 bg-gray-400" />
+                  </div>
+                </div>
+              ))}
+            </div>
+          </div>
+
+          {/* Cross-Synthesis Insights */}
+          {insights.length > 0 && (
+            <div>
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                {lang === 'cs' ? 'Cross-Assessment Syntéza' : 'Cross-Assessment Synthesis'}
+              </h3>
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                {insights.map(insight => (
+                  <div key={insight.id} className="card p-5" style={{ borderLeft: `4px solid ${insight.type === 'strength' ? '#10b981' : insight.type === 'risk' ? '#ef4444' : '#f59e0b'}` }}>
+                    <div className="flex items-start gap-3">
+                      <span className="text-2xl">{insight.icon}</span>
+                      <div>
+                        <h4 className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text)' }}>{insight.title[lang]}</h4>
+                        <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>{insight.description[lang]}</p>
+                        <p className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>{insight.source}</p>
+                      </div>
+                    </div>
+                  </div>
+                ))}
+              </div>
+            </div>
+          )}
+        </div>
+      </div>
+    );
+  };
 
   // Students list modal
   const renderStudentsModal = () => showStudentsList && (
@@ -4196,6 +4514,7 @@ const App: React.FC = () => {
       )}
       <main className="flex-1 flex flex-col">
         {view === 'welcome' && renderWelcome()}
+        {view === 'demoProfile' && renderDemoProfile()}
         {view === 'dashboard' && renderDashboard()}
         {view === 'chat' && renderChat()}
         {view === 'typology' && renderTypology()}
