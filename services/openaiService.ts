@@ -159,10 +159,23 @@ export class NavigatorService {
   private lastQuestionId: string | null = null;
 
   constructor() {
+    const savedKey = typeof window !== 'undefined' ? localStorage.getItem('openai_api_key') : null;
     this.openai = new OpenAI({
-      apiKey: import.meta.env.VITE_OPENAI_API_KEY || '',
+      apiKey: savedKey || import.meta.env.VITE_OPENAI_API_KEY || '',
       dangerouslyAllowBrowser: true
     });
+  }
+
+  setApiKey(key: string) {
+    localStorage.setItem('openai_api_key', key);
+    this.openai = new OpenAI({
+      apiKey: key,
+      dangerouslyAllowBrowser: true
+    });
+  }
+
+  getApiKey(): string {
+    return localStorage.getItem('openai_api_key') || import.meta.env.VITE_OPENAI_API_KEY || '';
   }
 
   getSessionJson(): SessionJson {

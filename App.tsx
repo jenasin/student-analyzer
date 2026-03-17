@@ -1,7 +1,7 @@
 
 import React, { useState, useEffect, useRef } from 'react';
 import ReactMarkdown from 'react-markdown';
-import { Brain, Eye, MessageCircle, CalendarDays, Sparkles, Medal, ArrowRight, Check, ChevronLeft, ExternalLink, Zap, Users, Trash2, User, Mic, Smile, Calculator, Heart, Square, Play, StopCircle, Upload, Video, Pencil, Eraser, RotateCcw, Circle, TreeDeciduous, BookOpen, ChevronDown, ChevronUp, GraduationCap, Target, Link } from 'lucide-react';
+import { Brain, Eye, MessageCircle, CalendarDays, Sparkles, Medal, ArrowRight, Check, ChevronLeft, ExternalLink, Zap, Users, Trash2, User, Mic, Smile, Calculator, Heart, Square, Play, StopCircle, Upload, Video, Pencil, Eraser, RotateCcw, Circle, TreeDeciduous, BookOpen, ChevronDown, ChevronUp, GraduationCap, Target, Link, Settings } from 'lucide-react';
 import { Message, AppStatus, Report, Skill } from './types';
 import { navigatorService } from './services/openaiService';
 import { getStudents, saveStudent, deleteStudent, getStudentByName, updateStudentResults, StudentProfile } from './services/studentStorage';
@@ -705,6 +705,10 @@ const App: React.FC = () => {
   const [resultsTab, setResultsTab] = useState<'overview' | 'synthesis' | 'coaching'>('overview');
   const [synthesis, setSynthesis] = useState<{ synthesis: string; studyTips: string[]; youtubeVideos: { videoId: string; title: string; description: string }[] } | null>(demoSynthesis);
   const [isSynthesisLoading, setIsSynthesisLoading] = useState(false);
+
+  // API Key settings
+  const [showApiKeyModal, setShowApiKeyModal] = useState(false);
+  const [apiKeyInput, setApiKeyInput] = useState(navigatorService.getApiKey());
 
   // AI Feedback modal state (after each test)
   const [showFeedbackModal, setShowFeedbackModal] = useState(false);
@@ -3942,6 +3946,14 @@ const App: React.FC = () => {
             >
               <svg className="w-5 h-5" fill="none" stroke="currentColor" viewBox="0 0 24 24"><path strokeLinecap="round" strokeLinejoin="round" strokeWidth={2} d="M3 12l2-2m0 0l7-7 7 7M5 10v10a1 1 0 001 1h3m10-11l2 2m-2-2v10a1 1 0 01-1 1h-3m-6 0a1 1 0 001-1v-4a1 1 0 011-1h2a1 1 0 011 1v4a1 1 0 001 1m-6 0h6" /></svg>
             </button>
+            <button
+              onClick={() => { setApiKeyInput(navigatorService.getApiKey()); setShowApiKeyModal(true); }}
+              className="p-2 hover:bg-slate-100 transition-colors"
+              style={{ borderRadius: 'var(--radius-md)', color: navigatorService.getApiKey() ? 'var(--color-text-muted)' : '#ef4444' }}
+              title={lang === 'cs' ? 'Nastavení API klíče' : 'API Key Settings'}
+            >
+              <Settings className="w-5 h-5" />
+            </button>
             <div className="flex gap-1.5">
               {modules.map(m => (
                 <div key={m.id} className={`w-3 h-3 ${progress[m.id as keyof ModuleProgress] ? 'bg-emerald-500' : ''}`} style={{ borderRadius: 'var(--radius-full)', backgroundColor: progress[m.id as keyof ModuleProgress] ? undefined : 'var(--color-border)' }} title={m.title} />
@@ -5447,6 +5459,60 @@ Evaluate: tree size, position, trunk (strength, texture), branches (direction, c
                 </div>
               </>
             )}
+          </div>
+        </div>
+      )}
+
+      {/* API Key Modal */}
+      {showApiKeyModal && (
+        <div className="fixed inset-0 z-50 flex items-center justify-center bg-black/50 p-4" onClick={() => setShowApiKeyModal(false)}>
+          <div className="bg-white w-full max-w-md" style={{ borderRadius: 'var(--radius-lg)', boxShadow: 'var(--shadow-lg)' }} onClick={e => e.stopPropagation()}>
+            <div className="px-6 py-4 flex items-center justify-between" style={{ borderBottom: '1px solid var(--color-border)', background: 'linear-gradient(135deg, #C5A059 0%, #8B7355 100%)' }}>
+              <div className="flex items-center gap-3">
+                <Settings className="w-5 h-5 text-white" />
+                <h2 className="text-lg font-serif font-semibold text-white">{lang === 'cs' ? 'Nastavení API klíče' : 'API Key Settings'}</h2>
+              </div>
+              <button onClick={() => setShowApiKeyModal(false)} className="text-white/70 hover:text-white text-xl">&times;</button>
+            </div>
+            <div className="p-6 space-y-4">
+              <p className="text-sm" style={{ color: 'var(--color-text-secondary)' }}>
+                {lang === 'cs'
+                  ? 'Pro AI syntézu, koučink a zpětnou vazbu potřebuješ OpenAI API klíč. Klíč se ukládá pouze v tvém prohlížeči.'
+                  : 'For AI synthesis, coaching, and feedback you need an OpenAI API key. The key is stored only in your browser.'}
+              </p>
+              <div>
+                <label className="block text-xs font-semibold uppercase tracking-wider mb-2" style={{ color: 'var(--color-text-muted)' }}>
+                  OpenAI API Key
+                </label>
+                <input
+                  type="password"
+                  value={apiKeyInput}
+                  onChange={e => setApiKeyInput(e.target.value)}
+                  placeholder="sk-..."
+                  className="w-full px-4 py-3 text-sm border outline-none focus:ring-2 focus:ring-amber-500"
+                  style={{ borderColor: 'var(--color-border)', borderRadius: 'var(--radius-md)', color: 'var(--color-text)' }}
+                />
+              </div>
+              <div className="flex gap-3 justify-end pt-2">
+                <button
+                  onClick={() => setShowApiKeyModal(false)}
+                  className="px-4 py-2 text-sm font-medium transition-colors hover:bg-slate-100"
+                  style={{ borderRadius: 'var(--radius-md)', color: 'var(--color-text-muted)' }}
+                >
+                  {lang === 'cs' ? 'Zrušit' : 'Cancel'}
+                </button>
+                <button
+                  onClick={() => {
+                    navigatorService.setApiKey(apiKeyInput.trim());
+                    setShowApiKeyModal(false);
+                  }}
+                  className="px-6 py-2 text-sm font-medium text-white transition-all hover:opacity-90"
+                  style={{ backgroundColor: 'var(--color-primary)', borderRadius: 'var(--radius-md)' }}
+                >
+                  {lang === 'cs' ? 'Uložit' : 'Save'}
+                </button>
+              </div>
+            </div>
           </div>
         </div>
       )}
