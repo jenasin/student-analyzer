@@ -101,6 +101,12 @@ export {
   // Resilience
   resilienceQuestions,
   scoreResilience,
+  // Gardner's Multiple Intelligences
+  gardnerQuestions,
+  scoreGardner,
+  // Kolb's Learning Style
+  kolbQuestions,
+  scoreKolb,
   // Helper functions for i18n
   getAssessmentQuestionText,
   getAssessmentOptionText,
@@ -109,7 +115,11 @@ export {
   getResultTips,
   getRiasecQuestionText
 } from './assessments';
-export type { AssessmentQuestion, AssessmentResult, RiasecQuestion, RiasecResult, BigFiveResult } from './assessments';
+export type { AssessmentQuestion, AssessmentResult, RiasecQuestion, RiasecResult, BigFiveResult, GardnerResult, KolbResult } from './assessments';
+
+// Cross-Assessment Synthesis
+export { generateCrossSynthesis } from './crossSynthesis';
+export type { SynthesisInsight, AssessmentScores } from './crossSynthesis';
 
 // Stroop Test (cognitive attention test with camera)
 export {

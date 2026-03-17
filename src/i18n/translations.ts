@@ -275,6 +275,16 @@ export const translations = {
         en: 'How quickly do you bounce back from setbacks and stress? Brief Resilience Scale (Smith et al.).'
       },
       tags: { cs: ['8 otázek', 'BRS', 'Odolnost'], en: ['8 questions', 'BRS', 'Resilience'] }
+    },
+    gardner: {
+      title: { cs: 'Mnohočetné inteligence', en: 'Multiple Intelligences' },
+      description: { cs: 'Zjisti své silné typy inteligence podle Gardnerovy teorie (1983). Jazykový, logický, prostorový nebo hudební typ?', en: 'Discover your intelligence types according to Gardner\'s theory (1983). Linguistic, logical, spatial, or musical type?' },
+      tags: { cs: ['16 otázek', 'Gardner', 'Inteligence'], en: ['16 questions', 'Gardner', 'Intelligence'] }
+    },
+    kolb: {
+      title: { cs: 'Kolbův učební styl', en: 'Kolb Learning Style' },
+      description: { cs: 'Jak se učíš? Zkušeností, pozorováním, teorií nebo experimentováním? Kolbův cyklus učení (1984).', en: 'How do you learn? By experience, observation, theory, or experimentation? Kolb\'s learning cycle (1984).' },
+      tags: { cs: ['12 otázek', 'Kolb', 'Učební cyklus'], en: ['12 questions', 'Kolb', 'Learning cycle'] }
     }
   },
 

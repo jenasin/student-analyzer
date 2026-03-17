@@ -59,6 +59,18 @@ import {
   scoreLocusOfControl,
   resilienceQuestions,
   scoreResilience,
+  // Gardner's Multiple Intelligences
+  gardnerQuestions,
+  scoreGardner,
+  GardnerResult,
+  // Kolb's Learning Style
+  kolbQuestions,
+  scoreKolb,
+  KolbResult,
+  // Cross-Synthesis
+  generateCrossSynthesis,
+  SynthesisInsight,
+  AssessmentScores,
   AssessmentResult,
   RiasecResult,
   BigFiveResult,
@@ -81,7 +93,7 @@ import {
   MentalRotationResult
 } from './src/modules';
 
-type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest' | 'procrastination' | 'academicMotivation' | 'timeManagement' | 'bigFive' | 'locusOfControl' | 'resilience';
+type View = 'welcome' | 'dashboard' | 'chat' | 'typology' | 'vak' | 'habits' | 'motivation' | 'strengths' | 'results' | 'gemini' | 'growthMindset' | 'grit' | 'selfEfficacy' | 'testAnxiety' | 'metacognition' | 'riasec' | 'eq' | 'stroop' | 'mentalRotation' | 'voiceInterview' | 'emotionRecognition' | 'mathReasoning' | 'garminHealth' | 'baumTest' | 'procrastination' | 'academicMotivation' | 'timeManagement' | 'bigFive' | 'locusOfControl' | 'resilience' | 'gardner' | 'kolb';
 
 interface ModuleProgress {
   chat: boolean;
@@ -111,6 +123,8 @@ interface ModuleProgress {
   bigFive: boolean;
   locusOfControl: boolean;
   resilience: boolean;
+  gardner: boolean;
+  kolb: boolean;
 }
 
 interface ModuleCard {
@@ -155,7 +169,9 @@ const modules: ModuleCard[] = [
   { id: 'timeManagement', title: '', description: '', time: '~3 min', icon: 'clock', color: 'blue', view: 'timeManagement', tags: [], previewBg: 'from-blue-500 via-cyan-500 to-teal-500', previewIcon: 'clock' },
   { id: 'bigFive', title: '', description: '', time: '~4 min', icon: 'brain', color: 'violet', view: 'bigFive', tags: [], previewBg: 'from-violet-500 via-indigo-500 to-blue-600', previewIcon: 'brain' },
   { id: 'locusOfControl', title: '', description: '', time: '~3 min', icon: 'star', color: 'teal', view: 'locusOfControl', tags: [], previewBg: 'from-teal-500 via-emerald-500 to-green-600', previewIcon: 'star' },
-  { id: 'resilience', title: '', description: '', time: '~3 min', icon: 'heart', color: 'rose', view: 'resilience', tags: [], previewBg: 'from-rose-500 via-pink-500 to-fuchsia-500', previewIcon: 'heart' }
+  { id: 'resilience', title: '', description: '', time: '~3 min', icon: 'heart', color: 'rose', view: 'resilience', tags: [], previewBg: 'from-rose-500 via-pink-500 to-fuchsia-500', previewIcon: 'heart' },
+  { id: 'gardner', title: '', description: '', time: '~5 min', icon: 'brain', color: 'indigo', view: 'gardner', tags: [], previewBg: 'from-indigo-500 via-purple-500 to-violet-600', previewIcon: 'brain' },
+  { id: 'kolb', title: '', description: '', time: '~4 min', icon: 'eye', color: 'cyan', view: 'kolb', tags: [], previewBg: 'from-cyan-500 via-blue-500 to-indigo-500', previewIcon: 'eye' }
 ];
 
 // Habits questions (8 questions)
@@ -588,7 +604,8 @@ const App: React.FC = () => {
     chat: false, typology: true, vak: true, habits: false, motivation: false, strengths: false, gemini: false,
     growthMindset: true, grit: false, selfEfficacy: false, testAnxiety: false, metacognition: false, riasec: false, eq: false, stroop: false, mentalRotation: false,
     voiceInterview: false, emotionRecognition: false, mathReasoning: false, garminHealth: false, baumTest: false,
-    procrastination: false, academicMotivation: false, timeManagement: false, bigFive: false, locusOfControl: false, resilience: false
+    procrastination: false, academicMotivation: false, timeManagement: false, bigFive: false, locusOfControl: false, resilience: false,
+    gardner: false, kolb: false
   });
   const [studentName, setStudentName] = useState<string>('');
   const [nameInput, setNameInput] = useState<string>('');
@@ -681,6 +698,14 @@ const App: React.FC = () => {
   const [currentRSQuestion, setCurrentRSQuestion] = useState(0);
   const [rsAnswers, setRsAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
   const [rsResult, setRsResult] = useState<AssessmentResult | null>(null);
+
+  const [currentGDQuestion, setCurrentGDQuestion] = useState(0);
+  const [gdAnswers, setGdAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [gdResult, setGdResult] = useState<GardnerResult | null>(null);
+
+  const [currentKLQuestion, setCurrentKLQuestion] = useState(0);
+  const [klAnswers, setKlAnswers] = useState<Record<string, 'A' | 'B' | 'C' | 'D'>>({});
+  const [klResult, setKlResult] = useState<KolbResult | null>(null);
 
   // Stroop Test state
   const [stroopPhase, setStroopPhase] = useState<'intro' | 'practice' | 'test' | 'done'>('intro');
@@ -1459,6 +1484,10 @@ const App: React.FC = () => {
     } else if (mod.id === 'locusOfControl' && progress.locusOfControl) {
       setView('results');
     } else if (mod.id === 'resilience' && progress.resilience) {
+      setView('results');
+    } else if (mod.id === 'gardner' && progress.gardner) {
+      setView('results');
+    } else if (mod.id === 'kolb' && progress.kolb) {
       setView('results');
     } else if (mod.id === 'stroop' && progress.stroop) {
       setView('results');
@@ -3851,6 +3880,122 @@ const App: React.FC = () => {
             </div>
           )}
 
+          {/* Gardner's Multiple Intelligences */}
+          {gdResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="brain" className="w-4 h-4" /> {lang === 'cs' ? 'Mnohočetné inteligence (Gardner)' : 'Multiple Intelligences (Gardner)'}
+              </h3>
+              <div className="space-y-2 mb-4">
+                {gdResult.intelligences.map((intel, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span style={{ color: 'var(--color-text-secondary)' }}>{intel.name[lang]}</span>
+                      <span style={{ color: 'var(--color-primary)' }}>{intel.percent}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${intel.percent}%`, backgroundColor: '#818cf8', borderRadius: 'var(--radius-full)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>{gdResult.summary[lang]}</p>
+              </div>
+            </div>
+          )}
+
+          {/* Kolb Learning Style */}
+          {klResult && (
+            <div className="card p-6">
+              <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                <IconComponent name="eye" className="w-4 h-4" /> {lang === 'cs' ? 'Kolbův učební styl' : 'Kolb Learning Style'}
+              </h3>
+              <div className="space-y-2 mb-4">
+                {[
+                  { label: { cs: 'Konkrétní zkušenost (CE)', en: 'Concrete Experience (CE)' }, percent: klResult.dimensions.cePercent, color: '#f59e0b' },
+                  { label: { cs: 'Reflektivní pozorování (RO)', en: 'Reflective Observation (RO)' }, percent: klResult.dimensions.roPercent, color: '#3b82f6' },
+                  { label: { cs: 'Abstraktní konceptualizace (AC)', en: 'Abstract Conceptualization (AC)' }, percent: klResult.dimensions.acPercent, color: '#8b5cf6' },
+                  { label: { cs: 'Aktivní experimentování (AE)', en: 'Active Experimentation (AE)' }, percent: klResult.dimensions.aePercent, color: '#10b981' }
+                ].map((dim, i) => (
+                  <div key={i} className="space-y-1">
+                    <div className="flex justify-between items-center text-xs font-semibold">
+                      <span style={{ color: 'var(--color-text-secondary)' }}>{dim.label[lang]}</span>
+                      <span style={{ color: 'var(--color-primary)' }}>{dim.percent}%</span>
+                    </div>
+                    <div className="h-2 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                      <div className="h-full transition-all duration-1000 ease-out" style={{ width: `${dim.percent}%`, backgroundColor: dim.color, borderRadius: 'var(--radius-full)' }} />
+                    </div>
+                  </div>
+                ))}
+              </div>
+              <div className="p-4" style={{ backgroundColor: 'var(--color-bg)', borderRadius: 'var(--radius-md)' }}>
+                <p className="font-semibold text-sm mb-2" style={{ color: 'var(--color-text)' }}>
+                  {lang === 'cs' ? 'Učební styl' : 'Learning Style'}: {klResult.style[lang]}
+                </p>
+                <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>{klResult.description[lang]}</p>
+                <ul className="space-y-1">
+                  {klResult.tips[lang].slice(0, 2).map((tip, i) => (
+                    <li key={i} className="text-xs" style={{ color: 'var(--color-text-secondary)' }}>• {tip}</li>
+                  ))}
+                </ul>
+              </div>
+            </div>
+          )}
+
+          {/* Cross-Assessment Synthesis */}
+          {(() => {
+            const scores: AssessmentScores = {
+              growthMindset: gmResult?.percent,
+              grit: gritResult?.percent,
+              selfEfficacy: seResult?.percent,
+              testAnxiety: taResult?.percent,
+              metacognition: mcResult?.percent,
+              eq: eqResult?.percent,
+              procrastination: prResult?.percent,
+              academicMotivation: amResult?.percent,
+              timeManagement: tmResult?.percent,
+              locusOfControl: lcResult?.percent,
+              resilience: rsResult?.percent,
+              extraversion: bfResult?.dimensions[0]?.percent,
+              agreeableness: bfResult?.dimensions[1]?.percent,
+              conscientiousness: bfResult?.dimensions[2]?.percent,
+              emotionalStability: bfResult?.dimensions[3]?.percent,
+              openness: bfResult?.dimensions[4]?.percent,
+              stroopAccuracy: stroopResult?.accuracy,
+              mentalRotationAccuracy: mrtResult?.accuracy,
+            };
+            const insights = generateCrossSynthesis(scores);
+            if (insights.length === 0) return null;
+            return (
+              <div className="col-span-full">
+                <h3 className="text-xs font-semibold uppercase tracking-wider mb-4 flex items-center gap-2" style={{ color: 'var(--color-primary)' }}>
+                  Cross-Assessment Synthesis
+                </h3>
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  {insights.map(insight => (
+                    <div key={insight.id} className="card p-5" style={{ borderLeft: `4px solid ${insight.type === 'strength' ? '#10b981' : insight.type === 'risk' ? '#ef4444' : '#f59e0b'}` }}>
+                      <div className="flex items-start gap-3">
+                        <span className="text-2xl">{insight.icon}</span>
+                        <div>
+                          <h4 className="font-semibold text-sm mb-1" style={{ color: 'var(--color-text)' }}>
+                            {insight.title[lang]}
+                          </h4>
+                          <p className="text-xs mb-2" style={{ color: 'var(--color-text-secondary)' }}>
+                            {insight.description[lang]}
+                          </p>
+                          <p className="text-[10px] italic" style={{ color: 'var(--color-text-muted)' }}>
+                            {insight.source}
+                          </p>
+                        </div>
+                      </div>
+                    </div>
+                  ))}
+                </div>
+              </div>
+            );
+          })()}
+
           {/* Stroop Test */}
           {stroopResult && (
             <div className="card p-6">
@@ -4149,6 +4294,34 @@ const App: React.FC = () => {
             setRsResult(result);
             setProgress(p => ({ ...p, resilience: true }));
             handleGenerateFeedback('resilience', 'Resilience', result);
+            setView('results');
+          }
+        )}
+        {view === 'gardner' && renderAssessment(
+          'Gardner\'s Multiple Intelligences (1983)',
+          gardnerQuestions,
+          currentGDQuestion,
+          setCurrentGDQuestion,
+          gdAnswers,
+          setGdAnswers,
+          () => {
+            const result = scoreGardner(gdAnswers);
+            setGdResult(result);
+            setProgress(p => ({ ...p, gardner: true }));
+            setView('results');
+          }
+        )}
+        {view === 'kolb' && renderAssessment(
+          'Kolb Learning Style Inventory (1984)',
+          kolbQuestions,
+          currentKLQuestion,
+          setCurrentKLQuestion,
+          klAnswers,
+          setKlAnswers,
+          () => {
+            const result = scoreKolb(klAnswers);
+            setKlResult(result);
+            setProgress(p => ({ ...p, kolb: true }));
             setView('results');
           }
         )}

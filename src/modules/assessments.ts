@@ -1252,3 +1252,362 @@ export function scoreResilience(answers: Record<string, 'A' | 'B' | 'C' | 'D'>):
     };
   }
 }
+
+// ============================================
+// 14. GARDNER'S MULTIPLE INTELLIGENCES (Gardner, 1983)
+// ============================================
+export interface GardnerResult {
+  intelligences: { name: { cs: string; en: string }; score: number; percent: number; description: { cs: string; en: string } }[];
+  topIntelligences: { cs: string; en: string }[];
+  summary: { cs: string; en: string };
+}
+
+export const gardnerQuestions: AssessmentQuestion[] = [
+  // Linguistic
+  { id: 'GD1', text: { cs: 'Rád/a čtu knihy, píšu texty a hraju si se slovy.', en: 'I enjoy reading books, writing texts, and playing with words.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD2', text: { cs: 'Snadno si zapamatuju texty, příběhy a citáty.', en: 'I easily remember texts, stories, and quotes.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // Logical-Mathematical
+  { id: 'GD3', text: { cs: 'Baví mě řešit logické hádanky, hlavolamy a matematické úlohy.', en: 'I enjoy solving logic puzzles, brainteasers, and math problems.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD4', text: { cs: 'Přirozeně hledám vzorce, pravidla a logické souvislosti.', en: 'I naturally look for patterns, rules, and logical connections.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // Spatial
+  { id: 'GD5', text: { cs: 'Dobře se orientuju v mapách a snadno si představím prostorové objekty.', en: 'I navigate maps well and can easily visualize spatial objects.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD6', text: { cs: 'Rád/a kreslím, maluji nebo vytvářím vizuální návrhy.', en: 'I enjoy drawing, painting, or creating visual designs.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // Musical
+  { id: 'GD7', text: { cs: 'Snadno rozpoznám melodie, rytmy a tóny.', en: 'I easily recognize melodies, rhythms, and tones.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD8', text: { cs: 'Často si brouká, ťukám do rytmu nebo si pouštím hudbu při učení.', en: 'I often hum, tap rhythms, or listen to music while studying.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // Bodily-Kinesthetic
+  { id: 'GD9', text: { cs: 'Učím se nejlépe, když si věci mohu vyzkoušet rukama nebo pohybem.', en: 'I learn best when I can try things with my hands or through movement.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD10', text: { cs: 'Jsem zručný/á ve sportu, tanci nebo manuálních činnostech.', en: 'I am skilled in sports, dance, or manual activities.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // Interpersonal
+  { id: 'GD11', text: { cs: 'Snadno rozumím pocitům a motivacím ostatních lidí.', en: 'I easily understand the feelings and motivations of other people.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD12', text: { cs: 'Rád/a pracuji v týmu a pomáhám řešit konflikty.', en: 'I enjoy working in teams and helping resolve conflicts.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // Intrapersonal
+  { id: 'GD13', text: { cs: 'Dobře znám své silné a slabé stránky a pravidelně o sobě přemýšlím.', en: 'I know my strengths and weaknesses well and regularly reflect on myself.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD14', text: { cs: 'Potřebuji čas o samotě na přemýšlení a plánování.', en: 'I need time alone for thinking and planning.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // Naturalistic
+  { id: 'GD15', text: { cs: 'Zajímám se o přírodu, zvířata a přírodní jevy.', en: 'I am interested in nature, animals, and natural phenomena.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'GD16', text: { cs: 'Rád/a třídím, klasifikuji a pozoruji detaily v okolním světě.', en: 'I enjoy sorting, classifying, and observing details in the world around me.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]}
+];
+
+export function scoreGardner(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): GardnerResult {
+  const getScore = (id: string) => {
+    const q = gardnerQuestions.find(q => q.id === id)!;
+    const opt = q.options.find(o => o.key === answers[id]);
+    return opt ? opt.score : 0;
+  };
+
+  const dims = [
+    { ids: ['GD1', 'GD2'], name: { cs: 'Jazyková', en: 'Linguistic' },
+      high: { cs: 'Máš silnou jazykovou inteligenci – slova, texty a komunikace jsou tvá doména.', en: 'You have strong linguistic intelligence – words, texts, and communication are your domain.' },
+      low: { cs: 'Jazyková inteligence není tvou hlavní silnou stránkou.', en: 'Linguistic intelligence is not your primary strength.' } },
+    { ids: ['GD3', 'GD4'], name: { cs: 'Logicko-matematická', en: 'Logical-Mathematical' },
+      high: { cs: 'Vynikáš v logickém myšlení, vzorcích a číslech.', en: 'You excel in logical thinking, patterns, and numbers.' },
+      low: { cs: 'Logicko-matematická inteligence není tvou dominantní oblastí.', en: 'Logical-mathematical intelligence is not your dominant area.' } },
+    { ids: ['GD5', 'GD6'], name: { cs: 'Prostorová', en: 'Spatial' },
+      high: { cs: 'Máš vynikající prostorovou představivost a vizuální myšlení.', en: 'You have excellent spatial imagination and visual thinking.' },
+      low: { cs: 'Prostorová inteligence není tvou nejsilnější stránkou.', en: 'Spatial intelligence is not your strongest area.' } },
+    { ids: ['GD7', 'GD8'], name: { cs: 'Hudební', en: 'Musical' },
+      high: { cs: 'Jsi citlivý/á na rytmus, melodii a zvuky.', en: 'You are sensitive to rhythm, melody, and sounds.' },
+      low: { cs: 'Hudební inteligence není tvou primární oblastí.', en: 'Musical intelligence is not your primary area.' } },
+    { ids: ['GD9', 'GD10'], name: { cs: 'Tělesně-pohybová', en: 'Bodily-Kinesthetic' },
+      high: { cs: 'Učíš se nejlépe pohybem a praxí – tělo je tvůj nástroj učení.', en: 'You learn best through movement and practice – your body is your learning tool.' },
+      low: { cs: 'Tělesně-pohybová inteligence není tvou hlavní oblastí.', en: 'Bodily-kinesthetic intelligence is not your main area.' } },
+    { ids: ['GD11', 'GD12'], name: { cs: 'Interpersonální', en: 'Interpersonal' },
+      high: { cs: 'Rozumíš ostatním a vynikáš v týmové práci a komunikaci.', en: 'You understand others and excel in teamwork and communication.' },
+      low: { cs: 'Interpersonální inteligence není tvou dominantní oblastí.', en: 'Interpersonal intelligence is not your dominant area.' } },
+    { ids: ['GD13', 'GD14'], name: { cs: 'Intrapersonální', en: 'Intrapersonal' },
+      high: { cs: 'Máš hluboké sebepoznání a schopnost sebereflexe.', en: 'You have deep self-knowledge and the ability for self-reflection.' },
+      low: { cs: 'Intrapersonální inteligence není tvou nejsilnější stránkou.', en: 'Intrapersonal intelligence is not your strongest area.' } },
+    { ids: ['GD15', 'GD16'], name: { cs: 'Přírodovědná', en: 'Naturalistic' },
+      high: { cs: 'Máš přirozený cit pro přírodu, klasifikaci a pozorování.', en: 'You have a natural sense for nature, classification, and observation.' },
+      low: { cs: 'Přírodovědná inteligence není tvou primární oblastí.', en: 'Naturalistic intelligence is not your primary area.' } }
+  ];
+
+  const intelligences = dims.map(d => {
+    const score = d.ids.reduce((sum, id) => sum + getScore(id), 0);
+    const maxDim = d.ids.length * 4;
+    const percent = Math.round((score / maxDim) * 100);
+    return {
+      name: d.name,
+      score,
+      percent,
+      description: percent >= 50 ? d.high : d.low
+    };
+  });
+
+  const sorted = [...intelligences].sort((a, b) => b.percent - a.percent);
+  const topIntelligences = sorted.slice(0, 3).map(i => i.name);
+
+  const topNames = {
+    cs: sorted.slice(0, 3).map(i => i.name.cs).join(', '),
+    en: sorted.slice(0, 3).map(i => i.name.en).join(', ')
+  };
+
+  return {
+    intelligences,
+    topIntelligences,
+    summary: {
+      cs: `Tvé nejsilnější typy inteligence jsou: ${topNames.cs}.`,
+      en: `Your strongest intelligence types are: ${topNames.en}.`
+    }
+  };
+}
+
+// ============================================
+// 15. KOLB'S LEARNING STYLE INVENTORY (Kolb, 1984)
+// ============================================
+export interface KolbResult {
+  dimensions: {
+    ce: number; ro: number; ac: number; ae: number;
+    cePercent: number; roPercent: number; acPercent: number; aePercent: number;
+  };
+  style: { cs: string; en: string };
+  styleKey: 'diverging' | 'assimilating' | 'converging' | 'accommodating';
+  description: { cs: string; en: string };
+  tips: { cs: string[]; en: string[] };
+}
+
+export const kolbQuestions: AssessmentQuestion[] = [
+  // CE questions
+  { id: 'KL1', text: { cs: 'Nejlépe se učím z konkrétních zkušeností a příkladů.', en: 'I learn best from concrete experiences and examples.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL2', text: { cs: 'Dávám přednost učení prostřednictvím pocitů a osobních zážitků.', en: 'I prefer learning through feelings and personal experiences.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL3', text: { cs: 'Při učení se snažím propojit nové informace se svými prožitky.', en: 'When learning, I try to connect new information with my own experiences.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // RO questions
+  { id: 'KL4', text: { cs: 'Raději nejdřív pozoruji a přemýšlím, než začnu jednat.', en: 'I prefer to observe and think before taking action.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL5', text: { cs: 'Rád/a se dívám na problém z různých úhlů pohledu.', en: 'I like to look at a problem from different perspectives.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL6', text: { cs: 'Při rozhodování si dávám čas na důkladné zvážení možností.', en: 'When making decisions, I take time to carefully consider options.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // AC questions
+  { id: 'KL7', text: { cs: 'Dávám přednost logickému a systematickému přístupu k učení.', en: 'I prefer a logical and systematic approach to learning.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL8', text: { cs: 'Rád/a analyzuji teorie a koncepty předtím, než je aplikuji.', en: 'I like to analyze theories and concepts before applying them.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL9', text: { cs: 'Zajímají mě abstraktní myšlenky a hledání obecných principů.', en: 'I am interested in abstract ideas and finding general principles.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  // AE questions
+  { id: 'KL10', text: { cs: 'Nejraději se učím tím, že věci hned zkouším a experimentuji.', en: 'I learn best by trying things out and experimenting right away.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL11', text: { cs: 'Rád/a aplikuji naučené poznatky na praktické problémy.', en: 'I enjoy applying learned knowledge to practical problems.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]},
+  { id: 'KL12', text: { cs: 'Dávám přednost aktivnímu zapojení a činnosti před pasivním posloucháním.', en: 'I prefer active involvement and doing things over passive listening.' }, options: [
+    { key: 'A', text: { cs: 'Silně souhlasím', en: 'Strongly agree' }, score: 4 },
+    { key: 'B', text: { cs: 'Spíše souhlasím', en: 'Somewhat agree' }, score: 3 },
+    { key: 'C', text: { cs: 'Spíše nesouhlasím', en: 'Somewhat disagree' }, score: 2 },
+    { key: 'D', text: { cs: 'Silně nesouhlasím', en: 'Strongly disagree' }, score: 1 }
+  ]}
+];
+
+export function scoreKolb(answers: Record<string, 'A' | 'B' | 'C' | 'D'>): KolbResult {
+  const getScore = (id: string) => {
+    const q = kolbQuestions.find(q => q.id === id)!;
+    const opt = q.options.find(o => o.key === answers[id]);
+    return opt ? opt.score : 0;
+  };
+
+  const ce = getScore('KL1') + getScore('KL2') + getScore('KL3');
+  const ro = getScore('KL4') + getScore('KL5') + getScore('KL6');
+  const ac = getScore('KL7') + getScore('KL8') + getScore('KL9');
+  const ae = getScore('KL10') + getScore('KL11') + getScore('KL12');
+
+  const maxDim = 12; // 3 questions * 4 max score
+  const cePercent = Math.round((ce / maxDim) * 100);
+  const roPercent = Math.round((ro / maxDim) * 100);
+  const acPercent = Math.round((ac / maxDim) * 100);
+  const aePercent = Math.round((ae / maxDim) * 100);
+
+  // Determine style: CE vs AC (vertical), AE vs RO (horizontal)
+  const vertical = ce - ac; // positive = CE dominant, negative = AC dominant
+  const horizontal = ae - ro; // positive = AE dominant, negative = RO dominant
+
+  let styleKey: KolbResult['styleKey'];
+  let style: { cs: string; en: string };
+  let description: { cs: string; en: string };
+  let tips: { cs: string[]; en: string[] };
+
+  if (vertical >= 0 && horizontal < 0) {
+    // CE + RO = Diverging
+    styleKey = 'diverging';
+    style = { cs: 'Divergující', en: 'Diverging' };
+    description = {
+      cs: 'Jsi imaginativní a dokážeš se dívat na věci z mnoha perspektiv. Silný v brainstormingu a generování nápadů.',
+      en: 'You are imaginative and can look at things from many perspectives. Strong in brainstorming and idea generation.'
+    };
+    tips = {
+      cs: ['Využívej brainstorming a mind mapy', 'Pracuj ve skupinách – inspiruješ se různými pohledy', 'Hledej propojení mezi obory a tématy'],
+      en: ['Use brainstorming and mind maps', 'Work in groups – get inspired by different viewpoints', 'Look for connections between fields and topics']
+    };
+  } else if (vertical < 0 && horizontal < 0) {
+    // AC + RO = Assimilating
+    styleKey = 'assimilating';
+    style = { cs: 'Asimilující', en: 'Assimilating' };
+    description = {
+      cs: 'Dáváš přednost logickému a stručnému přístupu. Vynikáš v pochopení teorií a vytváření modelů.',
+      en: 'You prefer a logical and concise approach. You excel at understanding theories and creating models.'
+    };
+    tips = {
+      cs: ['Čti odborné texty a vytvářej si strukturované poznámky', 'Hledej teoretické rámce pro pochopení témat', 'Zkus přednášky a logické diagramy'],
+      en: ['Read academic texts and create structured notes', 'Look for theoretical frameworks to understand topics', 'Try lectures and logical diagrams']
+    };
+  } else if (vertical < 0 && horizontal >= 0) {
+    // AC + AE = Converging
+    styleKey = 'converging';
+    style = { cs: 'Konvergující', en: 'Converging' };
+    description = {
+      cs: 'Jsi praktický/á a zaměřený/á na řešení problémů. Rád/a aplikuješ teorie na reálné situace.',
+      en: 'You are practical and focused on problem-solving. You enjoy applying theories to real-world situations.'
+    };
+    tips = {
+      cs: ['Řeš praktické případové studie a projekty', 'Využívej simulace a experimenty', 'Hledej reálné aplikace teoretických konceptů'],
+      en: ['Solve practical case studies and projects', 'Use simulations and experiments', 'Look for real-world applications of theoretical concepts']
+    };
+  } else {
+    // CE + AE = Accommodating
+    styleKey = 'accommodating';
+    style = { cs: 'Akomodující', en: 'Accommodating' };
+    description = {
+      cs: 'Jsi praktický/á a intuitivní. Učíš se nejlépe hands-on přístupem a rád/a zkoušíš nové věci.',
+      en: 'You are practical and intuitive. You learn best with a hands-on approach and enjoy trying new things.'
+    };
+    tips = {
+      cs: ['Zapoj se do projektů a stáží', 'Uč se metodou pokus-omyl', 'Spolupracuj s ostatními na praktických úkolech'],
+      en: ['Get involved in projects and internships', 'Learn through trial and error', 'Collaborate with others on practical tasks']
+    };
+  }
+
+  return {
+    dimensions: { ce, ro, ac, ae, cePercent, roPercent, acPercent, aePercent },
+    style,
+    styleKey,
+    description,
+    tips
+  };
+}
