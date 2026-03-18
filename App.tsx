@@ -1221,19 +1221,45 @@ const App: React.FC = () => {
 
     // All scores for bar chart
     const allScores = [
-      { label: { cs: 'Growth Mindset', en: 'Growth Mindset' }, value: r.growthMindset.percent, color: '#10b981' },
-      { label: { cs: 'Vytrvalost (Grit)', en: 'Grit' }, value: r.grit.percent, color: '#f97316' },
-      { label: { cs: 'Self-Efficacy', en: 'Self-Efficacy' }, value: r.selfEfficacy.percent, color: '#eab308' },
-      { label: { cs: 'Testová úzkost', en: 'Test Anxiety' }, value: r.testAnxiety.percent, color: '#ef4444' },
-      { label: { cs: 'Metakognice', en: 'Metacognition' }, value: r.metacognition.percent, color: '#8b5cf6' },
-      { label: { cs: 'Emoční inteligence', en: 'Emotional Intelligence' }, value: r.eq.percent, color: '#ec4899' },
-      { label: { cs: 'Prokrastinace', en: 'Procrastination' }, value: r.procrastination.percent, color: '#f43f5e' },
-      { label: { cs: 'Akademická motivace', en: 'Academic Motivation' }, value: r.academicMotivation.percent, color: '#f59e0b' },
-      { label: { cs: 'Time Management', en: 'Time Management' }, value: r.timeManagement.percent, color: '#3b82f6' },
-      { label: { cs: 'Locus of Control', en: 'Locus of Control' }, value: r.locusOfControl.percent, color: '#14b8a6' },
-      { label: { cs: 'Resilience', en: 'Resilience' }, value: r.resilience.percent, color: '#f472b6' },
-      { label: { cs: 'Studijní stres', en: 'Study Stress' }, value: r.studyStress.percent, color: '#ef4444' },
-      { label: { cs: 'Studijní strategie', en: 'Study Strategies' }, value: r.studyStrategies.percent, color: '#10b981' },
+      { label: { cs: 'Growth Mindset', en: 'Growth Mindset' }, value: r.growthMindset.percent, color: '#10b981',
+        desc: { cs: 'Víra, že schopnosti lze rozvíjet úsilím a učením (Dweck, 2006). Vyšší skóre = více věříš v možnost růstu.', en: 'Belief that abilities can be developed through effort and learning (Dweck, 2006). Higher = more belief in growth.' },
+        low: { cs: 'Fixní', en: 'Fixed' }, high: { cs: 'Růstové', en: 'Growth' }, source: 'Dweck (2006)' },
+      { label: { cs: 'Vytrvalost (Grit)', en: 'Grit' }, value: r.grit.percent, color: '#f97316',
+        desc: { cs: 'Vytrvalost a vášeň pro dlouhodobé cíle (Duckworth, 2007). Prediktor úspěchu silnější než IQ.', en: 'Perseverance and passion for long-term goals (Duckworth, 2007). Stronger predictor of success than IQ.' },
+        low: { cs: 'Nízká', en: 'Low' }, high: { cs: 'Vysoká', en: 'High' }, source: 'Duckworth (2007)' },
+      { label: { cs: 'Self-Efficacy', en: 'Self-Efficacy' }, value: r.selfEfficacy.percent, color: '#eab308',
+        desc: { cs: 'Víra ve vlastní schopnosti zvládnout úkoly (Bandura, 1997). Klíčový faktor akademického výkonu.', en: 'Belief in own ability to handle tasks (Bandura, 1997). Key factor in academic performance.' },
+        low: { cs: 'Pochybuje', en: 'Doubts' }, high: { cs: 'Věří si', en: 'Confident' }, source: 'Bandura (1997)' },
+      { label: { cs: 'Testová úzkost', en: 'Test Anxiety' }, value: r.testAnxiety.percent, color: '#ef4444',
+        desc: { cs: 'Míra stresu a úzkosti při zkouškách. Vyšší skóre = méně úzkosti = lepší výkon u testů.', en: 'Level of stress and anxiety during exams. Higher score = less anxiety = better test performance.' },
+        low: { cs: 'Vysoká úzkost', en: 'High anxiety' }, high: { cs: 'Klid', en: 'Calm' }, source: 'Spielberger (1980)' },
+      { label: { cs: 'Metakognice', en: 'Metacognition' }, value: r.metacognition.percent, color: '#8b5cf6',
+        desc: { cs: 'Schopnost „učit se učit" – plánování, monitorování a hodnocení vlastního učení (Flavell, 1979).', en: 'Ability to "learn how to learn" – planning, monitoring, and evaluating own learning (Flavell, 1979).' },
+        low: { cs: 'Neuvědomělé', en: 'Unaware' }, high: { cs: 'Strategické', en: 'Strategic' }, source: 'Flavell (1979)' },
+      { label: { cs: 'Emoční inteligence', en: 'Emotional Intelligence' }, value: r.eq.percent, color: '#ec4899',
+        desc: { cs: 'Schopnost rozpoznávat a regulovat emoce – vlastní i cizí (Goleman, 1995). Důležité pro týmovou práci.', en: 'Ability to recognize and regulate emotions – own and others\' (Goleman, 1995). Important for teamwork.' },
+        low: { cs: 'Nízká EQ', en: 'Low EQ' }, high: { cs: 'Vysoká EQ', en: 'High EQ' }, source: 'Goleman (1995)' },
+      { label: { cs: 'Prokrastinace', en: 'Procrastination' }, value: r.procrastination.percent, color: '#f43f5e',
+        desc: { cs: 'Míra odkládání studijních povinností (Solomon & Rothblum, 1984). Vyšší = méně odkládáš.', en: 'Degree of postponing academic duties (Solomon & Rothblum, 1984). Higher = less procrastination.' },
+        low: { cs: 'Odkládá', en: 'Procrastinates' }, high: { cs: 'Začíná hned', en: 'Starts now' }, source: 'Solomon & Rothblum (1984)' },
+      { label: { cs: 'Akademická motivace', en: 'Academic Motivation' }, value: r.academicMotivation.percent, color: '#f59e0b',
+        desc: { cs: 'Vnitřní vs. vnější motivace ke studiu (Vallerand, 1992). Vyšší = více studujete z vlastního zájmu.', en: 'Intrinsic vs. extrinsic study motivation (Vallerand, 1992). Higher = more studying from personal interest.' },
+        low: { cs: 'Vnější', en: 'Extrinsic' }, high: { cs: 'Vnitřní', en: 'Intrinsic' }, source: 'Vallerand (1992)' },
+      { label: { cs: 'Time Management', en: 'Time Management' }, value: r.timeManagement.percent, color: '#3b82f6',
+        desc: { cs: 'Schopnost plánovat, prioritizovat a efektivně využívat čas (Macan, 1994).', en: 'Ability to plan, prioritize, and use time effectively (Macan, 1994).' },
+        low: { cs: 'Chaotický', en: 'Chaotic' }, high: { cs: 'Organizovaný', en: 'Organized' }, source: 'Macan (1994)' },
+      { label: { cs: 'Locus of Control', en: 'Locus of Control' }, value: r.locusOfControl.percent, color: '#14b8a6',
+        desc: { cs: 'Vnímaná kontrola nad vlastními výsledky (Rotter, 1966). Vyšší = věříš, že výsledky závisí na tobě.', en: 'Perceived control over own results (Rotter, 1966). Higher = you believe results depend on you.' },
+        low: { cs: 'Externí', en: 'External' }, high: { cs: 'Interní', en: 'Internal' }, source: 'Rotter (1966)' },
+      { label: { cs: 'Resilience', en: 'Resilience' }, value: r.resilience.percent, color: '#f472b6',
+        desc: { cs: 'Schopnost vzpamatovat se z neúspěchů a stresu (Smith et al., 2008). Ochrana proti vyhoření.', en: 'Ability to bounce back from setbacks and stress (Smith et al., 2008). Protection against burnout.' },
+        low: { cs: 'Křehká', en: 'Fragile' }, high: { cs: 'Odolná', en: 'Resilient' }, source: 'Smith et al. (2008)' },
+      { label: { cs: 'Studijní stres', en: 'Study Stress' }, value: r.studyStress.percent, color: '#ef4444',
+        desc: { cs: 'Míra stresu ze studia, zkoušek a akademického tlaku. Vyšší = méně stresu.', en: 'Level of study stress, exam pressure, and academic burden. Higher = less stress.' },
+        low: { cs: 'Vysoký stres', en: 'High stress' }, high: { cs: 'Pohoda', en: 'Relaxed' }, source: 'HF: student-stress-survey' },
+      { label: { cs: 'Studijní strategie', en: 'Study Strategies' }, value: r.studyStrategies.percent, color: '#10b981',
+        desc: { cs: 'Kvalita studijních technik – active recall, spaced repetition, poznámky (Dunlosky et al., 2013).', en: 'Quality of study techniques – active recall, spaced repetition, notes (Dunlosky et al., 2013).' },
+        low: { cs: 'Neefektivní', en: 'Ineffective' }, high: { cs: 'Evidence-based', en: 'Evidence-based' }, source: 'Dunlosky et al. (2013)' },
     ];
 
     const avgScore = Math.round(allScores.reduce((s, d) => s + d.value, 0) / allScores.length);
@@ -1386,24 +1412,53 @@ const App: React.FC = () => {
             </div>
           </div>
 
-          {/* All Assessment Bars */}
-          <div className="card p-6">
-            <h3 className="text-xs font-semibold uppercase tracking-wider mb-4" style={{ color: 'var(--color-primary)' }}>
-              {lang === 'cs' ? 'Všechny výsledky' : 'All Results'}
+          {/* All Assessment Details */}
+          <div className="space-y-4">
+            <h3 className="text-xs font-semibold uppercase tracking-wider" style={{ color: 'var(--color-primary)' }}>
+              {lang === 'cs' ? 'Detailní výsledky s vysvětlením' : 'Detailed Results with Explanations'}
             </h3>
-            <div className="space-y-3">
-              {allScores.map((item, i) => (
-                <div key={i}>
-                  <div className="flex justify-between text-xs font-medium mb-1">
-                    <span style={{ color: 'var(--color-text-secondary)' }}>{item.label[lang]}</span>
-                    <span style={{ color: item.value >= 60 ? '#10b981' : item.value >= 40 ? '#f59e0b' : '#ef4444' }}>{item.value}%</span>
+            {allScores.map((item, i) => (
+              <div key={i} className="card p-5">
+                <div className="flex items-start justify-between gap-4 mb-2">
+                  <div className="flex-1">
+                    <div className="flex items-center gap-2 mb-1">
+                      <div className="w-3 h-3 rounded-full" style={{ backgroundColor: item.color }} />
+                      <h4 className="font-semibold text-sm" style={{ color: 'var(--color-text)' }}>{item.label[lang]}</h4>
+                    </div>
+                    <p className="text-xs" style={{ color: 'var(--color-text-muted)' }}>{item.desc[lang]}</p>
                   </div>
-                  <div className="h-3 w-full overflow-hidden" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
-                    <div className="h-full transition-all duration-1000" style={{ width: `${item.value}%`, backgroundColor: item.color, borderRadius: 'var(--radius-full)' }} />
+                  <div className="text-right flex-shrink-0">
+                    <span className="text-2xl font-bold" style={{ color: item.color }}>{item.value}%</span>
                   </div>
                 </div>
-              ))}
-            </div>
+                {/* Scale with dot */}
+                <div className="mt-3">
+                  <div className="flex justify-between text-[10px] mb-1">
+                    <span style={{ color: 'var(--color-text-muted)' }}>{item.low[lang]}</span>
+                    <span style={{ color: 'var(--color-text-muted)' }}>{item.high[lang]}</span>
+                  </div>
+                  <div className="relative h-3 w-full" style={{ backgroundColor: 'var(--color-border)', borderRadius: 'var(--radius-full)' }}>
+                    {/* Background gradient */}
+                    <div className="absolute inset-0 overflow-hidden" style={{ borderRadius: 'var(--radius-full)' }}>
+                      <div className="h-full w-full" style={{ background: `linear-gradient(to right, #fecaca, #fef08a, #bbf7d0)`, opacity: 0.5 }} />
+                    </div>
+                    {/* Center mark */}
+                    <div className="absolute top-0 left-1/2 w-px h-3 bg-gray-400 opacity-50" />
+                    {/* Dot indicator */}
+                    <div className="absolute top-1/2 -translate-y-1/2 w-5 h-5 shadow-lg border-2 border-white" style={{ left: `calc(${item.value}% - 10px)`, borderRadius: 'var(--radius-full)', backgroundColor: item.color, transition: 'left 1s ease-out' }} />
+                  </div>
+                  <div className="flex justify-between text-[9px] mt-1" style={{ color: 'var(--color-text-muted)' }}>
+                    <span>0%</span>
+                    <span>25%</span>
+                    <span>50%</span>
+                    <span>75%</span>
+                    <span>100%</span>
+                  </div>
+                </div>
+                {/* Source */}
+                <p className="text-[9px] mt-2 italic" style={{ color: 'var(--color-text-muted)' }}>{item.source}</p>
+              </div>
+            ))}
           </div>
 
           {/* Abstract vs Concrete Scale */}
